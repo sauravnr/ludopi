@@ -1,4 +1,4 @@
-// src/component/NavIten.jsx
+// src/components/NavItem.jsx
 export default function NavItem({ icon, label, active, onClick }) {
   return (
     <button
