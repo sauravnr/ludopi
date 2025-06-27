@@ -803,6 +803,10 @@ io.on("connection", (socket) => {
         } else {
           // (everyone finished—game over)
           room.currentTurnIndex = null;
+          // Schedule chat closure once the game ends
+          setTimeout(() => {
+            io.to(roomCode).emit("chat-closed");
+          }, 5 * 60 * 1000); // 5 minutes
         }
         // ─── RECORD STATS FOR 2P IMMEDIATELY WHEN SOMEONE WINS ───
         if (room.mode === "2P") {
@@ -909,14 +913,34 @@ io.on("connection", (socket) => {
   );
 
   // Chat
-  socket.on("chat-message", ({ roomCode, playerId, text }) => {
+  socket.on("chat-message", async ({ roomCode, playerId, text }) => {
     const room = rooms[roomCode];
     if (!room) return;
-    const user = room.players.find((p) => p.userId === playerId);
+    // Rate limit chat messages per user
+    try {
+      await msgLimiter.consume(socket.user._id.toString());
+    } catch {
+      return; // silently drop when exceeding limit
+    }
+
+    // Validate membership
+    const player = room.players.find(
+      (p) => p.userId === socket.user._id.toString() && p.userId === playerId
+    );
+    if (!player) return; // ignore non-members or impersonation
+
+    // Validate and sanitize text
+    if (typeof text !== "string") return;
+    const trimmed = text.trim();
+    if (trimmed.length === 0 || trimmed.length > 500) return;
+    const cleanText = sanitizeHtml(trimmed, {
+      allowedTags: [],
+      allowedAttributes: {},
+    });
     io.to(roomCode).emit("chat-message", {
-      playerId,
-      name: user?.username || "Unknown",
-      text,
+      playerId: socket.user._id.toString(),
+      name: player.username,
+      text: cleanText,
       ts: Date.now(),
     });
   });
