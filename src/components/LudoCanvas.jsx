@@ -1,7 +1,7 @@
 // src/components/LudoCanvas.jsx
 import { useCallback, useEffect, useRef, useState } from "react";
 import Dice from "./Dice";
-import socket from "../socket";
+import { useSocket } from "../context/SocketContext";
 
 // preload token PNGs at 3 resolutions (64,128,192 px)
 const tokenImages = {};
@@ -574,6 +574,7 @@ const LudoCanvas = ({
   currentTurnColor,
   gameOver,
 }) => {
+  const socket = useSocket();
   const canvasRef = useRef(null);
   // ── SPINNER SETUP ──────────────────────────────────────
   // holds our continuous angle, doesn’t trigger React renders:

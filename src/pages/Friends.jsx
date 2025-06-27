@@ -1,6 +1,5 @@
 // src/pages/Friends.jsx
-import React, { useState, lazy, Suspense, useEffect } from "react";
-import socket from "../socket";
+import React, { useState, lazy, Suspense } from "react";
 import Loader from "../components/Loader";
 
 const FriendsList = lazy(() => import("../components/FriendList"));
@@ -12,11 +11,6 @@ export default function Friends() {
   const [activeTab, setActiveTab] = useState("friends");
   // either `null` (show chat‐list) or a full `{ id, username, avatarUrl }`
   const [selectedUser, setSelectedUser] = useState(null);
-
-  useEffect(() => {
-    socket.connect();
-    return () => socket.disconnect();
-  }, []);
 
   const tabs = [
     { key: "friends", label: "Friends" },

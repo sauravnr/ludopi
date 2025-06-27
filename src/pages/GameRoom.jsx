@@ -1,13 +1,14 @@
 // src/pages/GameRoom.jsx
 import React, { useEffect, useRef, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
-import socket from "../socket";
+import { useSocket } from "../context/SocketContext";
 import { useAuth } from "../context/AuthContext";
 import ContentModal from "../components/ContentModal";
 import { ClipboardCopy, Share2 } from "lucide-react";
 
 const GameRoom = () => {
   const { user } = useAuth();
+  const socket = useSocket();
   const { roomCode } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -96,7 +97,6 @@ const GameRoom = () => {
     if (!socket.connected) {
       // watch for connect_error before connecting
       socket.once("connect_error", onAuthFail);
-      socket.connect();
       socket.once("connect", sendJoin);
     } else {
       sendJoin();

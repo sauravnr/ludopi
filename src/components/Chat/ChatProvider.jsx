@@ -1,11 +1,12 @@
 // src/components/Chat/ChatProvider.jsx
 import React, { createContext, useContext, useEffect, useState } from "react";
-import socket from "../../socket";
+import { useSocket } from "../../context/SocketContext";
 
 const ChatCtx = createContext();
 export const useChat = () => useContext(ChatCtx);
 
 export function ChatProvider({ roomCode, children }) {
+  const socket = useSocket();
   const [messages, setMessages] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
 

@@ -2,13 +2,14 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import useSWRInfinite from "swr/infinite";
 import api from "../utils/api";
-import socket from "../socket";
+import { useSocket } from "../context/SocketContext";
 import { FaArrowLeft } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 
 export default function ChatWindow({ user: partner, onBack }) {
   const LIMIT = 10;
   const { user: me } = useAuth();
+  const socket = useSocket();
   const myId = me._id || me.id;
   const activeUserId = partner.id;
 

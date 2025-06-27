@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import socket from "../socket";
+import { useSocket } from "../context/SocketContext";
 import { useAuth } from "../context/AuthContext";
 import LudoCanvas from "../components/LudoCanvas";
 import WinnerPopup from "../components/WinnerPopup";
@@ -13,6 +13,7 @@ import Loader from "../components/Loader";
 
 const PlayRoom = () => {
   const { user, loading } = useAuth();
+  const socket = useSocket();
   const navigate = useNavigate();
   const { roomCode } = useParams();
   const location = useLocation();
@@ -75,7 +76,6 @@ const PlayRoom = () => {
     const doJoin = async () => {
       if (!socket.connected) {
         socket.once("connect_error", onAuthFail);
-        socket.connect();
         socket.once("connect", sendJoin);
       } else {
         sendJoin();
@@ -95,7 +95,6 @@ const PlayRoom = () => {
       socket.off("connect_error", onAuthFail);
       if (!sessionStorage.getItem("navigatingToRoom") && socket.connected) {
         socket.emit("leave-room", { roomCode });
-        socket.disconnect();
       }
       socket.off("connect", sendJoin);
     };

@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import useSWRInfinite from "swr/infinite";
 import api from "../utils/api";
-import socket from "../socket";
+import { useSocket } from "../context/SocketContext";
 import { useAuth } from "../context/AuthContext";
 
 // Helper: split flat array into pages
@@ -16,6 +16,7 @@ function chunk(arr, size) {
 export default function ChatList({ onSelect }) {
   const LIMIT = 10;
   const { user: me } = useAuth();
+  const socket = useSocket();
   const myId = me._id || me.id;
 
   // 1) infinite SWR, no auto-remount revalidation
