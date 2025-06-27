@@ -1,0 +1,251 @@
+/* src/styles/modal.css */
+/* a simple centered box without any overlay */
+.dialog-container {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  margin: 2rem auto;
+  padding: 1rem;
+}
+
+.dialog-sm {
+  max-width: 400px;
+}
+.dialog-md {
+  max-width: 600px;
+}
+.dialog-lg {
+  max-width: 800px;
+}
+
+/* existing modal-title-bar & modal-body will apply here */
+
+/* full‐screen dimmer */
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+/* the main window, now relative so we can absolutely position title & close */
+.modal-window {
+  position: relative;
+  background: #fff8e6;
+  border: 1px solid #e0c08b;
+  border-radius: 1rem;
+  box-shadow: 0 3px 0 #c7994a, 0 8px 2px rgba(0, 0, 0, 0.5);
+  width: 90%;
+  max-width: 24rem;
+  overflow: visible;
+  padding-top: 1.5rem; /* give space for title bar */
+}
+.modal-window.modal-sm {
+  width: 60%;
+  max-width: 21rem; /* adjust as needed */
+}
+.modal-window.modal-lg {
+  width: 95%;
+  max-width: 32rem; /* adjust as needed */
+}
+/* lifted title */
+.modal-title-bar {
+  position: absolute;
+  top: -2rem; /* lift above the window */
+  left: 50%;
+  transform: translateX(-50%);
+  background: #ffae33;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 3px 0 #d18c00, 0 6px 2px rgba(0, 0, 0, 0.25);
+  z-index: 10;
+}
+.modal-title {
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+/* round X button on top‐right edge */
+.modal-close-btn {
+  position: absolute;
+  top: -0.7rem; /* bump it up so it overlaps */
+  right: -0.7rem;
+  background: #fff;
+  color: #b91c1c;
+  border: none;
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 0 #ccc, 0 2px 2px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+.modal-close-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 #ccc, 0 1px 2px rgba(0, 0, 0, 0.1);
+  filter: brightness(90%);
+}
+/* body/content area */
+.modal-body {
+  padding: 2rem 1rem 1rem;
+  color: #333;
+}
+
+/* footer section */
+.modal-footer {
+  padding: 0.2rem 1rem 1rem 1rem;
+  display: flex;
+  justify-content: center;
+  gap: 0.8rem;
+}
+/* center icon + text */
+.setting-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* toggle-switch.css */
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 4rem;
+  height: 2rem;
+}
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+/* track with inset shadow for depth */
+.toggle-switch .slider {
+  position: absolute;
+  inset: 0;
+  background-color: #ffae33;
+  border-radius: 1rem;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25);
+  transition: background-color 0.2s ease;
+}
+/* knob as a “button” with lifted shadow */
+.toggle-switch .slider::before {
+  content: "";
+  position: absolute;
+  width: 1.8rem;
+  height: 1.8rem;
+  top: 0.1rem;
+  left: 0.1rem;
+  background-color: #ef4444;
+  border-radius: 50%;
+  box-shadow: 0 1px 0 #b91c1c, /* red-700 shadow */ 0 4px 6px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease, background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+/* pressed effect */
+.toggle-switch:active .slider::before {
+  transform: translateX(var(--active-translate, 0)) scale(0.95);
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
+}
+/* move & color-change on “On” */
+.toggle-switch input:checked + .slider::before {
+  --active-translate: 2rem;
+  transform: translateX(2rem);
+  background-color: #10b981;
+  box-shadow: 0 1px 0 #059669,
+    /* green-600 shadow */ 0 4px 6px rgba(0, 0, 0, 0.4);
+}
+/* pressed effect for green (On) knob */
+.toggle-switch input:checked + .slider:active::before {
+  transform: translateX(2rem) scale(0.95);
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
+}
+/* labels */
+.toggle-switch .labels {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 0.3rem;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #fff;
+  pointer-events: none;
+  text-transform: uppercase;
+}
+.toggle-switch .labels::before {
+  content: attr(data-off);
+}
+.toggle-switch .labels::after {
+  content: attr(data-on);
+}
+
+/* Overlay fades in */
+@keyframes fadeInOverlay {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Window pops in with a bit of upward motion + scale */
+@keyframes fadeInWindow {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Trigger the animations when the modal mounts */
+.modal-overlay {
+  animation: fadeInOverlay 0.1s ease-out forwards;
+}
+
+.modal-window {
+  /* delay so overlay is visible first (optional) */
+  animation: fadeInWindow 0.1s ease-out forwards;
+  /* ensure initial state matches animation start */
+  opacity: 0;
+  transform: translateY(-20px) scale(0.95);
+}
+/* Fade-out keyframes */
+@keyframes fadeOutOverlay {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fadeOutWindow {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+}
+
+/* Closing classes */
+.modal-overlay.closing {
+  animation: fadeOutOverlay 0.1s ease-in forwards;
+}
+
+.modal-window.closing {
+  animation: fadeOutWindow 0.1s ease-in forwards;
+}
