@@ -5,17 +5,20 @@ import WebGLDice from "./WebGLDice";
 export default function Dice(props) {
   const { rollingNow, forcedFace, disabled, onRoll, size = 128 } = props;
 
-  // 1) If we’re not in the middle of a roll and there's no face to show,
-  //    just render the idle PNG:
-  if (!rollingNow && forcedFace == null) {
-    const DPR = window.devicePixelRatio > 1 ? "512" : "256";
-    const src = `/dice/idle-${DPR}.png`;
-    const handleClick = () => {
-      if (!disabled && !rollingNow) {
-        onRoll();
-      }
-    };
-    return (
+  // determine which element should be visible
+  const showIdle = !rollingNow && forcedFace == null;
+
+  const DPR = window.devicePixelRatio > 1 ? "512" : "256";
+  const src = `/dice/idle-${DPR}.png`;
+
+  const handleClick = () => {
+    if (!disabled && !rollingNow) {
+      onRoll();
+    }
+  };
+
+  return (
+    <>
       <img
         src={src}
         alt="dice idle"
@@ -24,11 +27,10 @@ export default function Dice(props) {
           width: size,
           height: size,
           cursor: disabled ? "default" : "pointer",
+          display: showIdle ? "block" : "none",
         }}
       />
-    );
-  }
-
-  // 2) Otherwise, render the full 3D dice:
-  return <WebGLDice {...props} />;
+      {!showIdle && <WebGLDice {...props} />}
+    </>
+  );
 }

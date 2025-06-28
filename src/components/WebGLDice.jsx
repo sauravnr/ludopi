@@ -11,17 +11,26 @@ function getDiceTextures(renderer) {
   if (cachedTextures.length === 0) {
     const DPR = window.devicePixelRatio > 1 ? "512" : "256";
     cachedTextures = faceOrder.map((n) => {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.src = `/dice/dice-${n}-${DPR}.png`;
-      const tex = new THREE.CanvasTexture(img);
+      // start with a 1x1 white canvas to avoid "image incomplete" warnings
+      const canvas = document.createElement("canvas");
+      canvas.width = 1;
+      canvas.height = 1;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, 1, 1);
+      const tex = new THREE.CanvasTexture(canvas);
       tex.generateMipmaps = true;
       tex.minFilter = THREE.LinearMipmapLinearFilter;
       tex.wrapS = THREE.ClampToEdgeWrapping;
       tex.wrapT = THREE.ClampToEdgeWrapping;
+
+      const img = new Image();
+      img.crossOrigin = "anonymous";
       img.onload = () => {
+        tex.image = img;
         tex.needsUpdate = true;
       };
+      img.src = `/dice/dice-${n}-${DPR}.png`;
       return tex;
     });
   }
