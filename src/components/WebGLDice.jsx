@@ -3,6 +3,35 @@ import React, { useRef, useEffect } from "react";
 import * as THREE from "three";
 import { gsap } from "gsap";
 
+// cache textures across component mounts
+let cachedTextures = [];
+const faceOrder = [3, 4, 2, 5, 1, 6];
+
+function getDiceTextures(renderer) {
+  if (cachedTextures.length === 0) {
+    const DPR = window.devicePixelRatio > 1 ? "512" : "256";
+    cachedTextures = faceOrder.map((n) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = `/dice/dice-${n}-${DPR}.png`;
+      const tex = new THREE.CanvasTexture(img);
+      tex.generateMipmaps = true;
+      tex.minFilter = THREE.LinearMipmapLinearFilter;
+      tex.wrapS = THREE.ClampToEdgeWrapping;
+      tex.wrapT = THREE.ClampToEdgeWrapping;
+      img.onload = () => {
+        tex.needsUpdate = true;
+      };
+      return tex;
+    });
+  }
+  const aniso = renderer.capabilities.getMaxAnisotropy();
+  cachedTextures.forEach((t) => {
+    t.anisotropy = aniso;
+  });
+  return cachedTextures;
+}
+
 export default function WebGLDice({
   onRoll,
   disabled,
@@ -77,28 +106,15 @@ export default function WebGLDice({
     dl.position.set(5, 5, 5);
     scene.add(dl);
 
-    // prepare face textures
-    const DPR = window.devicePixelRatio > 1 ? "512" : "256";
-    const faceOrder = [3, 4, 2, 5, 1, 6];
-    const materials = faceOrder.map((n) => {
+    // prepare face textures (cached across mounts)
+    const textures = getDiceTextures(renderer);
+    const materials = textures.map((tex) => {
       const mat = new THREE.MeshStandardMaterial({
         transparent: true,
         alphaTest: 0.1,
+        map: tex,
       });
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.src = `/dice/dice-${n}-${DPR}.png`;
-      img.onload = () => {
-        const tex = new THREE.CanvasTexture(img);
-        tex.generateMipmaps = true;
-        tex.minFilter = THREE.LinearMipmapLinearFilter;
-        // enable max anisotropy for super‐sharp angled faces:
-        tex.anisotropy = rendererRef.current.capabilities.getMaxAnisotropy();
-        tex.wrapS = THREE.ClampToEdgeWrapping;
-        tex.wrapT = THREE.ClampToEdgeWrapping;
-        mat.map = tex;
-        mat.needsUpdate = true;
-      };
+      mat.needsUpdate = true;
       return mat;
     });
 
