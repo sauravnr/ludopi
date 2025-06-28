@@ -140,6 +140,13 @@ app.post(
         green: 0,
         blue: 0,
       },
+      // bot flag per color
+      botActive: {
+        red: false,
+        yellow: false,
+        green: false,
+        blue: false,
+      },
     };
     return res.status(201).json({ code });
   }
@@ -465,6 +472,241 @@ function shuffleArray(arr) {
   }
   return a;
 }
+function applySpin(roomCode, color, value) {
+  const room = rooms[roomCode];
+  if (!room) return;
+  if (room.hasRolled[color]) return;
+  room.hasRolled[color] = true;
+  io.to(roomCode).emit("dice-rolled-broadcast", {
+    color,
+    value,
+    updatedSteps: null,
+    capture: false,
+    finished: false,
+  });
+}
+
+async function applyMove(roomCode, color, tokenIdx, value) {
+  const room = rooms[roomCode];
+  if (!room) return;
+
+  if (!room.hasRolled[color] || room.hasMoved[color]) {
+    return;
+  }
+  room.hasMoved[color] = true;
+
+  if (value === 6) {
+    room.consecutiveSixes[color] += 1;
+  } else {
+    room.consecutiveSixes[color] = 0;
+  }
+  if (room.consecutiveSixes[color] === 3) {
+    const oldArr = room.tokenSteps[color].slice();
+    const updatedSteps = { [color]: oldArr };
+    room.consecutiveSixes[color] = 0;
+    room.hasRolled[color] = false;
+    room.hasMoved[color] = false;
+    room.currentTurnIndex = (room.currentTurnIndex + 1) % room.players.length;
+    io.to(roomCode).emit("dice-rolled-broadcast", {
+      color,
+      value,
+      updatedSteps,
+      capture: false,
+      finished: false,
+    });
+    setTimeout(() => {
+      const nextColor = room.players[room.currentTurnIndex].color;
+      room.hasRolled[nextColor] = false;
+      room.hasMoved[nextColor] = false;
+      io.to(roomCode).emit("turn-change", { currentTurnColor: nextColor });
+      if (room.botActive[nextColor]) scheduleBotTurn(roomCode);
+    }, 2000);
+    return;
+  }
+
+  const oldArr = room.tokenSteps[color].slice();
+  const newArr = oldArr.slice();
+  let isCapture = false;
+  let finished = false;
+  const updatedSteps = {};
+
+  if (typeof tokenIdx !== "number") {
+    updatedSteps[color] = oldArr.slice();
+  } else {
+    if (tokenIdx < 0 || tokenIdx > 3 || oldArr[tokenIdx] === FINISHED) {
+      return;
+    }
+
+    if (oldArr[tokenIdx] === -1 && value === 6) {
+      newArr[tokenIdx] = 0;
+    } else {
+      const pathLen = PATHS[color].length;
+      const pos = oldArr[tokenIdx];
+      const next = pos + value;
+      if (pos >= 0 && next <= pathLen - 1) {
+        if (next === pathLen - 1) {
+          newArr[tokenIdx] = FINISHED;
+          finished = newArr.every((s) => s === FINISHED);
+        } else {
+          newArr[tokenIdx] = next;
+        }
+      } else {
+        newArr[tokenIdx] = pos;
+      }
+    }
+
+    updatedSteps[color] = newArr.slice();
+    const landingStep = newArr[tokenIdx];
+    if (landingStep >= 0) {
+      const coord = PATHS[color][landingStep];
+      if (!SAFE_COORDS.some(([r, c]) => r === coord[0] && c === coord[1])) {
+        for (const [otherColor, otherArr] of Object.entries(room.tokenSteps)) {
+          if (otherColor === color) continue;
+          for (let i = 0; i < otherArr.length; i++) {
+            const os = otherArr[i];
+            if (os < 0) continue;
+            const otherCoord = PATHS[otherColor][os];
+            if (otherCoord[0] === coord[0] && otherCoord[1] === coord[1]) {
+              if (!updatedSteps[otherColor]) {
+                updatedSteps[otherColor] = otherArr.slice();
+              }
+              updatedSteps[otherColor][i] = -1;
+              isCapture = true;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  for (const [clr, arr] of Object.entries(updatedSteps)) {
+    room.tokenSteps[clr] = arr.slice();
+  }
+
+  if (finished) {
+    room.finishOrder.push(color);
+    room.players = room.players.filter((p) => p.color !== color);
+    room.hasRolled[color] = false;
+    room.hasMoved[color] = false;
+
+    if (room.players.length > 0) {
+      room.currentTurnIndex = room.currentTurnIndex % room.players.length;
+    } else {
+      room.currentTurnIndex = null;
+      setTimeout(() => {
+        io.to(roomCode).emit("chat-closed");
+      }, 5 * 60 * 1000);
+    }
+    if (room.mode === "2P") {
+      try {
+        const allIds = room.participants.map((p) => p.userId);
+        await Player.updateMany(
+          { userId: { $in: allIds } },
+          { $inc: { totalGamesPlayed: 1 } }
+        );
+        await Player.findOneAndUpdate(
+          { userId: room.participants.find((p) => p.color === color).userId },
+          { $inc: { totalWins: 1, wins2P: 1 } }
+        );
+      } catch (err) {
+        console.error("Failed to write 2P game stats:", err);
+      }
+    }
+    if (room.mode === "4P" && room.finishOrder.length === 1) {
+      try {
+        const allIds = room.participants.map((p) => p.userId);
+        await Player.updateMany(
+          { userId: { $in: allIds } },
+          { $inc: { totalGamesPlayed: 1 } }
+        );
+        const winnerId = room.participants.find(
+          (p) => p.color === color
+        ).userId;
+        await Player.findOneAndUpdate(
+          { userId: winnerId },
+          { $inc: { totalWins: 1, wins4P: 1 } }
+        );
+      } catch (err) {
+        console.error("Failed to write 4P game stats:", err);
+      }
+    }
+  }
+
+  const justFinishedOne =
+    !finished &&
+    typeof tokenIdx === "number" &&
+    newArr[tokenIdx] === FINISHED &&
+    !newArr.every((s) => s === FINISHED);
+
+  if (justFinishedOne) {
+    if (value !== 6) {
+      room.consecutiveSixes[color] = 0;
+    }
+    room.hasRolled[color] = false;
+    room.hasMoved[color] = false;
+  } else if (!finished) {
+    if (!isCapture && value !== 6) {
+      room.currentTurnIndex = (room.currentTurnIndex + 1) % room.players.length;
+    }
+    if (isCapture || value === 6) {
+      room.hasRolled[color] = false;
+      room.hasMoved[color] = false;
+    } else {
+      const nextColor = room.players[room.currentTurnIndex]?.color;
+      if (nextColor) {
+        room.hasRolled[nextColor] = false;
+        room.hasMoved[nextColor] = false;
+      }
+    }
+  }
+
+  io.to(roomCode).emit("dice-rolled-broadcast", {
+    color,
+    value,
+    updatedSteps,
+    capture: isCapture,
+    finished,
+  });
+
+  setTimeout(() => {
+    if (room.currentTurnIndex !== null && room.players.length > 0) {
+      const nextColor = room.players[room.currentTurnIndex].color;
+      room.hasRolled[nextColor] = false;
+      room.hasMoved[nextColor] = false;
+      io.to(roomCode).emit("turn-change", { currentTurnColor: nextColor });
+      if (room.botActive[nextColor]) scheduleBotTurn(roomCode);
+    }
+  }, 2000);
+}
+
+function scheduleBotTurn(roomCode) {
+  const room = rooms[roomCode];
+  if (!room) return;
+  const color = room.players[room.currentTurnIndex]?.color;
+  if (!color || !room.botActive[color]) return;
+
+  if (room.botTimeout) clearTimeout(room.botTimeout);
+  room.botTimeout = setTimeout(() => {
+    const value = Math.floor(Math.random() * 6) + 1;
+    applySpin(roomCode, color, value);
+    setTimeout(() => {
+      const arr = room.tokenSteps[color];
+      const pathLen = PATHS[color].length;
+      const moves = [];
+      for (let i = 0; i < arr.length; i++) {
+        const pos = arr[i];
+        if (pos === FINISHED) continue;
+        if (pos === -1) {
+          if (value === 6) moves.push(i);
+        } else if (pos + value <= pathLen - 1) {
+          moves.push(i);
+        }
+      }
+      const tokenIdx = moves.length > 0 ? moves[0] : undefined;
+      applyMove(roomCode, color, tokenIdx, value);
+    }, 1000);
+  }, 1000);
+}
 
 // ─── 3) Connection & event handlers ───────────────────
 io.on("connection", (socket) => {
@@ -484,36 +726,55 @@ io.on("connection", (socket) => {
   function handleDeparture(socket, roomCode) {
     const room = rooms[roomCode];
     if (!room) return;
-    // find index of departing user
+
     const idx = room.players.findIndex(
       (p) => p.userId === socket.user._id.toString()
     );
     if (idx === -1) return;
+    const player = room.players[idx];
     const isHost = idx === 0;
-    // remove the player
-    room.players.splice(idx, 1);
+    if (!room.started) {
+      // lobby phase: remove as before
+      room.players.splice(idx, 1);
 
-    if (isHost) {
-      // host left → tell everyone the room is closed and delete it
-      io.to(roomCode).emit("room-closed", {
-        message: "The host has left. This room is now closed.",
-      });
-      // force everyone out of the socket.io room
-      const clients = io.sockets.adapter.rooms.get(roomCode) || new Set();
-      for (const sid of clients) {
-        io.sockets.sockets.get(sid)?.leave(roomCode);
+      if (isHost) {
+        io.to(roomCode).emit("room-closed", {
+          message: "The host has left. This room is now closed.",
+        });
+        const clients = io.sockets.adapter.rooms.get(roomCode) || new Set();
+        for (const sid of clients) {
+          io.sockets.sockets.get(sid)?.leave(roomCode);
+        }
+        clearTimeout(room.botTimeout);
+        delete rooms[roomCode];
+      } else {
+        io.to(roomCode).emit("player-list", {
+          players: room.players,
+          mode: room.mode,
+          botActive: room.botActive,
+        });
+        if (room.players.length === 0) {
+          console.log(`[Room ${roomCode}] deleted: no players left.`);
+          clearTimeout(room.botTimeout);
+          delete rooms[roomCode];
+        }
       }
-      delete rooms[roomCode];
     } else {
-      // normal departure → broadcast updated list
+      // in-game departure → mark offline and activate bot
+      player.socketId = null;
+      player.offline = true;
+      room.botActive[player.color] = true;
       io.to(roomCode).emit("player-list", {
         players: room.players,
         mode: room.mode,
+        botActive: room.botActive,
       });
-      // if empty, clean up
-      if (room.players.length === 0) {
-        console.log(`[Room ${roomCode}] deleted: no players left.`);
-        delete rooms[roomCode];
+      // if it's their turn, let the bot act
+      if (
+        room.players[room.currentTurnIndex] &&
+        room.players[room.currentTurnIndex].color === player.color
+      ) {
+        scheduleBotTurn(roomCode);
       }
     }
   }
@@ -573,6 +834,8 @@ io.on("connection", (socket) => {
       room.players.push(player);
     } else {
       player.socketId = socket.id;
+      player.offline = false;
+      room.botActive[player.color] = false;
     }
 
     socket.join(roomCode);
@@ -580,6 +843,7 @@ io.on("connection", (socket) => {
     io.to(roomCode).emit("player-list", {
       players: room.players,
       mode: room.mode, // “2P” or “4P”
+      botActive: room.botActive,
     });
 
     // If game already started, send current turn
@@ -629,6 +893,26 @@ io.on("connection", (socket) => {
     io.to(rc).emit("turn-change", {
       currentTurnColor: room.players[0].color,
     });
+    if (room.botActive[room.players[0].color]) {
+      scheduleBotTurn(rc);
+    }
+  });
+
+  socket.on("bot-toggle", ({ roomCode, color, enabled }) => {
+    const room = rooms[roomCode];
+    if (!room) return;
+    const playerObj = room.players.find((p) => p.color === color);
+    if (!playerObj) return;
+    if (socket.user._id.toString() !== playerObj.userId) return;
+    room.botActive[color] = Boolean(enabled);
+    io.to(roomCode).emit("player-list", {
+      players: room.players,
+      mode: room.mode,
+      botActive: room.botActive,
+    });
+    if (enabled && room.players[room.currentTurnIndex]?.color === color) {
+      scheduleBotTurn(roomCode);
+    }
   });
 
   // 1) “Spin only” event: broadcast immediately with updatedSteps = null
@@ -636,28 +920,13 @@ io.on("connection", (socket) => {
     const room = rooms[roomCode];
     if (!room) return;
 
-    // Verify user/color and turn‐check exactly as before:
     const playerObj = room.players.find((p) => p.color === color);
     if (!playerObj) return;
     if (socket.user._id.toString() !== playerObj.userId) return;
     const currentColor = room.players[room.currentTurnIndex]?.color;
     if (currentColor !== color) return;
 
-    // if they already rolled this turn, ignore
-    if (room.hasRolled[color]) {
-      return;
-    }
-    // mark “rolled this turn” so they can’t spin again
-    room.hasRolled[color] = true;
-
-    // Immediately broadcast just the spin (no movement)
-    io.to(roomCode).emit("dice-rolled-broadcast", {
-      color,
-      value,
-      updatedSteps: null,
-      capture: false,
-      finished: false,
-    });
+    applySpin(roomCode, color, value);
   });
 
   // 2) “Move token” event: apply three‐sixes + movement logic, broadcast updatedSteps
@@ -667,248 +936,14 @@ io.on("connection", (socket) => {
       const room = rooms[roomCode];
       if (!room) return;
 
-      // 1) Verify user/color
       const playerObj = room.players.find((p) => p.color === color);
       if (!playerObj) return;
       if (socket.user._id.toString() !== playerObj.userId) return;
 
-      // 2) Must be their turn
       const currentColor = room.players[room.currentTurnIndex]?.color;
       if (currentColor !== color) return;
 
-      // 3) Cannot move if they never rolled or already moved
-      if (!room.hasRolled[color] || room.hasMoved[color]) {
-        return;
-      }
-      room.hasMoved[color] = true;
-
-      // — Part A: “three sixes in a row” check (unchanged) —
-      if (value === 6) {
-        room.consecutiveSixes[color] += 1;
-      } else {
-        room.consecutiveSixes[color] = 0;
-      }
-      if (room.consecutiveSixes[color] === 3) {
-        // Forfeit the third‐six immediately
-        const oldArr = room.tokenSteps[color].slice();
-        const updatedSteps = { [color]: oldArr };
-        room.consecutiveSixes[color] = 0;
-
-        // Clear their “rolled/moved” flags so that if they somehow re‐join,
-        // they start fresh next time they get a turn.
-        room.hasRolled[color] = false;
-        room.hasMoved[color] = false;
-
-        // Advance to next player
-        room.currentTurnIndex =
-          (room.currentTurnIndex + 1) % room.players.length;
-
-        io.to(roomCode).emit("dice-rolled-broadcast", {
-          color,
-          value,
-          updatedSteps,
-          capture: false,
-          finished: false,
-        });
-        setTimeout(() => {
-          const nextColor = room.players[room.currentTurnIndex].color;
-          room.hasRolled[nextColor] = false;
-          room.hasMoved[nextColor] = false;
-          io.to(roomCode).emit("turn-change", { currentTurnColor: nextColor });
-        }, 2000);
-        return;
-      }
-
-      // — Part B: Normal‐move logic —
-      const oldArr = room.tokenSteps[color].slice();
-      const newArr = oldArr.slice();
-      let isCapture = false;
-      // “finished” means “this move just put all 4 tokens in home”
-      let finished = false;
-      const updatedSteps = {};
-
-      if (typeof tokenIdx !== "number") {
-        // “no legal token clicked” ⇒ no move
-        updatedSteps[color] = oldArr.slice();
-      } else {
-        // Move that specific tokenIdx
-        if (tokenIdx < 0 || tokenIdx > 3 || oldArr[tokenIdx] === FINISHED) {
-          return; // invalid index / already finished
-        }
-
-        if (oldArr[tokenIdx] === -1 && value === 6) {
-          newArr[tokenIdx] = 0;
-        } else {
-          const pathLen = PATHS[color].length;
-          const pos = oldArr[tokenIdx];
-          const next = pos + value;
-          if (pos >= 0 && next <= pathLen - 1) {
-            if (next === pathLen - 1) {
-              newArr[tokenIdx] = FINISHED;
-              // Check if ALL tokens are now FINISHED
-              finished = newArr.every((s) => s === FINISHED);
-            } else {
-              newArr[tokenIdx] = next;
-            }
-          } else {
-            // overshoot ⇒ stay
-            newArr[tokenIdx] = pos;
-          }
-        }
-
-        // Detect captures as before
-        updatedSteps[color] = newArr.slice();
-        const landingStep = newArr[tokenIdx];
-        if (landingStep >= 0) {
-          const coord = PATHS[color][landingStep];
-          if (!SAFE_COORDS.some(([r, c]) => r === coord[0] && c === coord[1])) {
-            for (const [otherColor, otherArr] of Object.entries(
-              room.tokenSteps
-            )) {
-              if (otherColor === color) continue;
-              for (let i = 0; i < otherArr.length; i++) {
-                const os = otherArr[i];
-                if (os < 0) continue;
-                const otherCoord = PATHS[otherColor][os];
-                if (otherCoord[0] === coord[0] && otherCoord[1] === coord[1]) {
-                  if (!updatedSteps[otherColor]) {
-                    updatedSteps[otherColor] = otherArr.slice();
-                  }
-                  updatedSteps[otherColor][i] = -1;
-                  isCapture = true;
-                }
-              }
-            }
-          }
-        }
-      }
-
-      // Commit updatedPositions to room.tokenSteps:
-      for (const [clr, arr] of Object.entries(updatedSteps)) {
-        room.tokenSteps[clr] = arr.slice();
-      }
-
-      // ─── NEW: If “finished===true” (all 4 tokens done for this color) ───
-      if (finished) {
-        // 1) Record their place:
-        room.finishOrder.push(color);
-        // 2) Remove them from future rotation:
-        room.players = room.players.filter((p) => p.color !== color);
-        room.hasRolled[color] = false;
-        room.hasMoved[color] = false;
-
-        // 3) Adjust currentTurnIndex so the next person in the new array is up:
-        if (room.players.length > 0) {
-          room.currentTurnIndex = room.currentTurnIndex % room.players.length;
-        } else {
-          // (everyone finished—game over)
-          room.currentTurnIndex = null;
-          // Schedule chat closure once the game ends
-          setTimeout(() => {
-            io.to(roomCode).emit("chat-closed");
-          }, 5 * 60 * 1000); // 5 minutes
-        }
-        // ─── RECORD STATS FOR 2P IMMEDIATELY WHEN SOMEONE WINS ───
-        if (room.mode === "2P") {
-          try {
-            // all participants
-            const allIds = room.participants.map((p) => p.userId);
-            await Player.updateMany(
-              { userId: { $in: allIds } },
-              { $inc: { totalGamesPlayed: 1 } }
-            );
-            // this winner
-            await Player.findOneAndUpdate(
-              {
-                userId: room.participants.find((p) => p.color === color).userId,
-              },
-              {
-                $inc: {
-                  totalWins: 1,
-                  wins2P: 1,
-                },
-              }
-            );
-          } catch (err) {
-            console.error("Failed to write 2P game stats:", err);
-          }
-        }
-        // ─── RECORD STATS FOR 4P AS SOON AS FIRST PLACE FINISHES ───
-        if (room.mode === "4P" && room.finishOrder.length === 1) {
-          try {
-            // 1) everybody played a game
-            const allIds = room.participants.map((p) => p.userId);
-            await Player.updateMany(
-              { userId: { $in: allIds } },
-              { $inc: { totalGamesPlayed: 1 } }
-            );
-            // 2) only the first‐placer gets wins4P
-            const winnerId = room.participants.find(
-              (p) => p.color === color
-            ).userId;
-            await Player.findOneAndUpdate(
-              { userId: winnerId },
-              { $inc: { totalWins: 1, wins4P: 1 } }
-            );
-          } catch (err) {
-            console.error("Failed to write 4P game stats:", err);
-          }
-        }
-      }
-
-      // “Extra‐roll if they finished one token but still have others”
-      const justFinishedOne =
-        !finished && // (if finished===true, that falls into the block above instead)
-        typeof tokenIdx === "number" &&
-        newArr[tokenIdx] === FINISHED &&
-        !newArr.every((s) => s === FINISHED);
-
-      if (justFinishedOne) {
-        if (value !== 6) {
-          room.consecutiveSixes[color] = 0;
-        }
-        // keep same turn index → they get to roll again
-        room.hasRolled[color] = false;
-        room.hasMoved[color] = false;
-      } else if (!finished) {
-        // Normal turn advance if no capture and no six
-        if (!isCapture && value !== 6) {
-          room.currentTurnIndex =
-            (room.currentTurnIndex + 1) % room.players.length;
-        }
-        // If they captured or rolled a six, same turnIndex again
-        if (isCapture || value === 6) {
-          room.hasRolled[color] = false;
-          room.hasMoved[color] = false;
-        } else {
-          // We truly moved on: clear flags for the new current player
-          const nextColor = room.players[room.currentTurnIndex]?.color;
-          if (nextColor) {
-            room.hasRolled[nextColor] = false;
-            room.hasMoved[nextColor] = false;
-          }
-        }
-      }
-
-      // Broadcast move + captures + finished flag
-      io.to(roomCode).emit("dice-rolled-broadcast", {
-        color,
-        value,
-        updatedSteps,
-        capture: isCapture,
-        finished,
-      });
-
-      // After 2s, announce whoever’s next (unless game over)
-      setTimeout(() => {
-        if (room.currentTurnIndex !== null && room.players.length > 0) {
-          const nextColor = room.players[room.currentTurnIndex].color;
-          // Clear next player’s flags just in case
-          room.hasRolled[nextColor] = false;
-          room.hasMoved[nextColor] = false;
-          io.to(roomCode).emit("turn-change", { currentTurnColor: nextColor });
-        }
-      }, 2000);
+      await applyMove(roomCode, color, tokenIdx, value);
     }
   );
 
@@ -1026,6 +1061,7 @@ setInterval(() => {
       now - (room.createdAt || now) > 5 * 60 * 1000
     ) {
       console.log(`🗑️ Deleting stale room ${code}`);
+      clearTimeout(room.botTimeout);
       delete rooms[code];
     }
   }
@@ -1049,6 +1085,7 @@ setInterval(() => {
         for (const sid of io.sockets.adapter.rooms.get(code) || []) {
           io.sockets.sockets.get(sid)?.leave(code);
         }
+        clearTimeout(room.botTimeout);
         delete rooms[code];
         console.log(`🗑️ Closed idle lobby ${code}`);
       }

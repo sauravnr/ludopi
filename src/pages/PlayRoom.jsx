@@ -43,6 +43,17 @@ const PlayRoom = () => {
   const [gameOver, setGameOver] = useState(false);
 
   const [rejoinMsg, setRejoinMsg] = useState(null);
+  const [botEnabled, setBotEnabled] = useState(false);
+
+  const toggleBot = () => {
+    const next = !botEnabled;
+    setBotEnabled(next);
+    socket.emit("bot-toggle", {
+      roomCode,
+      color: playerColor,
+      enabled: next,
+    });
+  };
 
   // Only show the board once we know our color and have >0 players
   const isReady = Boolean(playerColor && players.length > 0);
@@ -102,11 +113,17 @@ const PlayRoom = () => {
 
   useEffect(() => {
     // Now the server emits { players: [...], mode: "2P"|"4P" }
-    const onList = ({ players: updatedPlayers, mode: serverMode }) => {
+    const onList = ({
+      players: updatedPlayers,
+      mode: serverMode,
+      botActive,
+    }) => {
       const transformed = updatedPlayers.map((p) => ({
         playerId: p.userId,
         name: p.username,
         color: p.color,
+        offline: p.offline,
+        bot: botActive ? botActive[p.color] : false,
       }));
       setPlayers(transformed);
 
@@ -117,6 +134,9 @@ const PlayRoom = () => {
       const me = transformed.find((p) => p.playerId === user._id);
       if (me?.color) {
         setPlayerColor(me.color);
+        if (botActive) {
+          setBotEnabled(Boolean(botActive[me.color]));
+        }
         if (!location.state?.players) {
           setRejoinMsg("✅ Reconnected to your game.");
           setTimeout(() => setRejoinMsg(null), 3000);
@@ -298,6 +318,12 @@ const PlayRoom = () => {
         ) : null}
 
         {/* Chat UI */}
+        <button
+          onClick={toggleBot}
+          className="absolute top-2 right-2 bg-blue-600 text-white px-3 py-1 rounded"
+        >
+          {botEnabled ? "Disable Bot" : "Enable Bot"}
+        </button>
         <ChatButton />
         <ChatWindow />
       </div>
