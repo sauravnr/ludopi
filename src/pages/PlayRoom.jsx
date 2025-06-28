@@ -150,10 +150,17 @@ const PlayRoom = () => {
 
     socket.on("player-list", onList);
     socket.on("turn-change", onTurn);
+    const onSync = ({ finishOrder }) => {
+      if (Array.isArray(finishOrder)) {
+        finishOrder.forEach((c) => handleFinish(c));
+      }
+    };
+    socket.on("state-sync", onSync);
 
     return () => {
       socket.off("player-list", onList);
       socket.off("turn-change", onTurn);
+      socket.off("state-sync", onSync);
     };
   }, [user, location.state]);
 

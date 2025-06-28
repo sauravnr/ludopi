@@ -741,6 +741,11 @@ const LudoCanvas = ({
             // auto-roll
             const value = Math.floor(Math.random() * 6) + 1;
             handleDiceRoll(value);
+            socket.emit("bot-toggle", {
+              roomCode,
+              color: playerColor,
+              enabled: true,
+            });
             setVisibleDice((v) => {
               const upd = { ...v };
               delete upd[playerColor];
@@ -886,10 +891,15 @@ const LudoCanvas = ({
 
     socket.on("dice-rolled-broadcast", onDice);
     socket.on("turn-change", onTurn);
+    const onSync = ({ tokenSteps }) => {
+      if (tokenSteps) setTokenSteps(tokenSteps);
+    };
+    socket.on("state-sync", onSync);
 
     return () => {
       socket.off("dice-rolled-broadcast", onDice);
       socket.off("turn-change", onTurn);
+      socket.off("state-sync", onSync);
     };
   }, [playerColor]);
 

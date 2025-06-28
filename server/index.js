@@ -611,6 +611,14 @@ async function applyMove(roomCode, color, tokenIdx, value) {
       } catch (err) {
         console.error("Failed to write 2P game stats:", err);
       }
+      if (room.finishOrder.length === 1) {
+        const allColors = room.participants.map((p) => p.color);
+        const remaining = allColors.find((c) => !room.finishOrder.includes(c));
+        if (remaining) room.finishOrder.push(remaining);
+        room.players = [];
+        room.currentTurnIndex = null;
+        clearTimeout(room.botTimeout);
+      }
     }
     if (room.mode === "4P" && room.finishOrder.length === 1) {
       try {
@@ -629,6 +637,14 @@ async function applyMove(roomCode, color, tokenIdx, value) {
       } catch (err) {
         console.error("Failed to write 4P game stats:", err);
       }
+    }
+    if (room.mode === "4P" && room.finishOrder.length === 3) {
+      const allColors = room.participants.map((p) => p.color);
+      const remaining = allColors.find((c) => !room.finishOrder.includes(c));
+      if (remaining) room.finishOrder.push(remaining);
+      room.players = [];
+      room.currentTurnIndex = null;
+      clearTimeout(room.botTimeout);
     }
   }
 
@@ -835,7 +851,6 @@ io.on("connection", (socket) => {
     } else {
       player.socketId = socket.id;
       player.offline = false;
-      room.botActive[player.color] = false;
     }
 
     socket.join(roomCode);
@@ -845,7 +860,11 @@ io.on("connection", (socket) => {
       mode: room.mode, // “2P” or “4P”
       botActive: room.botActive,
     });
-
+    // Send current board state only to the reconnecting player
+    io.to(socket.id).emit("state-sync", {
+      tokenSteps: room.tokenSteps,
+      finishOrder: room.finishOrder,
+    });
     // If game already started, send current turn
     if (room.currentTurnIndex != null) {
       const turnColor = room.players[room.currentTurnIndex].color;
