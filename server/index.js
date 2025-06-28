@@ -114,6 +114,8 @@ app.post(
       finishOrder: [],
       currentTurnIndex: 0,
       mode,
+      // track whether win/loss stats have been recorded for this game
+      statsRecorded: false,
       // track “rolled this turn?” and “moved this roll?” per color
       hasRolled: {
         red: false,
@@ -598,18 +600,21 @@ async function applyMove(roomCode, color, tokenIdx, value) {
       }, 5 * 60 * 1000);
     }
     if (room.mode === "2P") {
-      try {
-        const allIds = room.participants.map((p) => p.userId);
-        await Player.updateMany(
-          { userId: { $in: allIds } },
-          { $inc: { totalGamesPlayed: 1 } }
-        );
-        await Player.findOneAndUpdate(
-          { userId: room.participants.find((p) => p.color === color).userId },
-          { $inc: { totalWins: 1, wins2P: 1 } }
-        );
-      } catch (err) {
-        console.error("Failed to write 2P game stats:", err);
+      if (!room.statsRecorded) {
+        try {
+          const allIds = room.participants.map((p) => p.userId);
+          await Player.updateMany(
+            { userId: { $in: allIds } },
+            { $inc: { totalGamesPlayed: 1 } }
+          );
+          await Player.findOneAndUpdate(
+            { userId: room.participants.find((p) => p.color === color).userId },
+            { $inc: { totalWins: 1, wins2P: 1 } }
+          );
+          room.statsRecorded = true;
+        } catch (err) {
+          console.error("Failed to write 2P game stats:", err);
+        }
       }
       if (room.finishOrder.length === 1) {
         const allColors = room.participants.map((p) => p.color);
@@ -621,21 +626,24 @@ async function applyMove(roomCode, color, tokenIdx, value) {
       }
     }
     if (room.mode === "4P" && room.finishOrder.length === 1) {
-      try {
-        const allIds = room.participants.map((p) => p.userId);
-        await Player.updateMany(
-          { userId: { $in: allIds } },
-          { $inc: { totalGamesPlayed: 1 } }
-        );
-        const winnerId = room.participants.find(
-          (p) => p.color === color
-        ).userId;
-        await Player.findOneAndUpdate(
-          { userId: winnerId },
-          { $inc: { totalWins: 1, wins4P: 1 } }
-        );
-      } catch (err) {
-        console.error("Failed to write 4P game stats:", err);
+      if (!room.statsRecorded) {
+        try {
+          const allIds = room.participants.map((p) => p.userId);
+          await Player.updateMany(
+            { userId: { $in: allIds } },
+            { $inc: { totalGamesPlayed: 1 } }
+          );
+          const winnerId = room.participants.find(
+            (p) => p.color === color
+          ).userId;
+          await Player.findOneAndUpdate(
+            { userId: winnerId },
+            { $inc: { totalWins: 1, wins4P: 1 } }
+          );
+          room.statsRecorded = true;
+        } catch (err) {
+          console.error("Failed to write 4P game stats:", err);
+        }
       }
     }
     if (room.mode === "4P" && room.finishOrder.length === 3) {
@@ -895,6 +903,7 @@ io.on("connection", (socket) => {
     room.players = rotated.map((c) => byColor[c]);
     room.currentTurnIndex = 0;
     room.finishOrder = [];
+    room.statsRecorded = false;
 
     // snapshot the starting participants so we can update stats later
     room.participants = room.players.map((p) => ({
