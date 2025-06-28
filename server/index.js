@@ -478,10 +478,12 @@ function applySpin(roomCode, color, value) {
   const room = rooms[roomCode];
   if (!room) return;
   if (room.hasRolled[color]) return;
+  const rolled =
+    typeof value === "number" ? value : Math.floor(Math.random() * 6) + 1;
   room.hasRolled[color] = true;
   io.to(roomCode).emit("dice-rolled-broadcast", {
     color,
-    value,
+    value: rolled,
     updatedSteps: null,
     capture: false,
     finished: false,
@@ -944,7 +946,7 @@ io.on("connection", (socket) => {
   });
 
   // 1) “Spin only” event: broadcast immediately with updatedSteps = null
-  socket.on("dice-spin-intent", ({ roomCode, color, value }) => {
+  socket.on("dice-spin-intent", ({ roomCode, color }) => {
     const room = rooms[roomCode];
     if (!room) return;
 
@@ -954,7 +956,7 @@ io.on("connection", (socket) => {
     const currentColor = room.players[room.currentTurnIndex]?.color;
     if (currentColor !== color) return;
 
-    applySpin(roomCode, color, value);
+    applySpin(roomCode, color);
   });
 
   // 2) “Move token” event: apply three‐sixes + movement logic, broadcast updatedSteps

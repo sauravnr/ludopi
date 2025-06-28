@@ -739,8 +739,7 @@ const LudoCanvas = ({
           if (!didRoll) {
             didRoll = true;
             // auto-roll
-            const value = Math.floor(Math.random() * 6) + 1;
-            handleDiceRoll(value);
+            handleDiceRoll();
             socket.emit("bot-toggle", {
               roomCode,
               color: playerColor,
@@ -863,6 +862,26 @@ const LudoCanvas = ({
           return u;
         });
         setRolledDice((r) => ({ ...r, [color]: value }));
+        if (color === playerColor) {
+          setPendingRoll(value);
+          console.log("🎲 You rolled:", value);
+
+          const myArr = tokenStepsRef.current[playerColor] || [];
+          const pathLen = PATHS[playerColor].length;
+          const canBringOut = value === 6 && myArr.some((pos) => pos === -1);
+          const canMove = myArr.some(
+            (pos) => pos >= 0 && pos + value <= pathLen - 1
+          );
+
+          if (!canBringOut && !canMove) {
+            socket.emit("dice-move-intent", {
+              roomCode,
+              color: playerColor,
+              value,
+            });
+            setPendingRoll(null);
+          }
+        }
         setTimeout(() => {
           setVisibleDice((v) => {
             const u = { ...v };
@@ -903,7 +922,7 @@ const LudoCanvas = ({
     };
   }, [playerColor]);
 
-  const handleDiceRoll = (value) => {
+  const handleDiceRoll = () => {
     if (gameOver) return; // don’t let anyone roll once game is over
     if (!isLocalTurn || hasRolled) return;
     setHasRolled(true);
@@ -916,43 +935,9 @@ const LudoCanvas = ({
     socket.emit("dice-spin-intent", {
       roomCode,
       color: playerColor,
-      value,
     });
 
-    // 3) Record pendingRoll so we know what value to apply when user clicks a token
-    setPendingRoll(value);
-
-    setTimeout(() => {
-      // Stop local spinner and show face on your own client
-      setRollingDice((r) => {
-        const u = { ...r };
-        delete u[playerColor];
-        return u;
-      });
-      setRolledDice((r) => ({ ...r, [playerColor]: value }));
-      console.log("🎲 You rolled:", value);
-
-      // Check “no move possible” immediately
-      const myArr = tokenStepsRef.current[playerColor] || [];
-      const pathLen = PATHS[playerColor].length;
-      const canBringOut = value === 6 && myArr.some((pos) => pos === -1);
-      const canMove = myArr.some(
-        (pos) => pos >= 0 && pos + value <= pathLen - 1
-      );
-
-      if (!canBringOut && !canMove) {
-        // If truly “no move,” immediately tell the server to do a “no‐move” action
-        // (triggers our “dice-move-intent” with tokenIdx omitted)
-        socket.emit("dice-move-intent", {
-          roomCode,
-          color: playerColor,
-          // omit tokenIdx to signal “no move possible”
-          value,
-        });
-        setPendingRoll(null);
-      }
-      // Otherwise, do nothing until the user clicks a token
-    }, 1000);
+    // spinner will stop when server broadcasts the roll result
   };
 
   // for overlay clicks: the [row,col] of each home‐box position

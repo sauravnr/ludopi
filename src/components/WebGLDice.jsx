@@ -25,7 +25,7 @@ export default function WebGLDice({
   // click to roll
   const handleClick = () => {
     if (!disabled && !rollingRef.current) {
-      onRoll(Math.floor(Math.random() * 6) + 1);
+      onRoll();
     }
   };
 

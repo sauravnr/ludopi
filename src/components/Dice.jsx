@@ -12,8 +12,7 @@ export default function Dice(props) {
     const src = `/dice/idle-${DPR}.png`;
     const handleClick = () => {
       if (!disabled && !rollingNow) {
-        const v = Math.floor(Math.random() * 6) + 1;
-        onRoll(v);
+        onRoll();
       }
     };
     return (
