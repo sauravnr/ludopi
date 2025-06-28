@@ -3,6 +3,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Dice from "./Dice";
 import { useSocket } from "../context/SocketContext";
 
+// dice dimensions in pixels
+const DICE_SIZE = 56;
+
 // preload token PNGs at 3 resolutions (64,128,192 px)
 const tokenImages = {};
 ["red", "yellow", "green", "blue"].forEach((color) => {
@@ -1461,20 +1464,25 @@ const LudoCanvas = ({
                   )}
                 </div>
                 {/* Dice to the right of avatar */}
-                <div className="w-16 h-16 flex items-center justify-center">
+                <div
+                  className="flex items-center justify-center"
+                  style={{ width: DICE_SIZE, height: DICE_SIZE }}
+                >
                   {(myTurn || visibleDice[p.color]) && (
                     <div
                       className={`transition-opacity duration-300 ${
                         visibleDice[p.color] ? "opacity-100" : "opacity-0"
                       }`}
                     >
-                      <Dice
-                        onRoll={handleDiceRoll}
-                        disabled={!myTurn || hasRolled}
-                        rollingNow={rollingDice[p.color]}
-                        forcedFace={rolledDice[p.color]}
-                        size={56}
-                      />
+                      <div className="dice-pit">
+                        <Dice
+                          onRoll={handleDiceRoll}
+                          disabled={!myTurn || hasRolled}
+                          rollingNow={rollingDice[p.color]}
+                          forcedFace={rolledDice[p.color]}
+                          size={56}
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1482,20 +1490,25 @@ const LudoCanvas = ({
             ) : (
               <>
                 {/* Dice on left for right-side players */}
-                <div className="w-16 h-16 flex items-center justify-center">
+                <div
+                  className="flex items-center justify-center"
+                  style={{ width: DICE_SIZE, height: DICE_SIZE }}
+                >
                   {(myTurn || visibleDice[p.color]) && (
                     <div
                       className={`transition-opacity duration-300 ${
                         visibleDice[p.color] ? "opacity-100" : "opacity-0"
                       }`}
                     >
-                      <Dice
-                        onRoll={handleDiceRoll}
-                        disabled={!myTurn || hasRolled}
-                        rollingNow={rollingDice[p.color]}
-                        forcedFace={rolledDice[p.color]}
-                        size={56}
-                      />
+                      <div className="dice-pit">
+                        <Dice
+                          onRoll={handleDiceRoll}
+                          disabled={!myTurn || hasRolled}
+                          rollingNow={rollingDice[p.color]}
+                          forcedFace={rolledDice[p.color]}
+                          size={56}
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
