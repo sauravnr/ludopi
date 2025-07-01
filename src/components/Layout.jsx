@@ -1,12 +1,12 @@
 // src/components/Layout.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Header from "./Header";
 import Footer from "./Footer";
 
 export default function Layout() {
-  const { user, player, logout } = useAuth();
+  const { user, logout } = useAuth();
   const location = useLocation(); // ← get current location
   const { pathname } = location;
 
@@ -20,21 +20,10 @@ export default function Layout() {
   else activePage = "";
 
   // … all your existing header‐state & effects …
-  const [showProfile, setShowProfile] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
   const [musicOn, setMusicOn] = useState(true);
   const [chatOn, setChatOn] = useState(true);
-  const [stats, setStats] = useState({ totalWins: 0, twoWins: 0, fourWins: 0 });
-
-  useEffect(() => {
-    if (!player) return;
-    setStats({
-      totalWins: player.totalWins,
-      twoWins: player.wins2P,
-      fourWins: player.wins4P,
-    });
-  }, [player]);
 
   const handleSupport = () => console.log("Support clicked");
   const handleFeedback = () => console.log("Feedback clicked");
@@ -44,9 +33,6 @@ export default function Layout() {
       <Header
         user={user}
         onLogout={logout}
-        showProfile={showProfile}
-        onProfileClick={() => setShowProfile(true)}
-        onProfileClose={() => setShowProfile(false)}
         showSettings={showSettings}
         onSettingsClick={() => setShowSettings(true)}
         onSettingsClose={() => setShowSettings(false)}
@@ -56,7 +42,6 @@ export default function Layout() {
         toggleMusic={() => setMusicOn((m) => !m)}
         chatOn={chatOn}
         toggleChat={() => setChatOn((c) => !c)}
-        stats={stats}
         onSupport={handleSupport}
         onFeedback={handleFeedback}
       />
