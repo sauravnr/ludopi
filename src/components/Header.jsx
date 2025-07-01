@@ -13,6 +13,7 @@ import Modal, { ToggleSwitch } from "./Modal";
 
 export default function Header({
   user,
+  player,
   onLogout,
   showSettings,
   onSettingsClick,
@@ -35,6 +36,7 @@ export default function Header({
     ? `${user.avatarUrl}?format=auto&width=32&quality=60 32w,
        ${user.avatarUrl}?format=auto&width=64&quality=60 64w`
     : "";
+  const coins = Number(player?.coins || 0).toLocaleString();
   return (
     <>
       <header className="relative z-10 flex items-center justify-between px-4 py-4 bg-header text-white header-3d">
@@ -59,7 +61,7 @@ export default function Header({
         </div>
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-1">
-            <FaCoins /> <span>1.7K</span>
+            <FaCoins /> <span>{coins}</span>
           </div>
           <div className="flex items-center space-x-1">
             <FaGem /> <span>30</span>

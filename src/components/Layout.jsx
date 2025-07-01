@@ -6,7 +6,7 @@ import Header from "./Header";
 import Footer from "./Footer";
 
 export default function Layout() {
-  const { user, logout } = useAuth();
+  const { user, player, logout } = useAuth();
   const location = useLocation(); // ← get current location
   const { pathname } = location;
 
@@ -32,6 +32,7 @@ export default function Layout() {
     <div className="flex flex-col h-screen">
       <Header
         user={user}
+        player={player}
         onLogout={logout}
         showSettings={showSettings}
         onSettingsClick={() => setShowSettings(true)}
