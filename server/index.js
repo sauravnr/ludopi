@@ -21,7 +21,11 @@ const jwt = require("jsonwebtoken");
 const User = require("./models/User");
 const Player = require("./models/Player");
 const Message = require("./models/Message");
+const CoinTransaction = require("./models/CoinTransaction");
 const mongoose = require("mongoose");
+
+const COINS_REWARD_2P = 10;
+const COINS_REWARD_4P = 15;
 
 const app = express();
 // trust proxy so req.secure & Secure cookies work behind proxies
@@ -609,10 +613,19 @@ async function applyMove(roomCode, color, tokenIdx, value) {
             { userId: { $in: allIds } },
             { $inc: { totalGamesPlayed: 1 } }
           );
+          const winnerId = room.participants.find(
+            (p) => p.color === color
+          ).userId;
           await Player.findOneAndUpdate(
-            { userId: room.participants.find((p) => p.color === color).userId },
-            { $inc: { totalWins: 1, wins2P: 1 } }
+            { userId: winnerId },
+            { $inc: { totalWins: 1, wins2P: 1, coins: COINS_REWARD_2P } }
           );
+          await CoinTransaction.create({
+            userId: winnerId,
+            amount: COINS_REWARD_2P,
+            type: "win",
+            description: "2P win",
+          });
           room.statsRecorded = true;
         } catch (err) {
           console.error("Failed to write 2P game stats:", err);
@@ -640,8 +653,14 @@ async function applyMove(roomCode, color, tokenIdx, value) {
           ).userId;
           await Player.findOneAndUpdate(
             { userId: winnerId },
-            { $inc: { totalWins: 1, wins4P: 1 } }
+            { $inc: { totalWins: 1, wins4P: 1, coins: COINS_REWARD_4P } }
           );
+          await CoinTransaction.create({
+            userId: winnerId,
+            amount: COINS_REWARD_4P,
+            type: "win",
+            description: "4P win",
+          });
           room.statsRecorded = true;
         } catch (err) {
           console.error("Failed to write 4P game stats:", err);

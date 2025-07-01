@@ -85,7 +85,7 @@ const playerSchema = new Schema(
     // Economy / Inventory
     coins: {
       type: Number,
-      default: 0,
+      default: 100,
     },
     purchasedItems: [{ type: String }],
     ownedDiceDesigns: [{ type: String }],
