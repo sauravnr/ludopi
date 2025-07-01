@@ -11,13 +11,13 @@ function getDiceTextures(renderer) {
   if (cachedTextures.length === 0) {
     const DPR = window.devicePixelRatio > 1 ? "512" : "256";
     cachedTextures = faceOrder.map((n) => {
-      // start with a 1x1 white canvas to avoid "image incomplete" warnings
+      // create a placeholder canvas that matches the final texture size
       const canvas = document.createElement("canvas");
-      canvas.width = 1;
-      canvas.height = 1;
+      canvas.width = parseInt(DPR, 10);
+      canvas.height = parseInt(DPR, 10);
       const ctx = canvas.getContext("2d");
       ctx.fillStyle = "#fff";
-      ctx.fillRect(0, 0, 1, 1);
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
       const tex = new THREE.CanvasTexture(canvas);
       tex.generateMipmaps = true;
       tex.minFilter = THREE.LinearMipmapLinearFilter;

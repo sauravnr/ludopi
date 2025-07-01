@@ -217,10 +217,9 @@ input:focus {
   display: inline-flex; /* shrink‐to‐fit around the dice */
   align-items: center; /* vertical center */
   justify-content: center; /* horizontal center */
-  width: 3.4rem; /* match your size={56}px (56/16 = 3.5rem) */
-  height: 3.4rem;
+  width: 3.5rem; /* match size={56}px exactly */
+  height: 3.5rem;
   background-color: rgba(0, 0, 0, 0.25); /* semi-transparent black */
   border-radius: 0.5rem; /* soften the corners */
   box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5); /* add some depth */
-  padding: 0.25rem; /* give the cube a little breathing room */
 }
