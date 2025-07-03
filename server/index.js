@@ -874,6 +874,11 @@ io.on("connection", (socket) => {
     // mark lobby as “touched” right now
     room.lastActive = Date.now();
 
+    // If lobby already has max players, deny the join
+    if (room.players.length >= room.capacity) {
+      return socket.emit("room-full");
+    }
+
     // Add or update player
     let player = room.players.find((p) => p.userId === user._id.toString());
     if (!player) {

@@ -20,6 +20,7 @@ const GameRoom = () => {
 
   const [players, setPlayers] = useState([]);
   const [bet, setBet] = useState(0);
+  const [betAgreed, setBetAgreed] = useState(false);
   // ─── Keep a ref to the "latest" players array, so we can read it in start-game
   const playersRef = useRef(players);
   // ─── Whenever `players` state changes, update the ref so we always have “latest” ─────────────────────
@@ -48,6 +49,18 @@ const GameRoom = () => {
       setPlayers(list);
       setMode(serverMode.toUpperCase()); // always “2P” or “4P”
       if (typeof b === "number") setBet(b);
+      if (
+        !betAgreed &&
+        location.state?.mode === "join" &&
+        typeof b === "number"
+      ) {
+        const ok = window.confirm(`Bet amount is ${b} coins. Do you accept?`);
+        if (!ok) {
+          navigate("/");
+          return;
+        }
+        setBetAgreed(true);
+      }
     };
     const handleRoomNotFound = () => {
       alert("Room not found");
@@ -84,6 +97,10 @@ const GameRoom = () => {
     socket.on("start-failed", ({ message }) => {
       alert(message || "Unable to start game.");
     });
+    socket.on("insufficient-coins", ({ message }) => {
+      alert(message || "Not enough coins to join this room.");
+      navigate("/");
+    });
     socket.on("rate-limit", handleRateLimit);
 
     // If the handshake fails (invalid or missing JWT), show an alert and redirect:
@@ -116,6 +133,7 @@ const GameRoom = () => {
       socket.off("rate-limit", handleRateLimit);
       socket.off("start-game", handleStart);
       socket.off("start-failed");
+      socket.off("insufficient-coins");
       socket.off("connect", sendJoin);
     };
   }, [roomCode, navigate, user._id, mode]);
