@@ -887,20 +887,28 @@ io.on("connection", (socket) => {
       const available = room.shuffledColors.filter((c) => !used.includes(c));
       if (available.length === 0) return socket.emit("room-full");
 
-      // ── Double‐check that no one has already taken available[0] ──
+      // ── Double-check that no one has already taken available[0] ──
       const chosen = available[0];
       if (room.players.some((p) => p.color === chosen)) {
         // someone else just snatched it, so fail out
         return socket.emit("room-full");
       }
 
-      player = {
-        socketId: socket.id,
-        userId: user._id.toString(),
-        username: user.username,
-        color: chosen,
-      };
-      room.players.push(player);
+      // Another join-room attempt might have added this user while we waited
+      player = room.players.find((p) => p.userId === user._id.toString());
+      if (!player) {
+        player = {
+          socketId: socket.id,
+          userId: user._id.toString(),
+          username: user.username,
+          color: chosen,
+        };
+        room.players.push(player);
+      } else {
+        // just update socket info if they snuck in
+        player.socketId = socket.id;
+        player.offline = false;
+      }
     } else {
       player.socketId = socket.id;
       player.offline = false;
