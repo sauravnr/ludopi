@@ -19,6 +19,7 @@ const GameRoom = () => {
   const playerLimit = mode === "4P" ? 4 : 2;
 
   const [players, setPlayers] = useState([]);
+  const [bet, setBet] = useState(0);
   // ─── Keep a ref to the "latest" players array, so we can read it in start-game
   const playersRef = useRef(players);
   // ─── Whenever `players` state changes, update the ref so we always have “latest” ─────────────────────
@@ -43,9 +44,10 @@ const GameRoom = () => {
     };
 
     // 1) If the server says “players + mode,” update both
-    const handlePlayerList = ({ players: list, mode: serverMode }) => {
+    const handlePlayerList = ({ players: list, mode: serverMode, bet: b }) => {
       setPlayers(list);
       setMode(serverMode.toUpperCase()); // always “2P” or “4P”
+      if (typeof b === "number") setBet(b);
     };
     const handleRoomNotFound = () => {
       alert("Room not found");
@@ -79,6 +81,9 @@ const GameRoom = () => {
     socket.on("room-not-found", handleRoomNotFound);
     socket.on("room-full", handleRoomFull);
     socket.on("start-game", handleStart);
+    socket.on("start-failed", ({ message }) => {
+      alert(message || "Unable to start game.");
+    });
     socket.on("rate-limit", handleRateLimit);
 
     // If the handshake fails (invalid or missing JWT), show an alert and redirect:
@@ -110,6 +115,7 @@ const GameRoom = () => {
       socket.off("room-full", handleRoomFull);
       socket.off("rate-limit", handleRateLimit);
       socket.off("start-game", handleStart);
+      socket.off("start-failed");
       socket.off("connect", sendJoin);
     };
   }, [roomCode, navigate, user._id, mode]);
@@ -147,11 +153,15 @@ const GameRoom = () => {
                    bg-[#eeebe3] border rounded-xl p-4"
           >
             {/* code label + value */}
-            <div className="flex items-baseline space-x-2">
+            <div className="flex items-baseline space-x-2 mb-2 sm:mb-0">
               <span className="text-lg font-semibold">Room Code:</span>
               <span className="text-2xl font-mono text-[#ffae33]">
                 {roomCode}
               </span>
+            </div>
+            <div className="flex items-baseline space-x-2 mb-2 sm:mb-0">
+              <span className="text-lg font-semibold">Bet:</span>
+              <span className="text-xl font-mono text-green-600">{bet}</span>
             </div>
 
             {/* copy + share */}
@@ -186,7 +196,7 @@ const GameRoom = () => {
             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {players.map((p) => (
                 <li
-                  key={p.socketId} // ← use socketId: always unique
+                  key={p.userId}
                   className="flex items-center gap-3 bg-[#eeebe3] border rounded-xl p-3"
                 >
                   {/* colored dot or avatar */}

@@ -5,6 +5,9 @@ import { FaUsers, FaUserFriends, FaGlobe, FaSignInAlt } from "react-icons/fa";
 import Modal from "../components/Modal";
 import api from "../utils/api";
 
+const MIN_BET = 10;
+const MAX_BET = 1000;
+
 const Home = () => {
   const navigate = useNavigate();
   const [roomCode, setRoomCode] = useState("");
@@ -16,8 +19,14 @@ const Home = () => {
 
   const handleCreateRoom = async (mode) => {
     sessionStorage.setItem("navigatingToRoom", "true");
+    const input = prompt(`Enter bet amount (${MIN_BET}-${MAX_BET})`);
+    const bet = parseInt(input, 10);
+    if (isNaN(bet) || bet < MIN_BET || bet > MAX_BET) {
+      alert("Invalid bet amount");
+      return;
+    }
     try {
-      const { data } = await api.post("/rooms", { mode });
+      const { data } = await api.post("/rooms", { mode, bet });
       navigate(`/room/${data.code}`, {
         state: { mode, action: "create" },
       });

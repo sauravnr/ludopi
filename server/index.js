@@ -24,8 +24,10 @@ const Message = require("./models/Message");
 const CoinTransaction = require("./models/CoinTransaction");
 const mongoose = require("mongoose");
 
-const COINS_REWARD_2P = 10;
-const COINS_REWARD_4P = 15;
+// Coins required for bets. Rewards come from the bet pot rather than
+// fixed win amounts.
+const MIN_BET = 10;
+const MAX_BET = 1000;
 
 const app = express();
 // trust proxy so req.secure & Secure cookies work behind proxies
@@ -100,8 +102,16 @@ app.post(
   "/api/rooms",
   protect, // must be logged in
   createRoomLimiter, // throttle brute-force
-  (req, res) => {
-    const { mode } = req.body; // e.g. "2P" or "4P"
+  async (req, res) => {
+    const { mode, bet } = req.body; // e.g. "2P" or "4P"
+    const betAmount = parseInt(bet, 10);
+    if (isNaN(betAmount) || betAmount < MIN_BET || betAmount > MAX_BET) {
+      return res.status(400).json({ error: "Invalid bet amount" });
+    }
+    const player = await Player.findOne({ userId: req.user._id });
+    if (!player || player.coins < betAmount) {
+      return res.status(400).json({ error: "Not enough coins for this bet" });
+    }
     const code = generateRoomCode(6); // ~2.8T possible codes
     // initialize exactly as your socket “create” logic would:
     rooms[code] = {
@@ -112,6 +122,8 @@ app.post(
       started: false,
       players: [],
       capacity: mode === "4P" ? 4 : 2,
+      bet: betAmount,
+      pot: 0,
       shuffledColors: shuffleArray(
         PLAYER_COLORS_BY_MODE[mode] || ["red", "blue"]
       ),
@@ -616,17 +628,20 @@ async function applyMove(roomCode, color, tokenIdx, value) {
           const winnerId = room.participants.find(
             (p) => p.color === color
           ).userId;
+          const pot = room.pot || room.bet * room.capacity;
           await Player.findOneAndUpdate(
             { userId: winnerId },
-            { $inc: { totalWins: 1, wins2P: 1, coins: COINS_REWARD_2P } }
+            { $inc: { totalWins: 1, wins2P: 1, coins: pot } }
           );
           await CoinTransaction.create({
             userId: winnerId,
-            amount: COINS_REWARD_2P,
+            amount: pot,
             type: "win",
-            description: "2P win",
+            description: "2P bet win",
           });
           room.statsRecorded = true;
+          room.pot = 0;
+          room.pot = 0;
         } catch (err) {
           console.error("Failed to write 2P game stats:", err);
         }
@@ -651,15 +666,16 @@ async function applyMove(roomCode, color, tokenIdx, value) {
           const winnerId = room.participants.find(
             (p) => p.color === color
           ).userId;
+          const pot = room.pot || room.bet * room.capacity;
           await Player.findOneAndUpdate(
             { userId: winnerId },
-            { $inc: { totalWins: 1, wins4P: 1, coins: COINS_REWARD_4P } }
+            { $inc: { totalWins: 1, wins4P: 1, coins: pot } }
           );
           await CoinTransaction.create({
             userId: winnerId,
-            amount: COINS_REWARD_4P,
+            amount: pot,
             type: "win",
-            description: "4P win",
+            description: "4P bet win",
           });
           room.statsRecorded = true;
         } catch (err) {
@@ -796,6 +812,7 @@ io.on("connection", (socket) => {
         io.to(roomCode).emit("player-list", {
           players: room.players,
           mode: room.mode,
+          bet: room.bet,
           botActive: room.botActive,
         });
         if (room.players.length === 0) {
@@ -812,6 +829,7 @@ io.on("connection", (socket) => {
       io.to(roomCode).emit("player-list", {
         players: room.players,
         mode: room.mode,
+        bet: room.bet,
         botActive: room.botActive,
       });
       // if it's their turn, let the bot act
@@ -859,6 +877,12 @@ io.on("connection", (socket) => {
     // Add or update player
     let player = room.players.find((p) => p.userId === user._id.toString());
     if (!player) {
+      const playerDoc = await Player.findOne({ userId: user._id });
+      if (!playerDoc || playerDoc.coins < room.bet) {
+        return socket.emit("insufficient-coins", {
+          message: "Not enough coins to join this room",
+        });
+      }
       const used = room.players.map((p) => p.color);
       const available = room.shuffledColors.filter((c) => !used.includes(c));
       if (available.length === 0) return socket.emit("room-full");
@@ -887,6 +911,7 @@ io.on("connection", (socket) => {
     io.to(roomCode).emit("player-list", {
       players: room.players,
       mode: room.mode, // “2P” or “4P”
+      bet: room.bet,
       botActive: room.botActive,
     });
     // Send current board state only to the reconnecting player
@@ -902,10 +927,43 @@ io.on("connection", (socket) => {
   });
 
   // Start game
-  socket.on("start-game", () => {
+  socket.on("start-game", async () => {
     const rc = socket.data.roomCode;
     const room = rooms[rc];
     if (!room || room.players.length !== room.capacity) return;
+
+    try {
+      const ids = room.players.map((p) => p.userId);
+      const docs = await Player.find({ userId: { $in: ids } });
+      const map = Object.fromEntries(
+        docs.map((d) => [d.userId.toString(), d.coins])
+      );
+      for (const id of ids) {
+        if ((map[id] || 0) < room.bet) {
+          return io
+            .to(rc)
+            .emit("start-failed", { message: "A player lacks enough coins." });
+        }
+      }
+      for (const id of ids) {
+        await Player.findOneAndUpdate(
+          { userId: id },
+          { $inc: { coins: -room.bet } }
+        );
+        await CoinTransaction.create({
+          userId: id,
+          amount: -room.bet,
+          type: "bet",
+          description: "Game bet",
+        });
+      }
+      room.pot = room.bet * room.capacity;
+    } catch (err) {
+      console.error("Failed to deduct bet coins:", err);
+      return io
+        .to(rc)
+        .emit("start-failed", { message: "Unable to start game" });
+    }
 
     // we’re officially “in‐game” now—stop treating it as a lobby
     room.started = true;
@@ -957,6 +1015,7 @@ io.on("connection", (socket) => {
     io.to(roomCode).emit("player-list", {
       players: room.players,
       mode: room.mode,
+      bet: room.bet,
       botActive: room.botActive,
     });
     if (enabled && room.players[room.currentTurnIndex]?.color === color) {
