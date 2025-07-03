@@ -35,6 +35,7 @@ const GameRoom = () => {
     };
     window.addEventListener("beforeunload", onUnload);
     return () => {
+      socket.emit("leave-room", { roomCode });
       window.removeEventListener("beforeunload", onUnload);
     };
   }, [roomCode]);
@@ -48,7 +49,6 @@ const GameRoom = () => {
     const handlePlayerList = ({ players: list, mode: serverMode, bet: b }) => {
       setPlayers(list);
       setMode(serverMode.toUpperCase()); // always “2P” or “4P”
-      if (typeof b === "number") setBet(b);
       if (
         !betAgreed &&
         location.state?.mode === "join" &&
@@ -56,6 +56,7 @@ const GameRoom = () => {
       ) {
         const ok = window.confirm(`Bet amount is ${b} coins. Do you accept?`);
         if (!ok) {
+          socket.emit("leave-room", { roomCode });
           navigate("/");
           return;
         }
