@@ -5,6 +5,7 @@ import { useSocket } from "../context/SocketContext";
 import { useAuth } from "../context/AuthContext";
 import ContentModal from "../components/ContentModal";
 import { ClipboardCopy, Share2 } from "lucide-react";
+import api from "../utils/api";
 
 const GameRoom = () => {
   const { user } = useAuth();
@@ -48,19 +49,9 @@ const GameRoom = () => {
     // 1) If the server says “players + mode,” update both
     const handlePlayerList = ({ players: list, mode: serverMode, bet: b }) => {
       setPlayers(list);
-      setMode(serverMode.toUpperCase()); // always “2P” or “4P”
-      if (
-        !betAgreed &&
-        location.state?.mode === "join" &&
-        typeof b === "number"
-      ) {
-        const ok = window.confirm(`Bet amount is ${b} coins. Do you accept?`);
-        if (!ok) {
-          socket.emit("leave-room", { roomCode });
-          navigate("/");
-          return;
-        }
-        setBetAgreed(true);
+      setMode(serverMode.toUpperCase()); // always "2P" or "4P"
+      if (typeof b === "number") {
+        setBet(b);
       }
     };
     const handleRoomNotFound = () => {
@@ -111,18 +102,36 @@ const GameRoom = () => {
       navigate("/"); // send them home (or to a login page)
     };
 
-    const sendJoin = () => {
-      socket.emit("join-room", {
-        roomCode,
-        mode: location.state?.mode || "2P",
-      });
+    const fetchAndJoin = async () => {
+      let joinMode = location.state?.mode || "2P";
+      if (location.state?.mode === "join") {
+        try {
+          const { data } = await api.get(`/rooms/${roomCode}`);
+          joinMode = data.mode.toUpperCase();
+          setMode(joinMode);
+          setBet(data.bet);
+          const ok = window.confirm(
+            `Bet amount is ${data.bet} coins. Do you accept?`
+          );
+          if (!ok) {
+            navigate("/");
+            return;
+          }
+          setBetAgreed(true);
+        } catch (err) {
+          alert("Room not found");
+          navigate("/");
+          return;
+        }
+      }
+      socket.emit("join-room", { roomCode, mode: joinMode });
     };
+
     if (!socket.connected) {
-      // watch for connect_error before connecting
       socket.once("connect_error", onAuthFail);
-      socket.once("connect", sendJoin);
+      socket.once("connect", fetchAndJoin);
     } else {
-      sendJoin();
+      fetchAndJoin();
     }
 
     return () => {
@@ -135,9 +144,9 @@ const GameRoom = () => {
       socket.off("start-game", handleStart);
       socket.off("start-failed");
       socket.off("insufficient-coins");
-      socket.off("connect", sendJoin);
+      socket.off("connect", fetchAndJoin);
     };
-  }, [roomCode, navigate, user._id, mode]);
+  }, [roomCode, navigate, user._id]);
 
   const isHost =
     players[0]?.userId === user._id || location.state?.action === "create";

@@ -170,6 +170,20 @@ app.post(
   }
 );
 
+// ─── ROOM INFO ENDPOINT ───────────────────────────────
+app.get("/api/rooms/:code", protect, (req, res) => {
+  const room = rooms[req.params.code];
+  if (!room) {
+    return res.status(404).json({ error: "Room not found" });
+  }
+  res.json({
+    mode: room.mode,
+    bet: room.bet,
+    players: room.players.length,
+    capacity: room.capacity,
+  });
+});
+
 // ─── HTTP + SOCKET.IO SETUP ─────────────────────────
 // ─── HTTP/HTTPS + SOCKET.IO SETUP ───────────────────────
 let server;
