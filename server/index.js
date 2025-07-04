@@ -29,6 +29,14 @@ const mongoose = require("mongoose");
 const MIN_BET = 10;
 const MAX_BET = 1000;
 
+// XP helpers
+const {
+  COMPLETE_GAME_XP,
+  WIN_XP_2P,
+  WIN_XP_4P,
+  addExperience,
+} = require("./utils/experience");
+
 const app = express();
 // trust proxy so req.secure & Secure cookies work behind proxies
 app.set("trust proxy", 1);
@@ -642,6 +650,9 @@ async function applyMove(roomCode, color, tokenIdx, value) {
             { userId: { $in: allIds } },
             { $inc: { totalGamesPlayed: 1 } }
           );
+          await Promise.all(
+            allIds.map((id) => addExperience(id, COMPLETE_GAME_XP))
+          );
           const winnerId = room.participants.find(
             (p) => p.color === color
           ).userId;
@@ -650,6 +661,7 @@ async function applyMove(roomCode, color, tokenIdx, value) {
             { userId: winnerId },
             { $inc: { totalWins: 1, wins2P: 1, coins: pot } }
           );
+          await addExperience(winnerId, WIN_XP_2P);
           await CoinTransaction.create({
             userId: winnerId,
             amount: pot,
@@ -679,6 +691,9 @@ async function applyMove(roomCode, color, tokenIdx, value) {
             { userId: { $in: allIds } },
             { $inc: { totalGamesPlayed: 1 } }
           );
+          await Promise.all(
+            allIds.map((id) => addExperience(id, COMPLETE_GAME_XP))
+          );
           const winnerId = room.participants.find(
             (p) => p.color === color
           ).userId;
@@ -687,6 +702,7 @@ async function applyMove(roomCode, color, tokenIdx, value) {
             { userId: winnerId },
             { $inc: { totalWins: 1, wins4P: 1, coins: pot } }
           );
+          await addExperience(winnerId, WIN_XP_4P);
           await CoinTransaction.create({
             userId: winnerId,
             amount: pot,
