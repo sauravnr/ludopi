@@ -104,6 +104,9 @@ app.post(
   createRoomLimiter, // throttle brute-force
   async (req, res) => {
     const { mode, bet } = req.body; // e.g. "2P" or "4P"
+    if (mode !== "2P" && mode !== "4P") {
+      return res.status(400).json({ error: "Invalid game mode" });
+    }
     const betAmount = parseInt(bet, 10);
     if (isNaN(betAmount) || betAmount < MIN_BET || betAmount > MAX_BET) {
       return res.status(400).json({ error: "Invalid bet amount" });
@@ -655,7 +658,6 @@ async function applyMove(roomCode, color, tokenIdx, value) {
           });
           room.statsRecorded = true;
           room.pot = 0;
-          room.pot = 0;
         } catch (err) {
           console.error("Failed to write 2P game stats:", err);
         }
@@ -879,7 +881,6 @@ io.on("connection", (socket) => {
       });
     }
     const user = socket.user;
-    const capacity = mode === "4P" ? 4 : 2;
 
     const room = rooms[roomCode];
     if (!room) {
@@ -959,7 +960,18 @@ io.on("connection", (socket) => {
   socket.on("start-game", async () => {
     const rc = socket.data.roomCode;
     const room = rooms[rc];
-    if (!room || room.players.length !== room.capacity) return;
+    if (!room) return;
+    if (room.started) {
+      console.log(`[Room ${rc}] start attempt ignored: already started`);
+      return;
+    }
+    if (socket.user._id.toString() !== room.players[0].userId) {
+      console.log(
+        `[Room ${rc}] user ${socket.user._id} attempted to start but is not host`
+      );
+      return;
+    }
+    if (room.players.length !== room.capacity) return;
 
     try {
       const ids = room.players.map((p) => p.userId);
