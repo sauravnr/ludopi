@@ -1037,6 +1037,19 @@ io.on("connection", (socket) => {
       room.hasMoved[clr] = false;
     }
 
+    // ensure bots are disabled at game start
+    for (const clr of ["red", "yellow", "green", "blue"]) {
+      room.botActive[clr] = false;
+    }
+
+    // broadcast fresh player list with bot state cleared
+    io.to(rc).emit("player-list", {
+      players: room.players,
+      mode: room.mode,
+      bet: room.bet,
+      botActive: room.botActive,
+    });
+
     io.to(rc).emit("start-game");
     io.to(rc).emit("turn-change", {
       currentTurnColor: room.players[0].color,
