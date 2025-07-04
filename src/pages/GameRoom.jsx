@@ -4,6 +4,7 @@ import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useSocket } from "../context/SocketContext";
 import { useAuth } from "../context/AuthContext";
 import ContentModal from "../components/ContentModal";
+import Modal from "../components/Modal";
 import { ClipboardCopy, Share2 } from "lucide-react";
 import api from "../utils/api";
 
@@ -22,6 +23,8 @@ const GameRoom = () => {
   const [players, setPlayers] = useState([]);
   const [bet, setBet] = useState(0);
   const [betAgreed, setBetAgreed] = useState(false);
+  const [showBetConfirm, setShowBetConfirm] = useState(false);
+  const [pendingMode, setPendingMode] = useState(null);
   // ─── Keep a ref to the "latest" players array, so we can read it in start-game
   const playersRef = useRef(players);
   // ─── Whenever `players` state changes, update the ref so we always have “latest” ─────────────────────
@@ -110,14 +113,9 @@ const GameRoom = () => {
           joinMode = data.mode.toUpperCase();
           setMode(joinMode);
           setBet(data.bet);
-          const ok = window.confirm(
-            `Bet amount is ${data.bet} coins. Do you accept?`
-          );
-          if (!ok) {
-            navigate("/");
-            return;
-          }
-          setBetAgreed(true);
+          setPendingMode(joinMode);
+          setShowBetConfirm(true);
+          return;
         } catch (err) {
           alert("Room not found");
           navigate("/");
@@ -147,6 +145,16 @@ const GameRoom = () => {
       socket.off("connect", fetchAndJoin);
     };
   }, [roomCode, navigate, user._id]);
+
+  const acceptBet = () => {
+    setBetAgreed(true);
+    setShowBetConfirm(false);
+    socket.emit("join-room", { roomCode, mode: pendingMode || mode });
+  };
+
+  const declineBet = () => {
+    navigate("/");
+  };
 
   const isHost =
     players[0]?.userId === user._id || location.state?.action === "create";
@@ -258,6 +266,22 @@ const GameRoom = () => {
           </div>
         </div>
       </ContentModal>
+      {showBetConfirm && (
+        <Modal
+          show={showBetConfirm}
+          title="Join Room"
+          closable={false}
+          onClose={declineBet}
+          footer={[
+            { label: "Accept", variant: "secondary", onClick: acceptBet },
+            { label: "Decline", variant: "primary", onClick: declineBet },
+          ]}
+        >
+          <p className="text-center">
+            Bet amount is {bet} coins. Do you accept?
+          </p>
+        </Modal>
+      )}
     </div>
   );
 };

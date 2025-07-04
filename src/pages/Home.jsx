@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaUsers, FaUserFriends, FaGlobe, FaSignInAlt } from "react-icons/fa";
 import Modal from "../components/Modal";
+import BetModal from "../components/BetModal";
 import api from "../utils/api";
 
 const MIN_BET = 10;
@@ -12,27 +13,36 @@ const Home = () => {
   const navigate = useNavigate();
   const [roomCode, setRoomCode] = useState("");
   const [showJoinModal, setShowJoinModal] = useState(false);
+  const [showBetModal, setShowBetModal] = useState(false);
+  const [betError, setBetError] = useState("");
+  const [betMode, setBetMode] = useState(null);
 
   useEffect(() => {
     sessionStorage.removeItem("navigatingToRoom");
   }, []);
 
-  const handleCreateRoom = async (mode) => {
-    sessionStorage.setItem("navigatingToRoom", "true");
-    const input = prompt(`Enter bet amount (${MIN_BET}-${MAX_BET})`);
-    const bet = parseInt(input, 10);
+  const handleCreateRoom = (mode) => {
+    setBetMode(mode);
+    setBetError("");
+    setShowBetModal(true);
+  };
+
+  const confirmCreateRoom = async (amount) => {
+    const bet = parseInt(amount, 10);
     if (isNaN(bet) || bet < MIN_BET || bet > MAX_BET) {
-      alert("Invalid bet amount");
+      setBetError(`Bet must be between ${MIN_BET} and ${MAX_BET}`);
       return;
     }
     try {
-      const { data } = await api.post("/rooms", { mode, bet });
+      sessionStorage.setItem("navigatingToRoom", "true");
+      const { data } = await api.post("/rooms", { mode: betMode, bet });
       navigate(`/room/${data.code}`, {
-        state: { mode, action: "create" },
+        state: { mode: betMode, action: "create" },
       });
+      setShowBetModal(false);
     } catch (err) {
       console.error("Failed to create room:", err);
-      alert("Unable to create room right now. Please try again.");
+      setBetError("Unable to create room right now. Please try again.");
     }
   };
 
@@ -146,6 +156,17 @@ const Home = () => {
             className="w-full px-4 py-2 border rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </Modal>
+      )}
+
+      {showBetModal && (
+        <BetModal
+          show={showBetModal}
+          onClose={() => setShowBetModal(false)}
+          onConfirm={confirmCreateRoom}
+          minBet={MIN_BET}
+          maxBet={MAX_BET}
+          error={betError}
+        />
       )}
     </div>
   );
