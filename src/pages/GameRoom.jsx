@@ -7,6 +7,7 @@ import ContentModal from "../components/ContentModal";
 import Modal from "../components/Modal";
 import { ClipboardCopy, Share2 } from "lucide-react";
 import api from "../utils/api";
+import { useAlert } from "../context/AlertContext";
 
 const GameRoom = () => {
   const { user } = useAuth();
@@ -14,6 +15,7 @@ const GameRoom = () => {
   const { roomCode } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const showAlert = useAlert();
 
   // Instead of reading mode from location.state, ask the server:
   const [mode, setMode] = useState("2P");
@@ -46,7 +48,10 @@ const GameRoom = () => {
 
   useEffect(() => {
     const handleRateLimit = ({ message }) => {
-      alert(message || "Too many join attempts—try again in a minute.");
+      showAlert(
+        message || "Too many join attempts—try again in a minute.",
+        "error"
+      );
     };
 
     // 1) If the server says “players + mode,” update both
@@ -58,11 +63,11 @@ const GameRoom = () => {
       }
     };
     const handleRoomNotFound = () => {
-      alert("Room not found");
+      showAlert("Room not found", "error");
       navigate("/");
     };
     const handleRoomFull = () => {
-      alert("Room full");
+      showAlert("Room full", "error");
       navigate("/");
     };
     const handleStart = () => {
@@ -80,7 +85,7 @@ const GameRoom = () => {
       });
     };
     const handleRoomClosed = ({ message }) => {
-      alert(message || "Host has left—this room is closed.");
+      showAlert(message || "Host has left—this room is closed.", "error");
       navigate("/");
     };
 
@@ -90,10 +95,10 @@ const GameRoom = () => {
     socket.on("room-full", handleRoomFull);
     socket.on("start-game", handleStart);
     socket.on("start-failed", ({ message }) => {
-      alert(message || "Unable to start game.");
+      showAlert(message || "Unable to start game.", "error");
     });
     socket.on("insufficient-coins", ({ message }) => {
-      alert(message || "Not enough coins to join this room.");
+      showAlert(message || "Not enough coins to join this room.", "error");
       navigate("/");
     });
     socket.on("rate-limit", handleRateLimit);
@@ -101,7 +106,7 @@ const GameRoom = () => {
     // If the handshake fails (invalid or missing JWT), show an alert and redirect:
     const onAuthFail = (err) => {
       console.error("Socket auth failed in GameRoom:", err.message);
-      alert("Authentication failed. Please log in again.");
+      showAlert("Authentication failed. Please log in again.", "error");
       navigate("/"); // send them home (or to a login page)
     };
 
@@ -117,7 +122,7 @@ const GameRoom = () => {
           setShowBetConfirm(true);
           return;
         } catch (err) {
-          alert("Room not found");
+          showAlert("Room not found", "error");
           navigate("/");
           return;
         }

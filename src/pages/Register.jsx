@@ -1,14 +1,15 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useAlert } from "../context/AlertContext";
 
 export default function Register() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [err, setErr] = useState("");
   const { register } = useAuth();
   const nav = useNavigate();
+  const showAlert = useAlert();
 
   const submit = async (e) => {
     e.preventDefault();
@@ -16,14 +17,13 @@ export default function Register() {
       await register({ username, email, password });
       nav("/");
     } catch (e) {
-      setErr(e.response?.data?.message || "Registration failed");
+      showAlert(e.response?.data?.message || "Registration failed", "error");
     }
   };
 
   return (
     <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded shadow text-black">
       <h2 className="text-xl mb-4">Register</h2>
-      {err && <p className="text-red-500">{err}</p>}
       <form onSubmit={submit}>
         <label>Username</label>
         <input

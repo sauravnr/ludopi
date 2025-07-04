@@ -5,11 +5,13 @@ import api from "../utils/api";
 import { useSocket } from "../context/SocketContext";
 import { FaArrowLeft } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
+import { useAlert } from "../context/AlertContext";
 
 export default function ChatWindow({ user: partner, onBack }) {
   const LIMIT = 10;
   const { user: me } = useAuth();
   const socket = useSocket();
+  const showAlert = useAlert();
   const myId = me._id || me.id;
   const activeUserId = partner.id;
 
@@ -176,7 +178,7 @@ export default function ChatWindow({ user: partner, onBack }) {
         }, false);
       } else {
         // error – you could mark temp as “failed” here
-        alert("Message failed to send");
+        showAlert("Message failed to send", "error");
       }
     });
   };

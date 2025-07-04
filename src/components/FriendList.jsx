@@ -41,7 +41,8 @@ export default function FriendsList({ onMessageClick }) {
     setOpenMenuId(null);
   };
 
-  if (error) return <div className="text-red-500">Error loading friends.</div>;
+  if (error)
+    return <div className="alert alert-error">Error loading friends.</div>;
   if (!pages) return <div>Loading friends…</div>;
 
   return (

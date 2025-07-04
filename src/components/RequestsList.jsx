@@ -35,7 +35,8 @@ export default function RequestsList() {
     }
   };
 
-  if (error) return <div className="text-red-500">Error loading requests.</div>;
+  if (error)
+    return <div className="alert alert-error">Error loading requests.</div>;
   if (!pages) return <div>Loading requests…</div>;
 
   return (

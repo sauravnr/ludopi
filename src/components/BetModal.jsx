@@ -29,9 +29,7 @@ export default function BetModal({
         onChange={(e) => setAmount(e.target.value)}
         placeholder={`Enter bet (${minBet}-${maxBet})`}
       />
-      {error && (
-        <p className="text-red-500 text-center text-sm mt-2">{error}</p>
-      )}
+      {error && <p className="alert alert-error mt-2">{error}</p>}
     </Modal>
   );
 }

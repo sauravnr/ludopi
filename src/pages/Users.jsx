@@ -21,7 +21,7 @@ export default function Users() {
   }, []);
 
   if (loading) return <p className="p-4">Loading users…</p>;
-  if (error) return <p className="p-4 text-red-500">{error}</p>;
+  if (error) return <p className="p-4 alert alert-error">{error}</p>;
 
   return (
     <div className="p-4">

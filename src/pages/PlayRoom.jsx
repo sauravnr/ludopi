@@ -10,6 +10,7 @@ import { ChatProvider } from "../components/Chat/ChatProvider";
 import ChatButton from "../components/Chat/ChatButton";
 import ChatWindow from "../components/Chat/ChatWindow";
 import Loader from "../components/Loader";
+import { useAlert } from "../context/AlertContext";
 
 const PlayRoom = () => {
   const { user, loading } = useAuth();
@@ -17,6 +18,7 @@ const PlayRoom = () => {
   const navigate = useNavigate();
   const { roomCode } = useParams();
   const location = useLocation();
+  const showAlert = useAlert();
 
   // when the server “player-list” event arrives.
   const [mode, setMode] = useState(
@@ -76,7 +78,7 @@ const PlayRoom = () => {
 
     const onAuthFail = (err) => {
       console.error("Socket auth failed in PlayRoom:", err.message);
-      alert("Authentication failed. Redirecting to home.");
+      showAlert("Authentication failed. Redirecting to home.", "error");
       navigate("/");
     };
 
@@ -97,7 +99,10 @@ const PlayRoom = () => {
     // If no color after 5s, alert user
     timeoutId = setTimeout(() => {
       if (!playerColor) {
-        alert("Could not connect to game server. Please try again later.");
+        showAlert(
+          "Could not connect to game server. Please try again later.",
+          "error"
+        );
       }
     }, 5000);
 

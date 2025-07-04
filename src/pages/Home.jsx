@@ -5,12 +5,14 @@ import { FaUsers, FaUserFriends, FaGlobe, FaSignInAlt } from "react-icons/fa";
 import Modal from "../components/Modal";
 import BetModal from "../components/BetModal";
 import api from "../utils/api";
+import { useAlert } from "../context/AlertContext";
 
 const MIN_BET = 10;
 const MAX_BET = 1000;
 
 const Home = () => {
   const navigate = useNavigate();
+  const showAlert = useAlert();
   const [roomCode, setRoomCode] = useState("");
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [showBetModal, setShowBetModal] = useState(false);
@@ -51,7 +53,7 @@ const Home = () => {
     // only allow exactly 6 alphanumeric characters (A–Z, 0–9). Adjust length as needed.
     const isValidFormat = /^[A-Z0-9]{6}$/.test(code);
     if (!isValidFormat) {
-      alert("Room code must be 6 letters/numbers.");
+      showAlert("Room code must be 6 letters/numbers.", "error");
       return;
     }
     sessionStorage.setItem("navigatingToRoom", "true");

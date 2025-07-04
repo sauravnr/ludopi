@@ -4,11 +4,13 @@ import { useNavigate, useParams } from "react-router-dom";
 import api from "../utils/api";
 import { FaArrowLeft, FaEdit } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
+import { useAlert } from "../context/AlertContext";
 
 export default function Profile() {
   const { user, player: me, setPlayer } = useAuth();
   const { userId } = useParams();
   const navigate = useNavigate();
+  const showAlert = useAlert();
   const isOwn = !userId || userId === (user._id || user.id);
 
   const [profile, setProfile] = useState(null);
@@ -29,7 +31,7 @@ export default function Profile() {
       api
         .get(`/player/${userId}`)
         .then(({ data }) => setProfile(data.player))
-        .catch(() => alert("Could not load that profile."));
+        .catch(() => showAlert("Could not load that profile.", "error"));
     }
   }, [isOwn, me, userId]);
 
@@ -57,7 +59,7 @@ export default function Profile() {
       setRequestId(data.request._id);
     } catch (err) {
       console.error(err);
-      alert("Failed to send request.");
+      showAlert("Failed to send request.", "error");
     } finally {
       setButtonLoading(false);
     }
@@ -71,7 +73,7 @@ export default function Profile() {
       setRelationship("none");
       setRequestId(null);
     } catch {
-      alert("Failed to cancel.");
+      showAlert("Failed to cancel.", "error");
     } finally {
       setButtonLoading(false);
     }
@@ -85,7 +87,7 @@ export default function Profile() {
       await api.delete(`/friend-requests/friends/${profile.userId}`);
       setRelationship("none");
     } catch {
-      alert("Failed to unfriend.");
+      showAlert("Failed to unfriend.", "error");
     } finally {
       setButtonLoading(false);
     }
@@ -107,7 +109,7 @@ export default function Profile() {
       setIsEditing(false);
     } catch (err) {
       console.error(err);
-      alert("Failed to update bio. Please try again.");
+      showAlert("Failed to update bio. Please try again.", "error");
     }
   };
 
@@ -123,14 +125,14 @@ export default function Profile() {
     try {
       const res = await api.post("/avatar/upload", formData);
       if (res.data?.avatarUrl) {
-        alert("Avatar updated!");
+        showAlert("Avatar updated!");
         window.location.reload();
       } else {
-        alert("Upload failed.");
+        showAlert("Upload failed.", "error");
       }
     } catch (err) {
       console.error("Upload error:", err);
-      alert("Upload failed: " + err.message);
+      showAlert("Upload failed: " + err.message, "error");
     }
   };
 

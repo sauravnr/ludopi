@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useAlert } from "../context/AlertContext";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [err, setErr] = useState("");
   const { login, piLogin } = useAuth();
   const nav = useNavigate();
+  const showAlert = useAlert();
 
   const submit = async (e) => {
     e.preventDefault();
@@ -15,7 +16,7 @@ export default function Login() {
       await login({ email, password });
       nav("/"); // redirect to home
     } catch (e) {
-      setErr(e.response?.data?.message || "Login failed");
+      showAlert(e.response?.data?.message || "Login failed", "error");
     }
   };
   // Pi Browser submit
@@ -24,7 +25,10 @@ export default function Login() {
     const isPiBrowser = ua.includes("PiBrowser");
 
     if (!window.Pi || !isPiBrowser) {
-      alert("Please open this page in your Pi Browser to login with Pi.");
+      showAlert(
+        "Please open this page in your Pi Browser to login with Pi.",
+        "error"
+      );
       return;
     }
 
@@ -34,14 +38,13 @@ export default function Login() {
       .then(() => navigate("/"))
       .catch((err) => {
         console.error("Pi login failed", err);
-        setErr("Pi login failed");
+        showAlert("Pi login failed", "error");
       });
   };
 
   return (
     <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded text-black shadow">
       <h2 className="text-xl mb-4">Login</h2>
-      {err && <p className="text-red-500">{err}</p>}
 
       {/* ——— Email / Password Form ——— */}
       <form onSubmit={submit}>
