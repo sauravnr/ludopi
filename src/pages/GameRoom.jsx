@@ -41,7 +41,9 @@ const GameRoom = () => {
     };
     window.addEventListener("beforeunload", onUnload);
     return () => {
-      socket.emit("leave-room", { roomCode });
+      if (!sessionStorage.getItem("navigatingToRoom")) {
+        socket.emit("leave-room", { roomCode });
+      }
       window.removeEventListener("beforeunload", onUnload);
     };
   }, [roomCode]);
@@ -80,6 +82,7 @@ const GameRoom = () => {
         "my color:",
         myColor
       );
+      sessionStorage.setItem("navigatingToRoom", "true");
       navigate(`/play/${roomCode}`, {
         state: { players: currentPlayers, mode: location.state?.mode || "2P" },
       });
@@ -176,6 +179,7 @@ const GameRoom = () => {
       "mode:",
       mode
     );
+    sessionStorage.setItem("navigatingToRoom", "true");
     navigate(`/play/${roomCode}`, {
       state: {
         players: currentPlayers,
