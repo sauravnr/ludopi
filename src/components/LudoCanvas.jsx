@@ -620,6 +620,8 @@ const LudoCanvas = ({
   const [localTurnColor, setLocalTurnColor] = useState(null);
   const [hasRolled, setHasRolled] = useState(false);
   const [pendingRoll, setPendingRoll] = useState(null);
+  // tracks whether countdown is waiting for a roll or a move
+  const [autoPhase, setAutoPhase] = useState(null); // 'roll' | 'move'
   // track four tokens per color; -1 = still at home
   const [tokenSteps, setTokenSteps] = useState({
     red: [-1, -1, -1, -1],
@@ -712,6 +714,7 @@ const LudoCanvas = ({
         });
         // Clear pendingRoll so they can’t click again until next roll
         setPendingRoll(null);
+        setAutoPhase(null);
         return;
       }
     }
@@ -724,24 +727,32 @@ const LudoCanvas = ({
     setLocalTurnColor(currentTurnColor);
     setVisibleDice((v) => ({ ...v, [currentTurnColor]: true }));
     setHasRolled(false);
+    setPendingRoll(null);
     setTimer(12);
+    setAutoPhase("roll");
   }, [currentTurnColor]);
 
-  // ── Countdown & auto-roll logic (patched) ─────────────────────
+  // Countdown for auto actions (roll or move)
   useEffect(() => {
-    if (!isLocalTurn) return;
-    setTimer(12);
-    setVisibleDice((v) => ({ ...v, [playerColor]: true }));
+    if (!isLocalTurn || !autoPhase) return;
 
-    let didRoll = false;
+    setTimer(12);
+    if (autoPhase === "roll") {
+      setVisibleDice((v) => ({ ...v, [playerColor]: true }));
+    }
+
     const interval = setInterval(() => {
       setTimer((t) => {
-        if (pendingRoll != null) return t; // ← don’t tick down while waiting
+        // while waiting for dice result, don't count
+        if (
+          (autoPhase === "roll" && hasRolled && pendingRoll == null) ||
+          (autoPhase === "move" && pendingRoll == null)
+        ) {
+          return t;
+        }
         if (t <= 1) {
           clearInterval(interval);
-          if (!didRoll) {
-            didRoll = true;
-            // auto-roll
+          if (autoPhase === "roll") {
             handleDiceRoll();
             socket.emit("bot-toggle", {
               roomCode,
@@ -753,15 +764,31 @@ const LudoCanvas = ({
               delete upd[playerColor];
               return upd;
             });
+            setAutoPhase("move");
+            return 12;
           }
-          return 0;
+
+          if (autoPhase === "move") {
+            socket.emit("bot-toggle", {
+              roomCode,
+              color: playerColor,
+              enabled: true,
+            });
+            setVisibleDice((v) => {
+              const upd = { ...v };
+              delete upd[playerColor];
+              return upd;
+            });
+            return 0;
+          }
         }
+
         return t - 1;
       });
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isLocalTurn, playerColor, pendingRoll]);
+  }, [isLocalTurn, autoPhase, hasRolled, pendingRoll, playerColor]);
 
   // Socket listeners
   useEffect(() => {
@@ -867,6 +894,8 @@ const LudoCanvas = ({
         setRolledDice((r) => ({ ...r, [color]: value }));
         if (color === playerColor) {
           setPendingRoll(value);
+          setAutoPhase("move");
+          setTimer(12);
           console.log("🎲 You rolled:", value);
 
           const myArr = tokenStepsRef.current[playerColor] || [];
@@ -883,6 +912,7 @@ const LudoCanvas = ({
               value,
             });
             setPendingRoll(null);
+            setAutoPhase(null);
           }
         }
         setTimeout(() => {
@@ -909,6 +939,7 @@ const LudoCanvas = ({
       setRollingDice({});
       setTimer(12);
       setVisibleDice((v) => ({ ...v, [currentTurnColor]: true }));
+      setAutoPhase("roll");
     };
 
     socket.on("dice-rolled-broadcast", onDice);
