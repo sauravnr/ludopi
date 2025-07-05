@@ -5,6 +5,7 @@ import api from "../utils/api";
 import { FaArrowLeft, FaEdit } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 import { useAlert } from "../context/AlertContext";
+import { COUNTRY_NAMES, getCountryFlag } from "../utils/countries";
 
 export default function Profile() {
   const { user, player: me, setPlayer } = useAuth();
@@ -25,14 +26,8 @@ export default function Profile() {
   const [countryEditing, setCountryEditing] = useState(false);
   const [countryInput, setCountryInput] = useState("Worldwide");
   const [ranking, setRanking] = useState(null);
-  const countries = [
-    "Worldwide",
-    "United States",
-    "United Kingdom",
-    "Canada",
-    "Germany",
-    "France",
-  ];
+  // Countries list for the dropdown. We keep "Worldwide" as a custom option.
+  const countries = ["Worldwide", ...COUNTRY_NAMES];
 
   // 1. load profile
   useEffect(() => {
@@ -375,8 +370,8 @@ export default function Profile() {
               🌐 {ranking.worldRank} / {ranking.worldTotal}
             </p>
             <p className="mb-1">
-              🏳 {ranking.country}: {ranking.countryRank} /{" "}
-              {ranking.countryTotal}
+              {getCountryFlag(ranking.country)} {ranking.country}:{" "}
+              {ranking.countryRank} / {ranking.countryTotal}
             </p>
           </div>
         )}
