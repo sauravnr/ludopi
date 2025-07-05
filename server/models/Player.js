@@ -70,11 +70,11 @@ const playerSchema = new Schema(
       type: Number,
       default: 0,
     },
-
     // Ranking
     trophies: {
       type: Number,
       default: 0,
+      min: 0,
     },
     country: {
       type: String,

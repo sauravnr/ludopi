@@ -529,9 +529,13 @@ async function awardTrophies(room) {
     if (!participant) continue;
     const inc = increments[i] ?? 0;
     try {
-      await Player.findOneAndUpdate(
+      const player = await Player.findOne({ userId: participant.userId });
+      if (!player) continue;
+      const current = player.trophies || 0;
+      const newTrophies = Math.max(0, current + inc);
+      await Player.updateOne(
         { userId: participant.userId },
-        { $inc: { trophies: inc } }
+        { $set: { trophies: newTrophies } }
       );
     } catch (err) {
       console.error("Failed to update trophies:", err);
