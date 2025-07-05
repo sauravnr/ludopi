@@ -59,14 +59,14 @@ export default function Profile() {
     }
   }, [isOwn, profile]);
 
-  // 3. fetch ranking info for own profile
+  // 3. fetch ranking info for the displayed profile
   useEffect(() => {
-    if (isOwn) {
-      api
-        .get("/ranking/me")
-        .then(({ data }) => setRanking(data))
-        .catch(() => {});
-    }
+    if (!profile) return;
+    const endpoint = isOwn ? "/ranking/me" : `/ranking/${profile.userId}`;
+    api
+      .get(endpoint)
+      .then(({ data }) => setRanking(data))
+      .catch(() => {});
   }, [isOwn, profile]);
 
   // encapsulate actions
@@ -194,7 +194,7 @@ export default function Profile() {
 
   return (
     <div
-      className="min-h-screen bg-cover bg-center p-4"
+      className="min-h-screen bg-cover bg-center p-4 overflow-y-auto"
       style={{ backgroundImage: "url(/images/cosmic-bg.png)" }}
     >
       <button
@@ -366,6 +366,21 @@ export default function Profile() {
           </div>
         </div>
 
+        {/* Ranking */}
+        {ranking && (
+          <div className="bg-white/50 p-4 rounded-lg">
+            <h3 className="text-lg font-semibold mb-3">Ranking</h3>
+            <p className="mb-1">🏆 {ranking.trophies}</p>
+            <p className="mb-1">
+              🌐 {ranking.worldRank} / {ranking.worldTotal}
+            </p>
+            <p className="mb-1">
+              🏳 {ranking.country}: {ranking.countryRank} /{" "}
+              {ranking.countryTotal}
+            </p>
+          </div>
+        )}
+
         {/* Badges */}
         <div>
           <h3 className="text-lg font-semibold mb-2">Badges</h3>
@@ -401,19 +416,6 @@ export default function Profile() {
             )}
           </div>
         </div>
-
-        {isOwn && ranking && (
-          <div>
-            <h3 className="text-lg font-semibold mb-3">My Ranking</h3>
-            <p className="mb-1">Trophies: {ranking.trophies}</p>
-            <p className="mb-1">
-              World rank: {ranking.worldRank} out of {ranking.worldTotal}
-            </p>
-            <p className="mb-1">
-              Country rank: {ranking.countryRank} out of {ranking.countryTotal}
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -421,7 +423,7 @@ export default function Profile() {
 
 function Stat({ title, value }) {
   return (
-    <div className="bg-white/50 p-3 rounded-lg text-center">
+    <div className="bg-white/70 p-3 rounded-lg text-center shadow">
       <div className="text-xl font-bold">{value}</div>
       <div className="text-sm">{title}</div>
     </div>
