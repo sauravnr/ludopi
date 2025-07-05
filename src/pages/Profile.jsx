@@ -367,11 +367,13 @@ export default function Profile() {
             <h3 className="text-lg font-semibold mb-3">Ranking</h3>
             <p className="mb-1">🏆 {ranking.trophies}</p>
             <p className="mb-1">
-              🌐 {ranking.worldRank} / {ranking.worldTotal}
+              🌐 World rank: {Number(ranking.worldRank).toLocaleString()} out of{" "}
+              {Number(ranking.worldTotal).toLocaleString()}
             </p>
             <p className="mb-1">
-              {getCountryFlag(ranking.country)} {ranking.country}:{" "}
-              {ranking.countryRank} / {ranking.countryTotal}
+              {getCountryFlag(ranking.country)} Country rank:{" "}
+              {Number(ranking.countryRank).toLocaleString()} out of{" "}
+              {Number(ranking.countryTotal).toLocaleString()}
             </p>
           </div>
         )}

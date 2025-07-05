@@ -255,6 +255,7 @@ export const COUNTRIES = [
 ];
 
 export const COUNTRY_NAMES = COUNTRIES.map((c) => c.name);
+export const COUNTRY_CODES = COUNTRIES.map((c) => c.code);
 
 export function getFlagEmoji(code) {
   if (!code) return "";
@@ -265,9 +266,22 @@ export function getFlagEmoji(code) {
   return String.fromCodePoint(...chars);
 }
 
-export function getCountryFlag(name) {
-  const entry = COUNTRIES.find((c) => c.name === name);
-  return entry ? getFlagEmoji(entry.code) : "";
+export function getCountryCode(input) {
+  if (!input) return "";
+  const upper = input.toUpperCase();
+  if (upper.length === 2) return upper;
+  const match = COUNTRIES.find((c) => c.name.toUpperCase() === upper);
+  return match ? match.code : "";
+}
+
+export function getCountryFlag(input) {
+  if (!input) return "";
+  const normalized = input.toString();
+  if (normalized.toLowerCase() === "worldwide") {
+    return "\u{1F3F4}"; // black flag
+  }
+  const code = getCountryCode(normalized);
+  return code ? getFlagEmoji(code) : "";
 }
 
 export default COUNTRIES;
