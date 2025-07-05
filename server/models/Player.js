@@ -81,14 +81,6 @@ const playerSchema = new Schema(
       default: "Worldwide",
     },
     // Progression
-    level: {
-      type: Number,
-      default: 1,
-    },
-    experiencePoints: {
-      type: Number,
-      default: 0,
-    },
     badges: [badgeSchema],
 
     // Economy / Inventory

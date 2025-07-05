@@ -180,8 +180,6 @@ export default function Profile() {
   const {
     avatarUrl,
     bio,
-    level = 1,
-    experiencePoints: experience = 0,
     badges = [],
     totalGamesPlayed: totalGames = 0,
     wins2P: twoWins = 0,
@@ -368,27 +366,6 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Level & XP bar */}
-        <div className="text-center">
-          <span className="text-lg font-bold">Level {level}</span>
-        </div>
-        <div>
-          <div className="w-full h-2 bg-gray-300 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-blue-500"
-              style={{
-                width: `${Math.min(
-                  100,
-                  Math.round((experience / (level * 1000 || 1)) * 100)
-                )}%`,
-              }}
-            />
-          </div>
-          <div className="text-right text-sm mt-1">
-            {experience.toLocaleString()} XP
-          </div>
-        </div>
-
         {/* Badges */}
         <div>
           <h3 className="text-lg font-semibold mb-2">Badges</h3>
@@ -434,9 +411,6 @@ export default function Profile() {
             </p>
             <p className="mb-1">
               Country rank: {ranking.countryRank} out of {ranking.countryTotal}
-            </p>
-            <p className="text-sm text-gray-600">
-              of the players in {ranking.country}
             </p>
           </div>
         )}
