@@ -22,6 +22,17 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [bioInput, setBioInput] = useState("");
   const maxLength = 30;
+  const [countryEditing, setCountryEditing] = useState(false);
+  const [countryInput, setCountryInput] = useState("Worldwide");
+  const [ranking, setRanking] = useState(null);
+  const countries = [
+    "Worldwide",
+    "United States",
+    "United Kingdom",
+    "Canada",
+    "Germany",
+    "France",
+  ];
 
   // 1. load profile
   useEffect(() => {
@@ -45,6 +56,16 @@ export default function Profile() {
           setRequestId(data.requestId || null);
         })
         .catch(console.error);
+    }
+  }, [isOwn, profile]);
+
+  // 3. fetch ranking info for own profile
+  useEffect(() => {
+    if (isOwn) {
+      api
+        .get("/ranking/me")
+        .then(({ data }) => setRanking(data))
+        .catch(() => {});
     }
   }, [isOwn, profile]);
 
@@ -97,6 +118,7 @@ export default function Profile() {
   useEffect(() => {
     if (profile) {
       setBioInput(profile.bio || "");
+      setCountryInput(profile.country || "Worldwide");
     }
   }, [profile]);
 
@@ -110,6 +132,20 @@ export default function Profile() {
     } catch (err) {
       console.error(err);
       showAlert("Failed to update bio. Please try again.", "error");
+    }
+  };
+
+  const saveCountry = async () => {
+    try {
+      const { data } = await api.patch("/player/me/country", {
+        country: countryInput,
+      });
+      setPlayer(data.player);
+      setProfile(data.player);
+      setCountryEditing(false);
+    } catch (err) {
+      console.error(err);
+      showAlert("Failed to update country.", "error");
     }
   };
 
@@ -284,6 +320,51 @@ export default function Profile() {
             ) : (
               bio && <p className="mt-2">{bio}</p>
             )}
+
+            {isOwn && (
+              <div className="mt-2">
+                {countryEditing ? (
+                  <>
+                    <select
+                      className="border p-1 rounded mr-2"
+                      value={countryInput}
+                      onChange={(e) => setCountryInput(e.target.value)}
+                    >
+                      {countries.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={saveCountry}
+                      className="mr-2 text-blue-600 hover:underline"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => {
+                        setCountryEditing(false);
+                        setCountryInput(profile.country || "Worldwide");
+                      }}
+                      className="text-gray-600 hover:underline"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <p>
+                    Country: {profile.country || "Worldwide"}{" "}
+                    <button
+                      onClick={() => setCountryEditing(true)}
+                      className="ml-2 text-gray-900"
+                    >
+                      <FaEdit size={12} />
+                    </button>
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -343,6 +424,22 @@ export default function Profile() {
             )}
           </div>
         </div>
+
+        {isOwn && ranking && (
+          <div>
+            <h3 className="text-lg font-semibold mb-3">My Ranking</h3>
+            <p className="mb-1">Trophies: {ranking.trophies}</p>
+            <p className="mb-1">
+              World rank: {ranking.worldRank} out of {ranking.worldTotal}
+            </p>
+            <p className="mb-1">
+              Country rank: {ranking.countryRank} out of {ranking.countryTotal}
+            </p>
+            <p className="text-sm text-gray-600">
+              of the players in {ranking.country}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

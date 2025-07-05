@@ -71,6 +71,15 @@ const playerSchema = new Schema(
       default: 0,
     },
 
+    // Ranking
+    trophies: {
+      type: Number,
+      default: 0,
+    },
+    country: {
+      type: String,
+      default: "Worldwide",
+    },
     // Progression
     level: {
       type: Number,

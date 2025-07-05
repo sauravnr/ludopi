@@ -75,12 +75,14 @@ const playerRoutes = require("./routes/player");
 const avatarRoutes = require("./routes/avatar");
 const friendRequests = require("./routes/friendRequests");
 const chatRoutes = require("./routes/chat");
+const rankingRoutes = require("./routes/ranking");
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/player", playerRoutes);
 app.use("/api/avatar", avatarRoutes);
 app.use("/api/friend-requests", friendRequests);
 app.use("/api/chat", chatRoutes);
+app.use("/api/ranking", rankingRoutes);
 
 // ─── IN-MEMORY ROOM STORE ────────────────────────────
 const rooms = {};
@@ -515,6 +517,27 @@ function shuffleArray(arr) {
   }
   return a;
 }
+
+async function awardTrophies(room) {
+  const placements = room.finishOrder;
+  if (!Array.isArray(placements) || placements.length === 0) return;
+  const mode = room.mode;
+  const increments = mode === "2P" ? [5, -2] : [5, 2, 1, -2];
+  for (let i = 0; i < placements.length; i++) {
+    const color = placements[i];
+    const participant = room.participants.find((p) => p.color === color);
+    if (!participant) continue;
+    const inc = increments[i] ?? 0;
+    try {
+      await Player.findOneAndUpdate(
+        { userId: participant.userId },
+        { $inc: { trophies: inc } }
+      );
+    } catch (err) {
+      console.error("Failed to update trophies:", err);
+    }
+  }
+}
 function applySpin(roomCode, color, value) {
   const room = rooms[roomCode];
   if (!room) return;
@@ -681,6 +704,7 @@ async function applyMove(roomCode, color, tokenIdx, value) {
         room.players = [];
         room.currentTurnIndex = null;
         clearTimeout(room.botTimeout);
+        await awardTrophies(room);
       }
     }
     if (room.mode === "4P" && room.finishOrder.length === 1) {
@@ -722,6 +746,7 @@ async function applyMove(roomCode, color, tokenIdx, value) {
       room.players = [];
       room.currentTurnIndex = null;
       clearTimeout(room.botTimeout);
+      await awardTrophies(room);
     }
   }
 

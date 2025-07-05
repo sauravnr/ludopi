@@ -41,6 +41,20 @@ router.patch("/me/bio", protect, async (req, res) => {
   return res.json({ player });
 });
 
+// PATCH /api/player/me/country
+router.patch("/me/country", protect, async (req, res) => {
+  const { country } = req.body;
+  if (typeof country !== "string" || country.length > 60) {
+    return res.status(400).json({ message: "Invalid country" });
+  }
+  const player = await Player.findOneAndUpdate(
+    { userId: req.user._id },
+    { country },
+    { new: true }
+  );
+  return res.json({ player });
+});
+
 // POST /api/player/purchase
 router.post("/purchase", protect, async (req, res) => {
   const { item, cost } = req.body;
