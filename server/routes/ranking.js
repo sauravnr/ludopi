@@ -60,6 +60,31 @@ router.get("/me", protect, async (req, res) => {
   res.json(result);
 });
 
+// GET /api/ranking/trophies?page=1&limit=50 - paginated trophy leaderboard
+router.get("/trophies", protect, async (req, res) => {
+  const page = Math.max(1, parseInt(req.query.page) || 1);
+  const limit = Math.min(50, parseInt(req.query.limit) || 50);
+  const skip = (page - 1) * limit;
+  const cacheKey = `trophies-${page}-${limit}`;
+  const cached = rankCache.get(cacheKey);
+  if (cached && Date.now() - cached.time < CACHE_TTL) {
+    return res.json(cached.data);
+  }
+
+  const [players, total] = await Promise.all([
+    Player.find()
+      .sort({ trophies: -1, trophyUpdatedAt: 1, playerId: 1 })
+      .skip(skip)
+      .limit(limit)
+      .select("playerId username avatarUrl trophies country"),
+    Player.countDocuments(),
+  ]);
+
+  const result = { players, page, limit, total };
+  rankCache.set(cacheKey, { time: Date.now(), data: result });
+  res.json(result);
+});
+
 // GET /api/ranking/:userId - ranking information for any player
 router.get("/:userId", protect, async (req, res) => {
   try {
