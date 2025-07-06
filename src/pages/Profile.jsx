@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../utils/api";
-import { FaArrowLeft, FaEdit } from "react-icons/fa";
+import { FaArrowLeft, FaEdit, FaCoins } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 import { useAlert } from "../context/AlertContext";
 import { COUNTRY_NAMES, getCountryFlag } from "../utils/countries";
@@ -181,11 +181,13 @@ export default function Profile() {
     wins4P: fourWins = 0,
     joinedAt,
     username,
+    coins: coinBalance = 0,
   } = profile;
 
   const winRate = totalGames
     ? Math.round(((twoWins + fourWins) / totalGames) * 100)
     : 0;
+  const coins = Number(coinBalance).toLocaleString();
 
   return (
     <div
@@ -266,7 +268,13 @@ export default function Profile() {
           {/* Username & bio editing */}
           <div className="ml-4 flex-1">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-semibold">{username}</h2>
+              <div className="flex items-center space-x-2">
+                <h2 className="text-2xl font-semibold">{username}</h2>
+                <div className="flex items-center space-x-1 text-yellow-600">
+                  <FaCoins />
+                  <span>{coins}</span>
+                </div>
+              </div>
               {isOwn && (
                 <button
                   onClick={() => setIsEditing(!isEditing)}
