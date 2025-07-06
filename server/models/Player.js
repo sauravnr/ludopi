@@ -156,5 +156,7 @@ const playerSchema = new Schema(
 
 // Index to speed ranking queries with tie-breakers
 playerSchema.index({ trophies: -1, trophyUpdatedAt: 1, playerId: 1 });
+// Additional index for coins ranking
+playerSchema.index({ coins: -1, playerId: 1 });
 
 module.exports = mongoose.model("Player", playerSchema);

@@ -85,6 +85,126 @@ router.get("/trophies", protect, async (req, res) => {
   res.json(result);
 });
 
+// GET /api/ranking/coins?page=1&limit=50 - paginated coin leaderboard
+router.get("/coins", protect, async (req, res) => {
+  const page = Math.max(1, parseInt(req.query.page) || 1);
+  const limit = Math.min(50, parseInt(req.query.limit) || 50);
+  const skip = (page - 1) * limit;
+  const cacheKey = `coins-${page}-${limit}`;
+  const cached = rankCache.get(cacheKey);
+  if (cached && Date.now() - cached.time < CACHE_TTL) {
+    return res.json(cached.data);
+  }
+
+  const [players, total] = await Promise.all([
+    Player.find()
+      // sort by coins first, then by playerId to break ties
+      .sort({ coins: -1, playerId: 1 })
+      .skip(skip)
+      .limit(limit)
+      .select("playerId username avatarUrl coins country"),
+    Player.countDocuments(),
+  ]);
+
+  const result = { players, page, limit, total };
+  rankCache.set(cacheKey, { time: Date.now(), data: result });
+  res.json(result);
+});
+
+// GET /api/ranking/coins/me - coin ranking for the logged in player
+router.get("/coins/me", protect, async (req, res) => {
+  const player = await Player.findOne({ userId: req.user._id });
+  if (!player) return res.status(404).json({ message: "Profile not found" });
+  const cacheKey = `coins-me-${player.playerId}`;
+  const cached = rankCache.get(cacheKey);
+  if (cached && Date.now() - cached.time < CACHE_TTL) {
+    return res.json(cached.data);
+  }
+
+  const coins = player.coins || 0;
+  const worldTotal = await Player.countDocuments();
+  const worldRank =
+    (await Player.countDocuments({
+      // players with more coins or same coins but smaller playerId rank ahead
+      $or: [
+        { coins: { $gt: coins } },
+        { coins, playerId: { $lt: player.playerId } },
+      ],
+    })) + 1;
+  const country = player.country || "Worldwide";
+  const countryTotal = await Player.countDocuments({ country });
+  const countryRank =
+    (await Player.countDocuments({
+      // same tie-breaker within the country scope
+      $or: [
+        { country, coins: { $gt: coins } },
+        { country, coins, playerId: { $lt: player.playerId } },
+      ],
+    })) + 1;
+
+  const result = {
+    coins,
+    country,
+    worldRank,
+    worldTotal,
+    countryRank,
+    countryTotal,
+  };
+
+  rankCache.set(cacheKey, { time: Date.now(), data: result });
+  res.json(result);
+});
+
+// GET /api/ranking/coins/:userId - coin ranking for any player
+router.get("/coins/:userId", protect, async (req, res) => {
+  try {
+    const player = await Player.findOne({ userId: req.params.userId });
+    if (!player) {
+      return res.status(404).json({ message: "Profile not found" });
+    }
+    const cacheKey = `coins-user-${player.playerId}`;
+    const cached = rankCache.get(cacheKey);
+    if (cached && Date.now() - cached.time < CACHE_TTL) {
+      return res.json(cached.data);
+    }
+
+    const coins = player.coins || 0;
+    const worldTotal = await Player.countDocuments();
+    const worldRank =
+      (await Player.countDocuments({
+        // players with more coins or same coins but smaller playerId rank ahead
+        $or: [
+          { coins: { $gt: coins } },
+          { coins, playerId: { $lt: player.playerId } },
+        ],
+      })) + 1;
+    const country = player.country || "Worldwide";
+    const countryTotal = await Player.countDocuments({ country });
+    const countryRank =
+      (await Player.countDocuments({
+        // same tie-breaker within the country scope
+        $or: [
+          { country, coins: { $gt: coins } },
+          { country, coins, playerId: { $lt: player.playerId } },
+        ],
+      })) + 1;
+    const result = {
+      coins,
+      country,
+      worldRank,
+      worldTotal,
+      countryRank,
+      countryTotal,
+    };
+
+    rankCache.set(cacheKey, { time: Date.now(), data: result });
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 // GET /api/ranking/:userId - ranking information for any player
 router.get("/:userId", protect, async (req, res) => {
   try {
