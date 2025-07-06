@@ -4,7 +4,7 @@ const protect = require("../middleware/auth");
 const Player = require("../models/Player");
 
 // simple in-memory cache so ranks don't recalc every request
-const CACHE_TTL = 60 * 1000; // 1 minute
+const CACHE_TTL = 1 * 60 * 60 * 1000; // 1 hour
 const rankCache = new Map();
 
 // GET /api/ranking/me
