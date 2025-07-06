@@ -76,6 +76,10 @@ const playerSchema = new Schema(
       default: 0,
       min: 0,
     },
+    trophyUpdatedAt: {
+      type: Date,
+      default: Date.now,
+    },
     country: {
       type: String,
       default: "Worldwide",
@@ -149,5 +153,8 @@ const playerSchema = new Schema(
     timestamps: true, // adds createdAt & updatedAt
   }
 );
+
+// Index to speed ranking queries with tie-breakers
+playerSchema.index({ trophies: -1, trophyUpdatedAt: 1, playerId: 1 });
 
 module.exports = mongoose.model("Player", playerSchema);

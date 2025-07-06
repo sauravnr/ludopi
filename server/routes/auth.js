@@ -59,7 +59,13 @@ router.post("/pi-login", piLoginLimiter, async (req, res) => {
       });
     }
 
-    // 4) Issue JWT and set cookie
+    // 4) Update last login without blocking response
+    Player.updateOne(
+      { userId: user._id },
+      { $set: { lastLogin: new Date() } }
+    ).catch((err) => console.error("Failed to update lastLogin:", err));
+
+    // 5) Issue JWT and set cookie
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
@@ -136,6 +142,11 @@ router.post("/login", async (req, res) => {
     if (!user || !(await user.matchPassword(password))) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
+    // fire-and-forget lastLogin update
+    Player.updateOne(
+      { userId: user._id },
+      { $set: { lastLogin: new Date() } }
+    ).catch((err) => console.error("Failed to update lastLogin:", err));
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
