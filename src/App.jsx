@@ -33,6 +33,11 @@ function RequireAuthRedirectToOwn() {
   const actualId = user._id || user.id;
   return <Navigate to={`/profile/${actualId}`} replace />;
 }
+function RedirectIfAuth({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return <Loader />;
+  return user ? <Navigate to="/" replace /> : children;
+}
 
 export default function App() {
   return (
@@ -40,8 +45,22 @@ export default function App() {
       <div className="w-full max-w-[425px] h-full bg-gray-100 overflow-hidden shadow-2xl flex flex-col relative">
         <Routes>
           {/* public */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route
+            path="/login"
+            element={
+              <RedirectIfAuth>
+                <Login />
+              </RedirectIfAuth>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <RedirectIfAuth>
+                <Register />
+              </RedirectIfAuth>
+            }
+          />
 
           {/* protected */}
           <Route element={<RequireAuth />}>
