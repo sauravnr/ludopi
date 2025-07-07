@@ -1,21 +1,23 @@
 import React, { useState } from "react";
-import useSWR from "swr";
 import useSWRInfinite from "swr/infinite";
 import api from "../utils/api";
 import { getCountryFlag } from "../utils/countries";
+import { useAuth } from "../context/AuthContext";
 
 export default function CoinsRanking() {
   const LIMIT = 20;
 
   const [scope, setScope] = useState("world");
+  const { player } = useAuth();
 
   const fetcher = (url) => api.get(url).then((res) => res.data);
-  const { data: myRank } = useSWR("/ranking/coins/me", fetcher);
   const getKey = (pageIndex, prev) => {
-    if (scope === "country" && !myRank) return null;
+    if (scope === "country" && !player?.country) return null;
     if (prev && prev.players.length < LIMIT) return null;
     const countryParam =
-      scope === "country" && myRank ? `&country=${myRank.country}` : "";
+      scope === "country" && player?.country
+        ? `&country=${player.country}`
+        : "";
     return `/ranking/coins?page=${pageIndex + 1}&limit=${LIMIT}${countryParam}`;
   };
 
@@ -60,7 +62,7 @@ export default function CoinsRanking() {
               : "text-gray-600 hover:text-gray-800"
           }`}
         >
-          {myRank ? myRank.country : "Country"}
+          {player?.country || "Country"}
         </button>
       </div>
       <div className="flex-1 overflow-y-auto">
