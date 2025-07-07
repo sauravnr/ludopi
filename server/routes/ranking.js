@@ -3,13 +3,17 @@ const router = express.Router();
 const protect = require("../middleware/auth");
 const Player = require("../models/Player");
 
+const RANK_FIELDS = "playerId trophies trophyUpdatedAt coins country";
+
 // simple in-memory cache so ranks don't recalc every request
 const CACHE_TTL = 1 * 60 * 60 * 1000; // 1 hour
 const rankCache = new Map();
 
 // GET /api/ranking/me
 router.get("/me", protect, async (req, res) => {
-  const player = await Player.findOne({ userId: req.user._id });
+  const player = await Player.findOne({ userId: req.user._id })
+    .select(RANK_FIELDS)
+    .lean();
   if (!player) return res.status(404).json({ message: "Profile not found" });
   const cacheKey = `me-${player.playerId}`;
   const cached = rankCache.get(cacheKey);
@@ -117,7 +121,9 @@ router.get("/coins", protect, async (req, res) => {
 
 // GET /api/ranking/coins/me - coin ranking for the logged in player
 router.get("/coins/me", protect, async (req, res) => {
-  const player = await Player.findOne({ userId: req.user._id });
+  const player = await Player.findOne({ userId: req.user._id })
+    .select(RANK_FIELDS)
+    .lean();
   if (!player) return res.status(404).json({ message: "Profile not found" });
   const cacheKey = `coins-me-${player.playerId}`;
   const cached = rankCache.get(cacheKey);
@@ -162,7 +168,9 @@ router.get("/coins/me", protect, async (req, res) => {
 // GET /api/ranking/coins/:userId - coin ranking for any player
 router.get("/coins/:userId", protect, async (req, res) => {
   try {
-    const player = await Player.findOne({ userId: req.params.userId });
+    const player = await Player.findOne({ userId: req.params.userId })
+      .select(RANK_FIELDS)
+      .lean();
     if (!player) {
       return res.status(404).json({ message: "Profile not found" });
     }
@@ -212,7 +220,9 @@ router.get("/coins/:userId", protect, async (req, res) => {
 // GET /api/ranking/:userId - ranking information for any player
 router.get("/:userId", protect, async (req, res) => {
   try {
-    const player = await Player.findOne({ userId: req.params.userId });
+    const player = await Player.findOne({ userId: req.params.userId })
+      .select(RANK_FIELDS)
+      .lean();
     if (!player) {
       return res.status(404).json({ message: "Profile not found" });
     }

@@ -113,7 +113,9 @@ app.post(
     if (isNaN(betAmount) || betAmount < MIN_BET || betAmount > MAX_BET) {
       return res.status(400).json({ error: "Invalid bet amount" });
     }
-    const player = await Player.findOne({ userId: req.user._id });
+    const player = await Player.findOne({ userId: req.user._id })
+      .select("coins")
+      .lean();
     if (!player || player.coins < betAmount) {
       return res.status(400).json({ error: "Not enough coins for this bet" });
     }
@@ -521,7 +523,9 @@ async function awardTrophies(room) {
     if (!participant) continue;
     const inc = increments[i] ?? 0;
     try {
-      const player = await Player.findOne({ userId: participant.userId });
+      const player = await Player.findOne({ userId: participant.userId })
+        .select("trophies")
+        .lean();
       if (!player) continue;
       const current = player.trophies || 0;
       const newTrophies = Math.max(0, current + inc);
@@ -928,7 +932,9 @@ io.on("connection", (socket) => {
     // Add or update player
     let player = room.players.find((p) => p.userId === user._id.toString());
     if (!player) {
-      const playerDoc = await Player.findOne({ userId: user._id });
+      const playerDoc = await Player.findOne({ userId: user._id })
+        .select("coins")
+        .lean();
       if (!playerDoc || playerDoc.coins < room.bet) {
         return socket.emit("insufficient-coins", {
           message: "Not enough coins to join this room",
@@ -1004,7 +1010,9 @@ io.on("connection", (socket) => {
 
     try {
       const ids = room.players.map((p) => p.userId);
-      const docs = await Player.find({ userId: { $in: ids } });
+      const docs = await Player.find({ userId: { $in: ids } })
+        .select("userId coins")
+        .lean();
       const map = Object.fromEntries(
         docs.map((d) => [d.userId.toString(), d.coins])
       );

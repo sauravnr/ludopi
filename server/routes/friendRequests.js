@@ -101,17 +101,18 @@ router.delete(
     });
     // ── Also remove each other from Player.friends ──
     {
-      const mePlayer = await Player.findOne({ userId: me });
-      const otherPlayer = await Player.findOne({ userId: them });
-      if (mePlayer && otherPlayer) {
-        mePlayer.friends = mePlayer.friends.filter(
-          (pid) => pid.toString() !== otherPlayer._id.toString()
-        );
-        otherPlayer.friends = otherPlayer.friends.filter(
-          (pid) => pid.toString() !== mePlayer._id.toString()
-        );
-        await mePlayer.save();
-        await otherPlayer.save();
+      const [meDoc, otherDoc] = await Promise.all([
+        Player.findOne({ userId: me }).select("_id"),
+        Player.findOne({ userId: them }).select("_id"),
+      ]);
+      if (meDoc && otherDoc) {
+        await Promise.all([
+          Player.updateOne(
+            { userId: me },
+            { $pull: { friends: otherDoc._id } }
+          ),
+          Player.updateOne({ userId: them }, { $pull: { friends: meDoc._id } }),
+        ]);
       }
     }
     return res.json({ message: "Unfriended." });
@@ -238,19 +239,21 @@ router.post("/:id", protect, async (req, res) => {
     // ── Add each other to Player.friends ──
     {
       // my Player doc
-      const mePlayer = await Player.findOne({ userId: me });
-      // the other’s Player doc
-      const otherPlayer = await Player.findOne({ userId: fr.from });
-      if (mePlayer && otherPlayer) {
-        // push if not already present
-        if (!mePlayer.friends.includes(otherPlayer._id)) {
-          mePlayer.friends.push(otherPlayer._id);
-          await mePlayer.save();
-        }
-        if (!otherPlayer.friends.includes(mePlayer._id)) {
-          otherPlayer.friends.push(mePlayer._id);
-          await otherPlayer.save();
-        }
+      const [meDoc, otherDoc] = await Promise.all([
+        Player.findOne({ userId: me }).select("_id"),
+        Player.findOne({ userId: fr.from }).select("_id"),
+      ]);
+      if (meDoc && otherDoc) {
+        await Promise.all([
+          Player.updateOne(
+            { userId: me },
+            { $addToSet: { friends: otherDoc._id } }
+          ),
+          Player.updateOne(
+            { userId: fr.from },
+            { $addToSet: { friends: meDoc._id } }
+          ),
+        ]);
       }
     }
     return res.json({ request: fr });
