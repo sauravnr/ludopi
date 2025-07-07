@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import useSWRInfinite from "swr/infinite";
 import api from "../utils/api";
 import { getCountryFlag } from "../utils/countries";
@@ -23,10 +23,17 @@ export default function TrophiesRanking() {
     }&limit=${LIMIT}${countryParam}`;
   };
 
-  const { data, size, setSize, isLoading, error } = useSWRInfinite(
+  const { data, size, setSize, isLoading, error, mutate } = useSWRInfinite(
     getKey,
-    fetcher
+    fetcher,
+    { revalidateOnMount: false }
   );
+
+  useEffect(() => {
+    if (!data) {
+      mutate();
+    }
+  }, [data, mutate]);
 
   const players = data ? data.flatMap((p) => p.players) : [];
   const hasMore = data ? data[data.length - 1].players.length === LIMIT : false;
