@@ -1,27 +1,26 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
+import useSWRInfinite from "swr/infinite";
 import api from "../utils/api";
 
 export default function Users() {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const LIMIT = 20;
 
-  useEffect(() => {
-    api
-      .get("/users")
-      .then((res) => {
-        setUsers(res.data);
-      })
-      .catch((err) => {
-        setError(err.response?.data?.message || "Failed to load users");
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, []);
+  const fetcher = (url) => api.get(url).then((res) => res.data);
+  const getKey = (pageIndex, prev) =>
+    prev && prev.users.length < LIMIT
+      ? null
+      : `/users?page=${pageIndex + 1}&limit=${LIMIT}`;
 
-  if (loading) return <p className="p-4">Loading users…</p>;
-  if (error) return <p className="p-4 alert alert-error">{error}</p>;
+  const { data, error, size, setSize, isLoading } = useSWRInfinite(
+    getKey,
+    fetcher
+  );
+
+  const users = data ? data.flatMap((p) => p.users) : [];
+  const hasMore = data ? data[data.length - 1].users.length === LIMIT : false;
+
+  if (error)
+    return <p className="p-4 alert alert-error">Failed to load users.</p>;
 
   return (
     <div className="p-4">
@@ -32,7 +31,24 @@ export default function Users() {
             <strong>{u.username}</strong> ({u.email})
           </li>
         ))}
+        {!users.length &&
+          (isLoading ? (
+            <li className="text-gray-500">Loading users…</li>
+          ) : (
+            <li className="text-gray-500">No users found.</li>
+          ))}
       </ul>
+      {hasMore && (
+        <div className="mt-4 text-center">
+          <button
+            onClick={() => setSize(size + 1)}
+            disabled={isLoading}
+            className="text-sm text-blue-600 hover:underline"
+          >
+            {isLoading ? "Loading…" : "Load more"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

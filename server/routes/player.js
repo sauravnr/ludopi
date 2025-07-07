@@ -6,8 +6,14 @@ const Player = require("../models/Player");
 const CoinTransaction = require("../models/CoinTransaction");
 const MAX_BIO_LEN = 30;
 
+// Fields needed by the front-end profile views
+const PROFILE_FIELDS =
+  "userId username avatarUrl bio country badges totalGamesPlayed wins2P wins4P coins createdAt";
+
 router.get("/me", protect, async (req, res) => {
-  const player = await Player.findOne({ userId: req.user._id });
+  const player = await Player.findOne({ userId: req.user._id })
+    .select(PROFILE_FIELDS)
+    .lean();
   if (!player) return res.status(404).json({ message: "Profile not found" });
   res.json({ player });
 });
@@ -15,7 +21,9 @@ router.get("/me", protect, async (req, res) => {
 // fetch another user's profile by their userId
 router.get("/:userId", protect, async (req, res) => {
   try {
-    const player = await Player.findOne({ userId: req.params.userId });
+    const player = await Player.findOne({ userId: req.params.userId })
+      .select(PROFILE_FIELDS)
+      .lean();
     if (!player) return res.status(404).json({ message: "Player not found" });
     res.json({ player });
   } catch (err) {
@@ -37,7 +45,9 @@ router.patch("/me/bio", protect, async (req, res) => {
     { userId: req.user._id },
     { bio },
     { new: true }
-  );
+  )
+    .select(PROFILE_FIELDS)
+    .lean();
   return res.json({ player });
 });
 
@@ -51,7 +61,9 @@ router.patch("/me/country", protect, async (req, res) => {
     { userId: req.user._id },
     { country },
     { new: true }
-  );
+  )
+    .select(PROFILE_FIELDS)
+    .lean();
   return res.json({ player });
 });
 
@@ -73,7 +85,9 @@ router.post("/purchase", protect, async (req, res) => {
       $set: { lastPurchaseDate: new Date() },
     },
     { new: true }
-  );
+  )
+    .select(PROFILE_FIELDS)
+    .lean();
   if (!player) {
     return res.status(400).json({ message: "Not enough coins" });
   }
