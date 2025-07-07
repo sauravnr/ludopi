@@ -65,19 +65,21 @@ router.get("/trophies", protect, async (req, res) => {
   const page = Math.max(1, parseInt(req.query.page) || 1);
   const limit = Math.min(50, parseInt(req.query.limit) || 50);
   const skip = (page - 1) * limit;
-  const cacheKey = `trophies-${page}-${limit}`;
+  const country = req.query.country;
+  const cacheKey = `trophies-${country || "world"}-${page}-${limit}`;
   const cached = rankCache.get(cacheKey);
   if (cached && Date.now() - cached.time < CACHE_TTL) {
     return res.json(cached.data);
   }
 
+  const query = country ? { country } : {};
   const [players, total] = await Promise.all([
-    Player.find()
+    Player.find(query)
       .sort({ trophies: -1, trophyUpdatedAt: 1, playerId: 1 })
       .skip(skip)
       .limit(limit)
       .select("playerId username avatarUrl trophies country"),
-    Player.countDocuments(),
+    Player.countDocuments(query),
   ]);
 
   const result = { players, page, limit, total };
@@ -90,20 +92,22 @@ router.get("/coins", protect, async (req, res) => {
   const page = Math.max(1, parseInt(req.query.page) || 1);
   const limit = Math.min(50, parseInt(req.query.limit) || 50);
   const skip = (page - 1) * limit;
-  const cacheKey = `coins-${page}-${limit}`;
+  const country = req.query.country;
+  const cacheKey = `coins-${country || "world"}-${page}-${limit}`;
   const cached = rankCache.get(cacheKey);
   if (cached && Date.now() - cached.time < CACHE_TTL) {
     return res.json(cached.data);
   }
 
+  const query = country ? { country } : {};
   const [players, total] = await Promise.all([
-    Player.find()
+    Player.find(query)
       // sort by coins first, then by playerId to break ties
       .sort({ coins: -1, playerId: 1 })
       .skip(skip)
       .limit(limit)
       .select("playerId username avatarUrl coins country"),
-    Player.countDocuments(),
+    Player.countDocuments(query),
   ]);
 
   const result = { players, page, limit, total };
