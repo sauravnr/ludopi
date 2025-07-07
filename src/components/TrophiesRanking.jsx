@@ -7,13 +7,13 @@ import { getCountryFlag } from "../utils/countries";
 export default function TrophiesRanking() {
   const LIMIT = 20;
 
+  const [scope, setScope] = useState("world");
+
   const fetcher = (url) => api.get(url).then((res) => res.data);
   const { data: myRank } = useSWR("/ranking/me", fetcher);
-  const [scope, setScope] = useState("world");
   const getKey = (pageIndex, prev) => {
     if (scope === "country" && !myRank) return null;
     if (prev && prev.players.length < LIMIT) return null;
-    return `/ranking/trophies?page=${pageIndex + 1}&limit=${LIMIT}`;
     const countryParam =
       scope === "country" && myRank ? `&country=${myRank.country}` : "";
     return `/ranking/trophies?page=${
@@ -38,21 +38,6 @@ export default function TrophiesRanking() {
 
   return (
     <div className="flex flex-col h-full">
-      {myRank && (
-        <div className="bg-white/70 p-3 rounded-md mb-2 text-sm">
-          <p className="font-medium mb-1">
-            {getCountryFlag(myRank.country)} {myRank.country}
-          </p>
-          <p>
-            🌐 World rank: {Number(myRank.worldRank).toLocaleString()} /{" "}
-            {Number(myRank.worldTotal).toLocaleString()}
-          </p>
-          <p>
-            Country rank: {Number(myRank.countryRank).toLocaleString()} /{" "}
-            {Number(myRank.countryTotal).toLocaleString()}
-          </p>
-        </div>
-      )}
       <div className="flex border-b mb-2">
         <button
           onClick={() => {
