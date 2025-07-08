@@ -44,7 +44,11 @@ const Home = () => {
       setShowBetModal(false);
     } catch (err) {
       console.error("Failed to create room:", err);
-      setBetError("Unable to create room right now. Please try again.");
+      const msg =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        "Unable to create room right now. Please try again.";
+      setBetError(msg);
     }
   };
 

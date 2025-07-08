@@ -3,9 +3,11 @@ import React from "react";
 import useSWRInfinite from "swr/infinite";
 import { useNavigate } from "react-router-dom";
 import api from "../utils/api";
+import { useAlert } from "../context/AlertContext";
 
 export default function RequestsList() {
   const navigate = useNavigate();
+  const showAlert = useAlert();
   const LIMIT = 15;
 
   // SWR infinite setup
@@ -30,8 +32,10 @@ export default function RequestsList() {
     try {
       await api.post(`/friend-requests/${id}`, { accept });
       await mutate(); // refresh pages
-    } catch {
+    } catch (err) {
       console.error("Failed to respond.");
+      const msg = err?.response?.data?.message || "Failed to respond.";
+      showAlert(msg, "error");
     }
   };
 

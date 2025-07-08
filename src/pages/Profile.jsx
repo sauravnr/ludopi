@@ -75,7 +75,8 @@ export default function Profile() {
       setRequestId(data.request._id);
     } catch (err) {
       console.error(err);
-      showAlert("Failed to send request.", "error");
+      const msg = err?.response?.data?.message || "Failed to send request.";
+      showAlert(msg, "error");
     } finally {
       setButtonLoading(false);
     }
@@ -88,8 +89,9 @@ export default function Profile() {
       await api.delete(`/friend-requests/${requestId}`);
       setRelationship("none");
       setRequestId(null);
-    } catch {
-      showAlert("Failed to cancel.", "error");
+    } catch (err) {
+      const msg = err?.response?.data?.message || "Failed to cancel.";
+      showAlert(msg, "error");
     } finally {
       setButtonLoading(false);
     }
@@ -102,8 +104,9 @@ export default function Profile() {
     try {
       await api.delete(`/friend-requests/friends/${profile.userId}`);
       setRelationship("none");
-    } catch {
-      showAlert("Failed to unfriend.", "error");
+    } catch (err) {
+      const msg = err?.response?.data?.message || "Failed to unfriend.";
+      showAlert(msg, "error");
     } finally {
       setButtonLoading(false);
     }
@@ -126,7 +129,10 @@ export default function Profile() {
       setIsEditing(false);
     } catch (err) {
       console.error(err);
-      showAlert("Failed to update bio. Please try again.", "error");
+      const msg =
+        err?.response?.data?.message ||
+        "Failed to update bio. Please try again.";
+      showAlert(msg, "error");
     }
   };
 
@@ -140,7 +146,8 @@ export default function Profile() {
       setCountryEditing(false);
     } catch (err) {
       console.error(err);
-      showAlert("Failed to update country.", "error");
+      const msg = err?.response?.data?.message || "Failed to update country.";
+      showAlert(msg, "error");
     }
   };
 
@@ -163,7 +170,10 @@ export default function Profile() {
       }
     } catch (err) {
       console.error("Upload error:", err);
-      showAlert("Upload failed: " + err.message, "error");
+      const msg =
+        err?.response?.data?.message ||
+        (err.message ? `Upload failed: ${err.message}` : "Upload failed.");
+      showAlert(msg, "error");
     }
   };
 
