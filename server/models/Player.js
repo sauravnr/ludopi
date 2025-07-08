@@ -114,6 +114,13 @@ const playerSchema = new Schema(
     friendRequestsReceived: [{ type: Schema.Types.ObjectId, ref: "Player" }],
     blockedUsers: [{ type: Schema.Types.ObjectId, ref: "Player" }],
 
+    // Track which room the user is currently in (if any)
+    activeRoomCode: {
+      type: String,
+      default: null,
+      index: true,
+    },
+
     // Preferences
     chatOn: {
       type: Boolean,

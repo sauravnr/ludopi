@@ -114,10 +114,15 @@ app.post(
       return res.status(400).json({ error: "Invalid bet amount" });
     }
     const player = await Player.findOne({ userId: req.user._id })
-      .select("coins")
+      .select("coins activeRoomCode")
       .lean();
     if (!player || player.coins < betAmount) {
       return res.status(400).json({ error: "Not enough coins for this bet" });
+    }
+    if (player.activeRoomCode) {
+      return res
+        .status(400)
+        .json({ error: "Finish your current game before creating another" });
     }
     const code = generateRoomCode(6); // ~2.8T possible codes
     // initialize exactly as your socket “create” logic would:
@@ -173,6 +178,14 @@ app.post(
         blue: false,
       },
     };
+    try {
+      await Player.findOneAndUpdate(
+        { userId: req.user._id, activeRoomCode: null },
+        { activeRoomCode: code }
+      );
+    } catch (err) {
+      console.error("Failed to set active room:", err);
+    }
     return res.status(201).json({ code });
   }
 );
@@ -512,6 +525,18 @@ function shuffleArray(arr) {
   return a;
 }
 
+async function clearActiveRoomCodes(userIds, code) {
+  if (!Array.isArray(userIds) || userIds.length === 0) return;
+  try {
+    await Player.updateMany(
+      { userId: { $in: userIds }, activeRoomCode: code },
+      { $set: { activeRoomCode: null } }
+    );
+  } catch (err) {
+    console.error("Failed to clear activeRoomCode:", err);
+  }
+}
+
 async function awardTrophies(room) {
   const placements = room.finishOrder;
   if (!Array.isArray(placements) || placements.length === 0) return;
@@ -701,6 +726,10 @@ async function applyMove(roomCode, color, tokenIdx, value) {
         room.currentTurnIndex = null;
         clearTimeout(room.botTimeout);
         await awardTrophies(room);
+        await clearActiveRoomCodes(
+          room.participants.map((p) => p.userId),
+          roomCode
+        );
       }
     }
     if (room.mode === "4P" && room.finishOrder.length === 1) {
@@ -739,6 +768,10 @@ async function applyMove(roomCode, color, tokenIdx, value) {
       room.currentTurnIndex = null;
       clearTimeout(room.botTimeout);
       await awardTrophies(room);
+      await clearActiveRoomCodes(
+        room.participants.map((p) => p.userId),
+        roomCode
+      );
     }
   }
 
@@ -833,9 +866,15 @@ io.on("connection", (socket) => {
   });
 
   // helper to remove a player (and tear down if host)
-  function handleDeparture(socket, roomCode) {
+  async function handleDeparture(socket, roomCode) {
     const room = rooms[roomCode];
-    if (!room) return;
+    if (!room) {
+      Player.findOneAndUpdate(
+        { userId: socket.user._id, activeRoomCode: roomCode },
+        { activeRoomCode: null }
+      ).catch((err) => console.error("Failed to clear active room:", err));
+      return;
+    }
 
     const idx = room.players.findIndex(
       (p) => p.userId === socket.user._id.toString()
@@ -846,6 +885,10 @@ io.on("connection", (socket) => {
     if (!room.started) {
       // lobby phase: remove as before
       room.players.splice(idx, 1);
+      Player.findOneAndUpdate(
+        { userId: socket.user._id, activeRoomCode: roomCode },
+        { activeRoomCode: null }
+      ).catch((err) => console.error("Failed to clear active room:", err));
 
       if (isHost) {
         io.to(roomCode).emit("room-closed", {
@@ -855,6 +898,10 @@ io.on("connection", (socket) => {
         for (const sid of clients) {
           io.sockets.sockets.get(sid)?.leave(roomCode);
         }
+        await clearActiveRoomCodes(
+          room.players.map((p) => p.userId),
+          roomCode
+        );
         clearTimeout(room.botTimeout);
         delete rooms[roomCode];
       } else {
@@ -919,6 +966,14 @@ io.on("connection", (socket) => {
     if (!room) {
       return socket.emit("room-not-found");
     }
+    // Check if user is already in another active room
+    const playerDoc = await Player.findOne({ userId: user._id })
+      .select("coins activeRoomCode")
+      .lean();
+    if (!playerDoc) return socket.emit("server-error");
+    if (playerDoc.activeRoomCode && playerDoc.activeRoomCode !== roomCode) {
+      return socket.emit("already-in-room");
+    }
     // mark lobby as “touched” right now
     room.lastActive = Date.now();
 
@@ -932,10 +987,7 @@ io.on("connection", (socket) => {
     // Add or update player
     let player = room.players.find((p) => p.userId === user._id.toString());
     if (!player) {
-      const playerDoc = await Player.findOne({ userId: user._id })
-        .select("coins")
-        .lean();
-      if (!playerDoc || playerDoc.coins < room.bet) {
+      if (playerDoc.coins < room.bet) {
         return socket.emit("insufficient-coins", {
           message: "Not enough coins to join this room",
         });
@@ -965,6 +1017,16 @@ io.on("connection", (socket) => {
         // just update socket info if they snuck in
         player.socketId = socket.id;
         player.offline = false;
+      }
+      if (!playerDoc.activeRoomCode) {
+        try {
+          await Player.findOneAndUpdate(
+            { userId: user._id, activeRoomCode: null },
+            { activeRoomCode: roomCode }
+          );
+        } catch (err) {
+          console.error("Failed to set active room:", err);
+        }
       }
     } else {
       player.socketId = socket.id;
@@ -1261,6 +1323,10 @@ setInterval(() => {
     ) {
       console.log(`🗑️ Deleting stale room ${code}`);
       clearTimeout(room.botTimeout);
+      clearActiveRoomCodes(
+        (room.participants || []).map((p) => p.userId),
+        code
+      );
       delete rooms[code];
     }
   }
@@ -1285,6 +1351,10 @@ setInterval(() => {
           io.sockets.sockets.get(sid)?.leave(code);
         }
         clearTimeout(room.botTimeout);
+        clearActiveRoomCodes(
+          (room.participants || []).map((p) => p.userId),
+          code
+        );
         delete rooms[code];
         console.log(`🗑️ Closed idle lobby ${code}`);
       }
