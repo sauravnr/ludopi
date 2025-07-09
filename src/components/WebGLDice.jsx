@@ -133,11 +133,10 @@ export default function WebGLDice({
       return mat;
     });
 
-    const chamfer = 0.2; // rounding radius for beveled edges
-    const geometry = new RoundedBoxGeometry(1, 1, 1, chamfer, 8);
+    const chamfer = 0.15; // increased radius for visible bevel
+    const geometry = new RoundedBoxGeometry(1, 1, 1, chamfer, 16);
     geometry.computeVertexNormals();
     const cube = new THREE.Mesh(geometry, materials);
-    // RoundedBoxGeometry already accounts for radius in its dimensions,
     scene.add(cube);
     cubeRef.current = cube;
 
