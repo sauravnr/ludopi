@@ -1,6 +1,8 @@
 // src/components/WebGLDice.jsx
 import React, { useRef, useEffect } from "react";
 import * as THREE from "three";
+// use example RoundedBoxGeometry for chamfered dice edges
+import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { gsap } from "gsap";
 
 // cache textures across component mounts
@@ -131,7 +133,11 @@ export default function WebGLDice({
       return mat;
     });
 
-    const cube = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), materials);
+    const chamfer = 0.2; // rounding radius for beveled edges
+    const geometry = new RoundedBoxGeometry(1, 1, 1, chamfer, 8);
+    geometry.computeVertexNormals();
+    const cube = new THREE.Mesh(geometry, materials);
+    // RoundedBoxGeometry already accounts for radius in its dimensions,
     scene.add(cube);
     cubeRef.current = cube;
 

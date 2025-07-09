@@ -926,8 +926,8 @@ const LudoCanvas = ({
             delete u[color];
             return u;
           });
-        }, 2000);
-      }, 1000);
+        }, 3000); // face display
+      }, 700); // spinning time
     };
 
     const onTurn = ({ currentTurnColor }) => {
