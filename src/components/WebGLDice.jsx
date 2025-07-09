@@ -114,7 +114,8 @@ export default function WebGLDice({
     container.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 10);
+    // slightly narrower FOV so the cube fills more of the container
+    const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 10);
     camera.position.set(0, 0, 2);
     scene.add(new THREE.AmbientLight(0xffffff, 0.6));
     const dl = new THREE.DirectionalLight(0xffffff, 0.8);
@@ -133,10 +134,12 @@ export default function WebGLDice({
       return mat;
     });
 
-    const chamfer = 0.15; // increased radius for visible bevel
+    // increase the chamfer radius for softer edges
+    const chamfer = 0.25;
     const geometry = new RoundedBoxGeometry(1, 1, 1, chamfer, 16);
     geometry.computeVertexNormals();
     const cube = new THREE.Mesh(geometry, materials);
+    cube.scale.set(1.3, 1.3, 1.3); // enlarge slightly so it matches idle size
     scene.add(cube);
     cubeRef.current = cube;
 
