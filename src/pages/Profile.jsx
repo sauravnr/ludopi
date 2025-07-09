@@ -246,7 +246,7 @@ export default function Profile() {
           </div>
         )}
         {/* Avatar & upload button */}
-        <div className="flex items-center bg-[#eeebe3] rounded-xl p-4">
+        <div className="flex items-center bg-[#eeebe3] rounded-xl p-4 shadow">
           <div className="relative">
             <img
               src={avatarUrl || "/default-avatar.png"}
@@ -381,7 +381,7 @@ export default function Profile() {
 
         {/* Ranking */}
         {ranking && (
-          <div className="bg-white/50 p-4 rounded-lg">
+          <div className="bg-white/50 p-4 rounded-lg shadow">
             <h3 className="text-lg font-semibold mb-3">Ranking</h3>
             <p className="mb-1">🏆 {ranking.trophies}</p>
             <p className="mb-1">

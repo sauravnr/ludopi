@@ -54,6 +54,8 @@ export default function WebGLDice({
   const spinRef = useRef({ x: 0, y: 0 });
   const rollingRef = useRef(rollingNow);
   const animatingRef = useRef(false);
+  const frameRef = useRef(null);
+  const startLoopRef = useRef(() => {});
 
   // keep rollingRef up to date
   useEffect(() => {
@@ -80,10 +82,12 @@ export default function WebGLDice({
 
     // swallow immutable-texture errors
     ["texParameteri", "generateMipmap", "texStorage2D"].forEach((fn) => {
-      const orig = gl[fn].bind(gl);
+      const orig = gl[fn];
+      if (typeof orig !== "function") return;
+      const bound = orig.bind(gl);
       gl[fn] = (...args) => {
         try {
-          return orig(...args);
+          return bound(...args);
         } catch {
           // ignore INVALID_OPERATION
         }
@@ -141,9 +145,26 @@ export default function WebGLDice({
         cube.rotation.y = spinRef.current.y;
       }
       renderer.render(scene, camera);
-      requestAnimationFrame(tick);
+      if (rollingRef.current || animatingRef.current) {
+        frameRef.current = requestAnimationFrame(tick);
+      } else {
+        frameRef.current = null;
+      }
     };
-    tick();
+
+    const startLoop = () => {
+      if (frameRef.current == null) {
+        frameRef.current = requestAnimationFrame(tick);
+      }
+    };
+
+    startLoopRef.current = startLoop;
+
+    if (rollingRef.current || animatingRef.current) {
+      startLoop();
+    } else {
+      renderer.render(scene, camera);
+    }
 
     // cleanup
     return () => {
@@ -152,6 +173,10 @@ export default function WebGLDice({
         const g = rend.getContext();
         const loseExt = g.getExtension("WEBGL_lose_context");
         if (loseExt) loseExt.loseContext();
+        if (frameRef.current != null) {
+          cancelAnimationFrame(frameRef.current);
+          frameRef.current = null;
+        }
         rend.dispose();
         container.removeChild(rend.domElement);
         rendererRef.current = null;
@@ -159,10 +184,18 @@ export default function WebGLDice({
     };
   }, [size]);
 
+  // start the loop when rolling begins (after renderer is ready)
+  useEffect(() => {
+    if (rollingNow) {
+      startLoopRef.current();
+    }
+  }, [rollingNow]);
+
   // ─── TWEEN TO FACE ───────────────────────────────────
   useEffect(() => {
     const cube = cubeRef.current;
     if (!cube || forcedFace == null) return;
+    startLoopRef.current();
     animatingRef.current = true;
     const rotationMap = {
       1: { x: 0, y: 0 },
