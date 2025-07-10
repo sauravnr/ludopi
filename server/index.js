@@ -2,7 +2,6 @@
 
 require("dotenv").config();
 const connectDB = require("./config/db");
-connectDB();
 
 const express = require("express");
 const https = require("https");
@@ -23,6 +22,20 @@ const Player = require("./models/Player");
 const Message = require("./models/Message");
 const CoinTransaction = require("./models/CoinTransaction");
 const mongoose = require("mongoose");
+
+async function clearStaleRooms() {
+  try {
+    const result = await Player.updateMany(
+      { activeRoomCode: { $ne: null } },
+      { $set: { activeRoomCode: null } }
+    );
+    console.log(`🧹 Cleared ${result.modifiedCount} stale active rooms`);
+  } catch (err) {
+    console.error("Failed to clear stale rooms:", err);
+  }
+}
+
+connectDB().then(clearStaleRooms);
 
 // Coins required for bets. Rewards come from the bet pot rather than
 // fixed win amounts.
@@ -120,9 +133,16 @@ app.post(
       return res.status(400).json({ error: "Not enough coins for this bet" });
     }
     if (player.activeRoomCode) {
-      return res
-        .status(400)
-        .json({ error: "Finish your current game before creating another" });
+      if (!rooms[player.activeRoomCode]) {
+        await Player.updateOne(
+          { userId: req.user._id },
+          { $set: { activeRoomCode: null } }
+        );
+      } else {
+        return res
+          .status(400)
+          .json({ error: "Finish your current game before creating another" });
+      }
     }
     const code = generateRoomCode(6); // ~2.8T possible codes
     // initialize exactly as your socket “create” logic would:
@@ -972,7 +992,14 @@ io.on("connection", (socket) => {
       .lean();
     if (!playerDoc) return socket.emit("server-error");
     if (playerDoc.activeRoomCode && playerDoc.activeRoomCode !== roomCode) {
-      return socket.emit("already-in-room");
+      if (!rooms[playerDoc.activeRoomCode]) {
+        await Player.updateOne(
+          { userId: user._id },
+          { $set: { activeRoomCode: null } }
+        );
+      } else {
+        return socket.emit("already-in-room");
+      }
     }
     // mark lobby as “touched” right now
     room.lastActive = Date.now();
