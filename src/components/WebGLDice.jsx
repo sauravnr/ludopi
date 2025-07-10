@@ -6,13 +6,14 @@ import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeom
 import { gsap } from "gsap";
 
 // cache textures across component mounts
-let cachedTextures = [];
+const textureCache = {};
 const faceOrder = [3, 4, 2, 5, 1, 6];
 
-function getDiceTextures(renderer) {
-  if (cachedTextures.length === 0) {
+function getDiceTextures(renderer, design) {
+  if (!textureCache[design]) {
     const DPR = window.devicePixelRatio > 1 ? "512" : "256";
-    cachedTextures = faceOrder.map((n) => {
+    const base = design === "default" ? "/dice" : `/dice/${design}`;
+    textureCache[design] = faceOrder.map((n) => {
       // create a placeholder canvas that matches the final texture size
       const canvas = document.createElement("canvas");
       canvas.width = parseInt(DPR, 10);
@@ -32,15 +33,15 @@ function getDiceTextures(renderer) {
         tex.image = img;
         tex.needsUpdate = true;
       };
-      img.src = `/dice/dice-${n}-${DPR}.png`;
+      img.src = `${base}/dice-${n}-${DPR}.png`;
       return tex;
     });
   }
   const aniso = renderer.capabilities.getMaxAnisotropy();
-  cachedTextures.forEach((t) => {
+  textureCache[design].forEach((t) => {
     t.anisotropy = aniso;
   });
-  return cachedTextures;
+  return textureCache[design];
 }
 
 export default function WebGLDice({
@@ -49,6 +50,7 @@ export default function WebGLDice({
   rollingNow,
   forcedFace,
   size = 128,
+  design = "default",
 }) {
   const mountRef = useRef(null);
   const rendererRef = useRef(null);
@@ -123,7 +125,7 @@ export default function WebGLDice({
     scene.add(dl);
 
     // prepare face textures (cached across mounts)
-    const textures = getDiceTextures(renderer);
+    const textures = getDiceTextures(renderer, design);
     const materials = textures.map((tex) => {
       const mat = new THREE.MeshStandardMaterial({
         transparent: true,

@@ -1512,6 +1512,7 @@ const LudoCanvas = ({
                           rollingNow={rollingDice[p.color]}
                           forcedFace={rolledDice[p.color]}
                           size={56}
+                          design={p.diceDesign || "default"}
                         />
                       </div>
                     </div>
@@ -1538,6 +1539,7 @@ const LudoCanvas = ({
                           rollingNow={rollingDice[p.color]}
                           forcedFace={rolledDice[p.color]}
                           size={56}
+                          design={p.diceDesign || "default"}
                         />
                       </div>
                     </div>

@@ -8,7 +8,7 @@ const MAX_BIO_LEN = 30;
 
 // Fields needed by the front-end profile views
 const PROFILE_FIELDS =
-  "userId username avatarUrl bio country badges totalGamesPlayed wins2P wins4P coins createdAt";
+  "userId username avatarUrl bio country badges totalGamesPlayed wins2P wins4P coins diceDesign ownedDiceDesigns createdAt";
 
 router.get("/me", protect, async (req, res) => {
   const player = await Player.findOne({ userId: req.user._id })
@@ -99,6 +99,64 @@ router.post("/purchase", protect, async (req, res) => {
     description: item,
   });
 
+  return res.json({ player });
+});
+
+// POST /api/player/dice/purchase
+router.post("/dice/purchase", protect, async (req, res) => {
+  const { designId, cost } = req.body;
+  const price = parseInt(cost, 10);
+  if (!designId || typeof designId !== "string") {
+    return res.status(400).json({ message: "Invalid design" });
+  }
+  if (isNaN(price) || price <= 0) {
+    return res.status(400).json({ message: "Invalid cost" });
+  }
+  const player = await Player.findOneAndUpdate(
+    { userId: req.user._id, coins: { $gte: price } },
+    {
+      $inc: { coins: -price },
+      $addToSet: { ownedDiceDesigns: designId },
+      $set: { lastPurchaseDate: new Date() },
+    },
+    { new: true }
+  )
+    .select(PROFILE_FIELDS)
+    .lean();
+  if (!player) {
+    return res.status(400).json({ message: "Not enough coins" });
+  }
+
+  await CoinTransaction.create({
+    userId: req.user._id,
+    amount: -price,
+    type: "purchase",
+    description: `dice:${designId}`,
+  });
+
+  return res.json({ player });
+});
+
+// PATCH /api/player/dice/design
+router.patch("/dice/design", protect, async (req, res) => {
+  const { designId } = req.body;
+  if (designId != null && typeof designId !== "string") {
+    return res.status(400).json({ message: "Invalid design" });
+  }
+  const playerDoc = await Player.findOne({ userId: req.user._id }).lean();
+  if (!playerDoc) {
+    return res.status(404).json({ message: "Player not found" });
+  }
+  if (designId && !playerDoc.ownedDiceDesigns.includes(designId)) {
+    return res.status(400).json({ message: "Design not owned" });
+  }
+  const player = await Player.findOneAndUpdate(
+    { userId: req.user._id },
+    { diceDesign: designId || null },
+    { new: true }
+  )
+    .select(PROFILE_FIELDS)
+    .lean();
   return res.json({ player });
 });
 

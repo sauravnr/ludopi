@@ -129,6 +129,7 @@ const PlayRoom = () => {
         color: p.color,
         offline: p.offline,
         bot: botActive ? botActive[p.color] : false,
+        diceDesign: p.diceDesign || "default",
       }));
       setPlayers(transformed);
 
@@ -242,7 +243,12 @@ const PlayRoom = () => {
 
   // ─── Listen for “dice-rolled-broadcast” from server ────────────────────
   useEffect(() => {
-    const onDiceBroadcast = ({ color, finished }) => {
+    const onDiceBroadcast = ({ color, finished, diceDesign }) => {
+      if (diceDesign) {
+        setPlayers((prev) =>
+          prev.map((p) => (p.color === color ? { ...p, diceDesign } : p))
+        );
+      }
       if (!finished) return;
       handleFinish(color);
     };

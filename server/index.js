@@ -611,12 +611,15 @@ function applySpin(roomCode, color, value) {
   const rolled =
     typeof value === "number" ? value : Math.floor(Math.random() * 6) + 1;
   room.hasRolled[color] = true;
+  const design =
+    room.players.find((p) => p.color === color)?.diceDesign || null;
   io.to(roomCode).emit("dice-rolled-broadcast", {
     color,
     value: rolled,
     updatedSteps: null,
     capture: false,
     finished: false,
+    diceDesign: design,
   });
 }
 
@@ -647,6 +650,8 @@ async function applyMove(roomCode, color, tokenIdx, value) {
       updatedSteps,
       capture: false,
       finished: false,
+      diceDesign:
+        room.players.find((p) => p.color === color)?.diceDesign || null,
     });
     setTimeout(() => {
       const nextColor = room.players[room.currentTurnIndex].color;
@@ -850,6 +855,7 @@ async function applyMove(roomCode, color, tokenIdx, value) {
     updatedSteps,
     capture: isCapture,
     finished,
+    diceDesign: room.players.find((p) => p.color === color)?.diceDesign || null,
   });
 
   setTimeout(() => {
@@ -1009,7 +1015,7 @@ io.on("connection", (socket) => {
     }
     // Check if user is already in another active room
     const playerDoc = await Player.findOne({ userId: user._id })
-      .select("coins activeRoomCode")
+      .select("coins activeRoomCode diceDesign")
       .lean();
     if (!playerDoc) return socket.emit("server-error");
     if (playerDoc.activeRoomCode && playerDoc.activeRoomCode !== roomCode) {
@@ -1059,6 +1065,7 @@ io.on("connection", (socket) => {
           userId: user._id.toString(),
           username: user.username,
           color: chosen,
+          diceDesign: playerDoc.diceDesign || null,
         };
         room.players.push(player);
       } else {
@@ -1079,6 +1086,7 @@ io.on("connection", (socket) => {
     } else {
       player.socketId = socket.id;
       player.offline = false;
+      player.diceDesign = playerDoc.diceDesign || null;
     }
 
     socket.join(roomCode);
