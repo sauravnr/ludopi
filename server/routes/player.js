@@ -147,12 +147,16 @@ router.patch("/dice/design", protect, async (req, res) => {
   if (!playerDoc) {
     return res.status(404).json({ message: "Player not found" });
   }
-  if (designId && !playerDoc.ownedDiceDesigns.includes(designId)) {
+  if (
+    designId &&
+    designId !== "default" &&
+    !playerDoc.ownedDiceDesigns.includes(designId)
+  ) {
     return res.status(400).json({ message: "Design not owned" });
   }
   const player = await Player.findOneAndUpdate(
     { userId: req.user._id },
-    { diceDesign: designId || null },
+    { diceDesign: designId && designId !== "default" ? designId : null },
     { new: true }
   )
     .select(PROFILE_FIELDS)
