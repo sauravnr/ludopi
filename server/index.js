@@ -25,11 +25,32 @@ const mongoose = require("mongoose");
 
 async function clearStaleRooms() {
   try {
-    const result = await Player.updateMany(
-      { activeRoomCode: { $ne: null } },
-      { $set: { activeRoomCode: null } }
-    );
-    console.log(`🧹 Cleared ${result.modifiedCount} stale active rooms`);
+    const stalePlayers = await Player.find({ activeRoomCode: { $ne: null } })
+      .select("userId lockedBet")
+      .lean();
+    for (const p of stalePlayers) {
+      if (p.lockedBet > 0) {
+        await Player.updateOne(
+          { userId: p.userId },
+          {
+            $inc: { coins: p.lockedBet },
+            $set: { lockedBet: 0, activeRoomCode: null },
+          }
+        );
+        await CoinTransaction.create({
+          userId: p.userId,
+          amount: p.lockedBet,
+          type: "grant",
+          description: "Refund for unfinished game",
+        });
+      } else {
+        await Player.updateOne(
+          { userId: p.userId },
+          { $set: { activeRoomCode: null } }
+        );
+      }
+    }
+    console.log(`🧹 Cleared ${stalePlayers.length} stale active rooms`);
   } catch (err) {
     console.error("Failed to clear stale rooms:", err);
   }
@@ -550,7 +571,7 @@ async function clearActiveRoomCodes(userIds, code) {
   try {
     await Player.updateMany(
       { userId: { $in: userIds }, activeRoomCode: code },
-      { $set: { activeRoomCode: null } }
+      { $set: { activeRoomCode: null, lockedBet: 0 } }
     );
   } catch (err) {
     console.error("Failed to clear activeRoomCode:", err);
@@ -1115,7 +1136,7 @@ io.on("connection", (socket) => {
       for (const id of ids) {
         await Player.findOneAndUpdate(
           { userId: id },
-          { $inc: { coins: -room.bet } }
+          { $inc: { coins: -room.bet }, $set: { lockedBet: room.bet } }
         );
         await CoinTransaction.create({
           userId: id,

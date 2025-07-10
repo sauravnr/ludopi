@@ -92,6 +92,12 @@ const playerSchema = new Schema(
       type: Number,
       default: 100,
     },
+    // Coins temporarily locked for an in-progress game
+    lockedBet: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     purchasedItems: [{ type: String }],
     ownedDiceDesigns: [{ type: String }],
     diceDesign: {
