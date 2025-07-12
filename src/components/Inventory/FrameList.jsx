@@ -45,9 +45,9 @@ export default function FrameList() {
     id === "default" ? !player?.frameDesign : player?.frameDesign === id;
 
   const imgSrc = (id) =>
-    id === "default" ? `/frames/idle-256.png` : `/frames/${id}/idle-256.png`;
+    id === "default" ? `/frames/idle-128.png` : `/frames/${id}/idle-128.png`;
   const previewSrc = (id) =>
-    id === "default" ? `/frames/idle-256.png` : `/frames/${id}/idle-256.png`;
+    id === "default" ? `/frames/idle-128.png` : `/frames/${id}/idle-128.png`;
 
   return (
     <>
