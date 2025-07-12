@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import DiceList from "../components/Inventory/DiceList";
+import FrameList from "../components/Inventory/FrameList";
 
 const tabs = [
   { key: "dice", label: "Dice", icon: "/inventory-icons/dice.png" },
@@ -33,9 +34,7 @@ const Inventory = () => {
         </div>
         <div className="flex-1 overflow-auto">
           {activeTab === "dice" && <DiceList />}
-          {activeTab === "frame" && (
-            <div className="p-4">Your frames collection goes here.</div>
-          )}
+          {activeTab === "frame" && <FrameList />}
           {activeTab === "emoji" && (
             <div className="p-4">Your emojis collection goes here.</div>
           )}
