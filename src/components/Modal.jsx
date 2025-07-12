@@ -36,6 +36,7 @@ export default function Modal({
     setClosing(true);
     setTimeout(() => {
       onClose();
+      setClosing(false);
     }, 300); // match CSS 0.3s
   };
 

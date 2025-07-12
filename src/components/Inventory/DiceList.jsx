@@ -45,52 +45,50 @@ export default function DiceList() {
   const imgSrc = (id) =>
     id === "default" ? `/dice/idle-256.png` : `/dice/${id}/idle-256.png`;
   const previewSrc = (id) =>
-    id === "default" ? `/dice/idle-512.png` : `/dice/${id}/idle-512.png`;
+    id === "default" ? `/dice/idle-256.png` : `/dice/${id}/idle-256.png`;
 
   return (
     <>
-      <div className="p-4 space-y-4">
-        {DICE_SKINS.map((d) => (
-          <div
-            key={d.id}
-            className="flex items-center justify-between bg-white p-4 rounded shadow"
-          >
+      <div className="p-4">
+        <div className="grid grid-cols-3  gap-4">
+          {DICE_SKINS.map((d) => (
             <div
-              className="flex items-center cursor-pointer"
-              onClick={() => setPreview(d.id)}
+              key={d.id}
+              className="bg-white p-4 rounded shadow flex flex-col items-center"
             >
+              <div className="font-medium text-center mb-2">{d.name}</div>
               <img
                 src={imgSrc(d.id)}
                 alt={d.name}
-                className="w-12 h-12"
+                className="w-12 h-12 cursor-pointer mb-2"
+                onClick={() => setPreview(d.id)}
                 onError={(e) => (e.currentTarget.style.display = "none")}
               />
-              <div className="ml-4">
-                <div className="font-medium">{d.name}</div>
-                {d.price > 0 && (
-                  <div className="text-sm text-gray-500">{d.price} coins</div>
-                )}
-              </div>
+              {!owned(d.id) && d.price > 0 && (
+                <div className="text-sm text-gray-500 mb-2">
+                  {d.price} coins
+                </div>
+              )}
+              {owned(d.id) ? (
+                <button
+                  disabled={loading === d.id || selected(d.id)}
+                  onClick={() => selectDesign(d.id)}
+                  className="bg-green-500 text-white px-3 py-1 rounded"
+                >
+                  {selected(d.id) ? "Selected" : "Use"}
+                </button>
+              ) : (
+                <button
+                  disabled={loading === d.id}
+                  onClick={() => purchase(d.id, d.price)}
+                  className="bg-blue-500 text-white px-3 py-1 rounded"
+                >
+                  Buy
+                </button>
+              )}
             </div>
-            {owned(d.id) ? (
-              <button
-                disabled={loading === d.id || selected(d.id)}
-                onClick={() => selectDesign(d.id)}
-                className="bg-green-500 text-white px-3 py-1 rounded"
-              >
-                {selected(d.id) ? "Selected" : "Use"}
-              </button>
-            ) : (
-              <button
-                disabled={loading === d.id}
-                onClick={() => purchase(d.id, d.price)}
-                className="bg-blue-500 text-white px-3 py-1 rounded"
-              >
-                Buy
-              </button>
-            )}
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
       <Modal
         show={!!preview}
@@ -103,7 +101,7 @@ export default function DiceList() {
             <img
               src={previewSrc(preview)}
               alt={preview}
-              className="w-48 h-48"
+              className="w-64 h-64"
             />
           </div>
         )}

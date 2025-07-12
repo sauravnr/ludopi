@@ -137,7 +137,7 @@ export default function WebGLDice({
     });
 
     // increase the chamfer radius for softer edges
-    const chamfer = 0.25;
+    const chamfer = 0.32;
     const geometry = new RoundedBoxGeometry(1, 1, 1, chamfer, 16);
     geometry.computeVertexNormals();
     const cube = new THREE.Mesh(geometry, materials);
