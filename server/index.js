@@ -181,6 +181,7 @@ app.post(
         PLAYER_COLORS_BY_MODE[mode] || ["red", "blue"]
       ),
       finishOrder: [],
+      forfeits: [],
       currentTurnIndex: 0,
       mode,
       // track whether win/loss stats have been recorded for this game
@@ -604,6 +605,66 @@ async function awardTrophies(room) {
     }
   }
 }
+
+async function recordWinner(room, color) {
+  if (room.statsRecorded) return;
+  try {
+    const allIds = room.participants.map((p) => p.userId);
+    await Player.updateMany(
+      { userId: { $in: allIds } },
+      { $inc: { totalGamesPlayed: 1 } }
+    );
+    const winnerId = room.participants.find((p) => p.color === color).userId;
+    const pot = room.pot || room.bet * room.capacity;
+    const winField = room.mode === "2P" ? "wins2P" : "wins4P";
+    await Player.findOneAndUpdate(
+      { userId: winnerId },
+      { $inc: { totalWins: 1, [winField]: 1, coins: pot } }
+    );
+    await CoinTransaction.create({
+      userId: winnerId,
+      amount: pot,
+      type: "win",
+      description: `${room.mode}P bet win`,
+    });
+    room.statsRecorded = true;
+    room.pot = 0;
+  } catch (err) {
+    console.error(`Failed to write ${room.mode}P game stats:`, err);
+  }
+}
+
+async function finalizeGame(roomCode, remainingColor) {
+  const room = rooms[roomCode];
+  if (!room) return;
+
+  const finalOrder = room.finishOrder.slice();
+  if (remainingColor) finalOrder.push(remainingColor);
+  const forfeits = room.forfeits ? [...room.forfeits].reverse() : [];
+  for (const c of forfeits) {
+    if (!finalOrder.includes(c)) finalOrder.push(c);
+  }
+  room.finishOrder = finalOrder;
+
+  const winnerColor = finalOrder[0];
+  await recordWinner(room, winnerColor);
+
+  room.players = [];
+  room.currentTurnIndex = null;
+  clearTimeout(room.botTimeout);
+
+  await awardTrophies(room);
+  await clearActiveRoomCodes(
+    room.participants.map((p) => p.userId),
+    roomCode
+  );
+
+  io.to(roomCode).emit("state-sync", { finishOrder: room.finishOrder });
+  setTimeout(() => {
+    io.to(roomCode).emit("chat-closed");
+  }, 5 * 60 * 1000);
+}
+
 function applySpin(roomCode, color, value) {
   const room = rooms[roomCode];
   if (!room) return;
@@ -766,16 +827,12 @@ async function applyMove(roomCode, color, tokenIdx, value) {
       }
       if (room.finishOrder.length === 1) {
         const allColors = room.participants.map((p) => p.color);
-        const remaining = allColors.find((c) => !room.finishOrder.includes(c));
-        if (remaining) room.finishOrder.push(remaining);
-        room.players = [];
-        room.currentTurnIndex = null;
-        clearTimeout(room.botTimeout);
-        await awardTrophies(room);
-        await clearActiveRoomCodes(
-          room.participants.map((p) => p.userId),
-          roomCode
+        const remaining = allColors.find(
+          (c) =>
+            !room.finishOrder.includes(c) && !(room.forfeits || []).includes(c)
         );
+        if (remaining) room.finishOrder.push(remaining);
+        await finalizeGame(roomCode);
       }
     }
     if (room.mode === "4P" && room.finishOrder.length === 1) {
@@ -808,16 +865,12 @@ async function applyMove(roomCode, color, tokenIdx, value) {
     }
     if (room.mode === "4P" && room.finishOrder.length === 3) {
       const allColors = room.participants.map((p) => p.color);
-      const remaining = allColors.find((c) => !room.finishOrder.includes(c));
-      if (remaining) room.finishOrder.push(remaining);
-      room.players = [];
-      room.currentTurnIndex = null;
-      clearTimeout(room.botTimeout);
-      await awardTrophies(room);
-      await clearActiveRoomCodes(
-        room.participants.map((p) => p.userId),
-        roomCode
+      const remaining = allColors.find(
+        (c) =>
+          !room.finishOrder.includes(c) && !(room.forfeits || []).includes(c)
       );
+      if (remaining) room.finishOrder.push(remaining);
+      await finalizeGame(roomCode);
     }
   }
 
@@ -984,7 +1037,52 @@ io.on("connection", (socket) => {
       }
     }
   }
+  async function handleForfeit(socket, roomCode) {
+    const room = rooms[roomCode];
+    if (!room || !room.started) return;
 
+    const idx = room.players.findIndex(
+      (p) => p.userId === socket.user._id.toString()
+    );
+    if (idx === -1) return;
+
+    const player = room.players[idx];
+    const color = player.color;
+
+    room.players.splice(idx, 1);
+    if (!room.forfeits) room.forfeits = [];
+    room.forfeits.push(color);
+    room.tokenSteps[color] = [FINISHED, FINISHED, FINISHED, FINISHED];
+    room.hasRolled[color] = false;
+    room.hasMoved[color] = false;
+    room.botActive[color] = false;
+
+    await Player.findOneAndUpdate(
+      { userId: socket.user._id, activeRoomCode: roomCode },
+      { $set: { activeRoomCode: null, lockedBet: 0 } }
+    ).catch((err) => console.error("Failed to clear forfeit player:", err));
+
+    io.to(roomCode).emit("player-list", {
+      players: room.players,
+      mode: room.mode,
+      bet: room.bet,
+      botActive: room.botActive,
+    });
+
+    if (room.players.length <= 1) {
+      const remaining = room.players[0]?.color;
+      await finalizeGame(roomCode, remaining);
+    } else {
+      if (room.currentTurnIndex >= room.players.length) {
+        room.currentTurnIndex = 0;
+      }
+      const nextColor = room.players[room.currentTurnIndex]?.color;
+      if (nextColor) {
+        io.to(roomCode).emit("turn-change", { currentTurnColor: nextColor });
+        if (room.botActive[nextColor]) scheduleBotTurn(roomCode);
+      }
+    }
+  }
   // old leave-room listener
   socket.on("leave-room", ({ roomCode }) => {
     socket.leave(roomCode);
@@ -1263,6 +1361,11 @@ io.on("connection", (socket) => {
       await applyMove(roomCode, color, tokenIdx, value);
     }
   );
+
+  socket.on("forfeit-game", ({ roomCode }) => {
+    socket.leave(roomCode);
+    handleForfeit(socket, roomCode);
+  });
 
   // Chat
   socket.on("chat-message", async ({ roomCode, playerId, text }) => {

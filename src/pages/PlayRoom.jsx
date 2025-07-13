@@ -57,6 +57,18 @@ const PlayRoom = () => {
     });
   };
 
+  const exitGame = () => {
+    if (
+      window.confirm(
+        "Are you sure you want to leave? You will forfeit the game."
+      )
+    ) {
+      sessionStorage.setItem("navigatingToRoom", "true");
+      socket.emit("forfeit-game", { roomCode });
+      navigate("/");
+    }
+  };
+
   // Only show the board once we know our color and have >0 players
   const isReady = Boolean(playerColor && players.length > 0);
 
@@ -338,9 +350,15 @@ const PlayRoom = () => {
         {/* Chat UI */}
         <button
           onClick={toggleBot}
-          className="absolute top-2 right-2 bg-blue-600 text-white px-3 py-1 rounded"
+          className="absolute top-2 right-32 bg-blue-600 text-white px-3 py-1 rounded"
         >
           {botEnabled ? "Disable Bot" : "Enable Bot"}
+        </button>
+        <button
+          onClick={exitGame}
+          className="absolute top-2 right-2 bg-red-600 text-white px-3 py-1 rounded"
+        >
+          Exit Game
         </button>
         <ChatButton />
         <ChatWindow />
