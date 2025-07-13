@@ -31,6 +31,14 @@ const PlayRoom = () => {
   const [players, setPlayers] = useState(location.state?.players || []);
   // Keep a ref so that our onDice listener always sees the latest `players`.
   const playersRef = useRef(players);
+  // Store every player seen at game start so winner popup works after forfeits
+  const initialAllPlayers = {};
+  (location.state?.players || []).forEach((p) => {
+    const id = p.userId || p.playerId;
+    const name = p.username || p.name;
+    initialAllPlayers[p.color] = { playerId: id, name };
+  });
+  const allPlayersRef = useRef(initialAllPlayers);
 
   const [playerColor, setPlayerColor] = useState(null);
   const [currentTurnColor, setCurrentTurnColor] = useState(null);
@@ -64,7 +72,11 @@ const PlayRoom = () => {
       )
     ) {
       sessionStorage.setItem("navigatingToRoom", "true");
-      socket.emit("forfeit-game", { roomCode });
+      if (!gameOver) {
+        socket.emit("forfeit-game", { roomCode });
+      } else if (socket.connected) {
+        socket.emit("leave-room", { roomCode });
+      }
       navigate("/");
     }
   };
@@ -144,6 +156,13 @@ const PlayRoom = () => {
         diceDesign: p.diceDesign || "default",
       }));
       setPlayers(transformed);
+      // keep track of everyone who has ever been in the room
+      transformed.forEach((p) => {
+        allPlayersRef.current[p.color] = {
+          playerId: p.playerId,
+          name: p.name,
+        };
+      });
 
       //  whenever the server sends back its mode, overwrite our state
       setMode(serverMode.toUpperCase());
@@ -200,9 +219,14 @@ const PlayRoom = () => {
     }
 
     // Use playersRef.current so we always see the latest list
-    const justFinished = playersRef.current.find((p) => p.color === color);
+    let justFinished = playersRef.current.find((p) => p.color === color);
     if (!justFinished) {
-      return;
+      const stored = allPlayersRef.current[color];
+      if (stored) {
+        justFinished = { playerId: stored.playerId, name: stored.name };
+      } else {
+        return;
+      }
     }
 
     if (mode === "2P") {
@@ -214,7 +238,16 @@ const PlayRoom = () => {
       };
 
       // The “other” (only other) is 2nd
-      const other = playersRef.current.find((p) => p.color !== color);
+      let other = playersRef.current.find((p) => p.color !== color);
+      if (!other) {
+        const entry = Object.entries(allPlayersRef.current).find(
+          ([c]) => c !== color
+        );
+        if (entry) {
+          const [, data] = entry;
+          other = { playerId: data.playerId, name: data.name };
+        }
+      }
       const secondObj = other
         ? {
             playerId: other.playerId,
@@ -274,9 +307,16 @@ const PlayRoom = () => {
   // ─── 4P: auto-assign the 4th once we have three ─────────────────────────
   useEffect(() => {
     if (mode === "4P" && allFinishers.length === 3) {
-      const fourth = playersRef.current.find(
+      let fourth = playersRef.current.find(
         (p) => !allFinishers.some((f) => f.playerId === p.playerId)
       );
+      if (!fourth) {
+        const remaining = Object.values(allPlayersRef.current).find(
+          (ap) => !allFinishers.some((f) => f.playerId === ap.playerId)
+        );
+        if (remaining)
+          fourth = { playerId: remaining.playerId, name: remaining.name };
+      }
       if (!fourth) return;
 
       const finObj = {
@@ -354,12 +394,14 @@ const PlayRoom = () => {
         >
           {botEnabled ? "Disable Bot" : "Enable Bot"}
         </button>
-        <button
-          onClick={exitGame}
-          className="absolute top-2 right-2 bg-red-600 text-white px-3 py-1 rounded"
-        >
-          Exit Game
-        </button>
+        {!gameOver && players.length > 1 && (
+          <button
+            onClick={exitGame}
+            className="absolute top-2 right-2 bg-red-600 text-white px-3 py-1 rounded"
+          >
+            Exit Game
+          </button>
+        )}
         <ChatButton />
         <ChatWindow />
       </div>
