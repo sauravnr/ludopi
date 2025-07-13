@@ -50,17 +50,19 @@ export default function DiceList() {
   return (
     <>
       <div className="p-4">
-        <div className="grid grid-cols-3  gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {DICE_SKINS.map((d) => (
             <div
               key={d.id}
-              className="bg-white p-4 rounded shadow flex flex-col items-center"
+              className={`bg-[#fff8e6] border border-[#e0c08b] rounded-xl shadow-[0_2px_0_#c7994a,0_5px_2px_rgba(0,0,0,0.3)] flex flex-col items-center p-4 ${
+                selected(d.id) ? "ring-2 ring-blue-500" : ""
+              }`}
             >
               <div className="font-medium text-center mb-2">{d.name}</div>
               <img
                 src={imgSrc(d.id)}
                 alt={d.name}
-                className="w-12 h-12 cursor-pointer mb-2"
+                className="w-16 h-16 cursor-pointer mb-2"
                 onClick={() => setPreview(d.id)}
                 onError={(e) => (e.currentTarget.style.display = "none")}
               />
