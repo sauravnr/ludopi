@@ -175,6 +175,8 @@ app.post(
       createdAt: Date.now(),
       // when was the lobby last touched?
       lastActive: Date.now(),
+      endedAt: null,
+      cleanupTimeout: null,
       // hasn’t started until we emit “start-game”
       started: false,
       players: [],
@@ -638,6 +640,26 @@ async function recordWinner(room, color) {
   }
 }
 
+function scheduleRoomCleanup(roomCode, delay = 5 * 60 * 1000) {
+  const room = rooms[roomCode];
+  if (!room) return;
+  if (room.cleanupTimeout) clearTimeout(room.cleanupTimeout);
+  room.endedAt = Date.now();
+  room.cleanupTimeout = setTimeout(async () => {
+    io.to(roomCode).emit("chat-closed");
+    clearTimeout(room.botTimeout);
+    try {
+      await clearActiveRoomCodes(
+        (room.participants || []).map((p) => p.userId),
+        roomCode
+      );
+    } catch (err) {
+      console.error("Failed to clear active room codes:", err);
+    }
+    delete rooms[roomCode];
+  }, delay);
+}
+
 async function finalizeGame(roomCode, remainingColor) {
   const room = rooms[roomCode];
   if (!room) return;
@@ -664,9 +686,7 @@ async function finalizeGame(roomCode, remainingColor) {
   );
 
   io.to(roomCode).emit("state-sync", { finishOrder: room.finishOrder });
-  setTimeout(() => {
-    io.to(roomCode).emit("chat-closed");
-  }, 5 * 60 * 1000);
+  scheduleRoomCleanup(roomCode);
 }
 
 function applySpin(roomCode, color, value) {
@@ -797,9 +817,7 @@ async function applyMove(roomCode, color, tokenIdx, value) {
       room.currentTurnIndex = room.currentTurnIndex % room.players.length;
     } else {
       room.currentTurnIndex = null;
-      setTimeout(() => {
-        io.to(roomCode).emit("chat-closed");
-      }, 5 * 60 * 1000);
+      scheduleRoomCleanup(roomCode);
     }
     if (room.mode === "2P") {
       if (!room.statsRecorded) {
@@ -1476,20 +1494,22 @@ io.on("connection", (socket) => {
 });
 
 // ─── Garbage-collect empty rooms older than 5 minutes ───
-setInterval(() => {
+setInterval(async () => {
   const now = Date.now();
   for (const code in rooms) {
     const room = rooms[code];
     if (
       room.players.length === 0 &&
-      now - (room.createdAt || now) > 5 * 60 * 1000
+      room.endedAt &&
+      now - room.endedAt > 5 * 60 * 1000
     ) {
       console.log(`🗑️ Deleting stale room ${code}`);
+      clearTimeout(room.cleanupTimeout);
       clearTimeout(room.botTimeout);
-      clearActiveRoomCodes(
+      await clearActiveRoomCodes(
         (room.participants || []).map((p) => p.userId),
         code
-      );
+      ).catch((err) => console.error(err));
       delete rooms[code];
     }
   }
@@ -1499,7 +1519,7 @@ setInterval(() => {
 const IDLE_LIMIT = 10 * 60 * 1000; // 10 minutes
 const CHECK_FREQ = 60 * 1000; // every 1 minute
 
-setInterval(() => {
+setInterval(async () => {
   const now = Date.now();
   for (const [code, room] of Object.entries(rooms)) {
     // only target rooms that haven’t started yet
@@ -1513,11 +1533,12 @@ setInterval(() => {
         for (const sid of io.sockets.adapter.rooms.get(code) || []) {
           io.sockets.sockets.get(sid)?.leave(code);
         }
+        clearTimeout(room.cleanupTimeout);
         clearTimeout(room.botTimeout);
-        clearActiveRoomCodes(
+        await clearActiveRoomCodes(
           (room.participants || []).map((p) => p.userId),
           code
-        );
+        ).catch((err) => console.error(err));
         delete rooms[code];
         console.log(`🗑️ Closed idle lobby ${code}`);
       }
