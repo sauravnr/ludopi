@@ -1423,7 +1423,7 @@ const LudoCanvas = ({
     };
   }, [drawCanvas]);
 
-  // ── START ANIMATION LOOP ───────────────────────────────
+  // ── START ANIMATION LOOP ──────────────────────────────
   useEffect(() => {
     const loop = () => {
       // advance rotation:
