@@ -686,7 +686,8 @@ async function finalizeGame(roomCode, remainingColor) {
   );
 
   io.to(roomCode).emit("state-sync", { finishOrder: room.finishOrder });
-  scheduleRoomCleanup(roomCode);
+  // Close chat and delete the room shortly after announcing the winner
+  scheduleRoomCleanup(roomCode, 5000); // 5‑second grace period
 }
 
 function applySpin(roomCode, color, value) {
@@ -817,7 +818,8 @@ async function applyMove(roomCode, color, tokenIdx, value) {
       room.currentTurnIndex = room.currentTurnIndex % room.players.length;
     } else {
       room.currentTurnIndex = null;
-      scheduleRoomCleanup(roomCode);
+      // Only schedule cleanup if the game hasn't already ended
+      if (!room.endedAt) scheduleRoomCleanup(roomCode);
     }
     if (room.mode === "2P") {
       if (!room.statsRecorded) {
