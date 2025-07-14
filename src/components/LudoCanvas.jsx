@@ -9,6 +9,11 @@ const DICE_SIZE = 56;
 // lazily load token PNGs at two resolutions (64,128 px)
 const tokenImages = {};
 
+const getFrameSrc = (design) =>
+  design && design !== "default"
+    ? `/frames/${design}/idle-128.png`
+    : "/frames/idle-128.png";
+
 const getTokenImage = (design, color, size, onLoad) => {
   if (!tokenImages[design]) tokenImages[design] = {};
   if (!tokenImages[design][color]) tokenImages[design][color] = {};
@@ -1487,6 +1492,16 @@ const LudoCanvas = ({
               <>
                 {/* Avatar on left-side players */}
                 <div className="w-12 h-12 bg-white rounded-lg border border-gray-300 relative overflow-hidden">
+                  <img
+                    src={p.avatarUrl || "/default-avatar.png"}
+                    alt={p.name}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                  <img
+                    src={getFrameSrc(p.frameDesign)}
+                    alt=""
+                    className="absolute inset-0 w-full h-full pointer-events-none"
+                  />
                   {curr && (
                     <div
                       className="absolute inset-0 bg-pink-500 rounded-full"
@@ -1549,6 +1564,16 @@ const LudoCanvas = ({
                 </div>
                 {/* Avatar on right-side players */}
                 <div className="w-12 h-12 bg-white rounded-lg border border-gray-300 relative overflow-hidden">
+                  <img
+                    src={p.avatarUrl || "/default-avatar.png"}
+                    alt={p.name}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                  <img
+                    src={getFrameSrc(p.frameDesign)}
+                    alt=""
+                    className="absolute inset-0 w-full h-full pointer-events-none"
+                  />
                   {curr && (
                     <div
                       className="absolute inset-0 bg-pink-500 rounded-full"

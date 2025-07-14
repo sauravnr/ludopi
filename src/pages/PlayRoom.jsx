@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useSocket } from "../context/SocketContext";
 import { useAuth } from "../context/AuthContext";
+import api from "../utils/api";
 import LudoCanvas from "../components/LudoCanvas";
 import WinnerPopup from "../components/WinnerPopup";
 import { ChatProvider } from "../components/Chat/ChatProvider";
@@ -13,7 +14,7 @@ import Loader from "../components/Loader";
 import { useAlert } from "../context/AlertContext";
 
 const PlayRoom = () => {
-  const { user, loading } = useAuth();
+  const { user, player: me, loading } = useAuth();
   const socket = useSocket();
   const navigate = useNavigate();
   const { roomCode } = useParams();
@@ -40,7 +41,8 @@ const PlayRoom = () => {
   });
   const allPlayersRef = useRef(initialAllPlayers);
 
-  const [playerColor, setPlayerColor] = useState(null);
+  const [playerColor, setPlayerColor] = useState(me?.color || null);
+
   const [currentTurnColor, setCurrentTurnColor] = useState(null);
 
   // ALL finishers in order: array of { playerId, name, place }
@@ -88,6 +90,23 @@ const PlayRoom = () => {
   useEffect(() => {
     playersRef.current = players;
   }, [players]);
+
+  // Fetch avatar and frame info for all players
+  useEffect(() => {
+    players.forEach((p) => {
+      if (playerInfo[p.playerId] || p.playerId === me?.playerId) return;
+      api
+        .get(`/player/${p.playerId}`)
+        .then(({ data }) => {
+          const { avatarUrl, frameDesign } = data.player || {};
+          setPlayerInfo((prev) => ({
+            ...prev,
+            [p.playerId]: { avatarUrl, frameDesign },
+          }));
+        })
+        .catch(() => {});
+    });
+  }, [players, me]);
 
   // Show loading spinner/text while AuthContext is loading
   if (loading) {
@@ -357,7 +376,12 @@ const PlayRoom = () => {
               roomCode={roomCode}
               playerId={user._id}
               playerColor={playerColor}
-              players={players}
+              players={players.map((p) => ({
+                ...p,
+                ...(p.playerId === me?.playerId
+                  ? { avatarUrl: me.avatarUrl, frameDesign: me.frameDesign }
+                  : playerInfo[p.playerId] || {}),
+              }))}
               currentTurnColor={currentTurnColor}
               gameOver={gameOver} // Block actions once gameOver is true
             />
