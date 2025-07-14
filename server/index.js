@@ -115,7 +115,7 @@ app.use("/api/ranking", rankingRoutes);
 app.use("/api/admin", adminRoutes);
 
 // ─── IN-MEMORY ROOM STORE ────────────────────────────
-const rooms = {};
+const rooms = require("./roomStore");
 
 // ─── ROOM-CODE GENERATOR ─────────────────────────────
 function generateRoomCode(length = 6) {

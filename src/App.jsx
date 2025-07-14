@@ -16,6 +16,7 @@ const Friends = lazy(() => import("./pages/Friends"));
 const Ranking = lazy(() => import("./pages/Ranking"));
 const Store = lazy(() => import("./pages/Store"));
 const Users = lazy(() => import("./pages/Users"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 
 // these we keep “eager” because they’re full-screen or tiny:
 const PlayRoom = lazy(() => import("./pages/PlayRoom"));
@@ -119,6 +120,14 @@ export default function App() {
                 element={
                   <Suspense fallback={<Loader />}>
                     <Users />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/admin"
+                element={
+                  <Suspense fallback={<Loader />}>
+                    <AdminDashboard />
                   </Suspense>
                 }
               />

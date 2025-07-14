@@ -6,6 +6,8 @@ const rateLimit = require("express-rate-limit");
 const User = require("../models/User");
 const Player = require("../models/Player");
 const Message = require("../models/Message");
+const CoinTransaction = require("../models/CoinTransaction");
+const rooms = require("../roomStore");
 const router = express.Router();
 
 // All admin routes require authentication and admin role
@@ -57,6 +59,79 @@ router.get("/messages", async (req, res) => {
     res.json({ messages });
   } catch (err) {
     console.error("admin messages error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// GET /api/admin/rooms - list active rooms
+router.get("/rooms", (req, res) => {
+  try {
+    const list = Object.entries(rooms).map(([code, r]) => ({
+      code,
+      mode: r.mode,
+      bet: r.bet,
+      players: r.players.length,
+      capacity: r.capacity,
+      started: r.started,
+      createdAt: r.createdAt,
+      lastActive: r.lastActive,
+    }));
+    res.json({ rooms: list });
+  } catch (err) {
+    console.error("admin rooms error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// PATCH /api/admin/player/:userId/ban
+router.patch("/player/:userId/ban", async (req, res) => {
+  try {
+    const { reason, expiresAt } = req.body;
+    const update = {
+      isBanned: true,
+      banReason: reason || "",
+      banExpiresAt: expiresAt || null,
+    };
+    const player = await Player.findOneAndUpdate(
+      { userId: req.params.userId },
+      update,
+      { new: true }
+    ).lean();
+    if (!player) return res.status(404).json({ message: "Player not found" });
+    res.json({ player });
+  } catch (err) {
+    console.error("admin ban error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// PATCH /api/admin/player/:userId/unban
+router.patch("/player/:userId/unban", async (req, res) => {
+  try {
+    const player = await Player.findOneAndUpdate(
+      { userId: req.params.userId },
+      { isBanned: false, banReason: null, banExpiresAt: null },
+      { new: true }
+    ).lean();
+    if (!player) return res.status(404).json({ message: "Player not found" });
+    res.json({ player });
+  } catch (err) {
+    console.error("admin unban error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// GET /api/admin/transactions/:userId - coin transactions for a player
+router.get("/transactions/:userId", async (req, res) => {
+  try {
+    const limit = Math.min(100, parseInt(req.query.limit, 10) || 20);
+    const txs = await CoinTransaction.find({ userId: req.params.userId })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
+    res.json({ transactions: txs });
+  } catch (err) {
+    console.error("admin transactions error:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
