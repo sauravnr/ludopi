@@ -102,6 +102,7 @@ const avatarRoutes = require("./routes/avatar");
 const friendRequests = require("./routes/friendRequests");
 const chatRoutes = require("./routes/chat");
 const rankingRoutes = require("./routes/ranking");
+const adminRoutes = require("./routes/admin");
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/player", playerRoutes);
@@ -109,6 +110,7 @@ app.use("/api/avatar", avatarRoutes);
 app.use("/api/friend-requests", friendRequests);
 app.use("/api/chat", chatRoutes);
 app.use("/api/ranking", rankingRoutes);
+app.use("/api/admin", adminRoutes);
 
 // ─── IN-MEMORY ROOM STORE ────────────────────────────
 const rooms = {};

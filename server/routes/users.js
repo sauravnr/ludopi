@@ -2,10 +2,11 @@
 const express = require("express");
 const User = require("../models/User");
 const protect = require("../middleware/auth");
+const requireRole = require("../middleware/requireRole");
 const router = express.Router();
 
 // GET /api/users?page=1&limit=20 - paginated list of users
-router.get("/", protect, async (req, res) => {
+router.get("/", protect, requireRole("admin"), async (req, res) => {
   const page = Math.max(1, parseInt(req.query.page) || 1);
   const limit = Math.min(50, parseInt(req.query.limit) || 20);
   const skip = (page - 1) * limit;
