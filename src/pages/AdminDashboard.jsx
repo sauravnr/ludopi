@@ -95,55 +95,61 @@ export default function AdminDashboard() {
           </button>
         </div>
         {playerInfo && (
-          <div className="space-y-2">
-            <p>
-              <strong>{playerInfo.username}</strong> – Coins: {playerInfo.coins}
-            </p>
-            <p>Banned: {playerInfo.isBanned ? "yes" : "no"}</p>
-            {playerInfo.isBanned ? (
-              <button onClick={unbanUser} className="bg-green-500 text-white px-2">
-                Unban
-              </button>
-            ) : (
-              <div className="flex gap-2 items-center">
-                <input
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  placeholder="Reason"
-                  className="border p-1 flex-1"
-                />
+          <>
+            <div className="space-y-2">
+              <p>
+                <strong>{playerInfo.username}</strong> – Coins:{" "}
+                {playerInfo.coins}
+              </p>
+              <p>Banned: {playerInfo.isBanned ? "yes" : "no"}</p>
+              {playerInfo.isBanned ? (
                 <button
-                  onClick={banUser}
-                  className="bg-red-500 text-white px-2"
+                  onClick={unbanUser}
+                  className="bg-green-500 text-white px-2"
                 >
-                  Ban
+                  Unban
                 </button>
+              ) : (
+                <div className="flex gap-2 items-center">
+                  <input
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    placeholder="Reason"
+                    className="border p-1 flex-1"
+                  />
+                  <button
+                    onClick={banUser}
+                    className="bg-red-500 text-white px-2"
+                  >
+                    Ban
+                  </button>
+                </div>
+              )}
+            </div>
+            {transactions.length > 0 && (
+              <div>
+                <h3 className="font-medium">Recent Transactions</h3>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left">
+                      <th className="p-1">Amt</th>
+                      <th className="p-1">Type</th>
+                      <th className="p-1">Desc</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {transactions.map((t) => (
+                      <tr key={t._id} className="border-t">
+                        <td className="p-1">{t.amount}</td>
+                        <td className="p-1">{t.type}</td>
+                        <td className="p-1">{t.description}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
-          </div>
-          {transactions.length > 0 && (
-            <div>
-              <h3 className="font-medium">Recent Transactions</h3>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left">
-                    <th className="p-1">Amt</th>
-                    <th className="p-1">Type</th>
-                    <th className="p-1">Desc</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {transactions.map((t) => (
-                    <tr key={t._id} className="border-t">
-                      <td className="p-1">{t.amount}</td>
-                      <td className="p-1">{t.type}</td>
-                      <td className="p-1">{t.description}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          </>
         )}
       </section>
 
