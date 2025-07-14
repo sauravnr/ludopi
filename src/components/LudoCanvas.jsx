@@ -6,16 +6,22 @@ import { useSocket } from "../context/SocketContext";
 // dice dimensions in pixels
 const DICE_SIZE = 56;
 
-// preload token PNGs at 3 resolutions (64,128,192 px)
+// lazily load token PNGs at two resolutions (64,128 px)
 const tokenImages = {};
 ["red", "yellow", "green", "blue"].forEach((color) => {
   tokenImages[color] = {};
-  [64, 128, 192].forEach((size) => {
-    const img = new Image();
-    img.src = `/tokens/${color}-${size}.png`;
-    tokenImages[color][size] = img;
-  });
 });
+
+const getTokenImage = (color, size, onLoad) => {
+  const map = tokenImages[color];
+  if (!map[size]) {
+    const img = new Image();
+    if (onLoad) img.onload = onLoad;
+    img.src = `/tokens/${color}-${size}.png`;
+    map[size] = img;
+  }
+  return map[size];
+};
 
 const MAIN_STARS = [
   [2, 6],
@@ -1168,8 +1174,8 @@ const LudoCanvas = ({
 
         const diam = tileSize * 1.5;
         const realPx = diam * window.devicePixelRatio;
-        const size = [64, 128, 192].find((s) => s >= realPx) || 192;
-        const img = tokenImages[color][size];
+        const size = [64, 128].find((s) => s >= realPx) || 128;
+        const img = getTokenImage(color, size, drawCanvas);
         if (img.complete) {
           // draw a subtle shadow beneath the hopping token
           ctx.save();
@@ -1219,14 +1225,15 @@ const LudoCanvas = ({
           const [cx, cy, tile] = project(...PATHS[color][step]);
           const diam = tile * 1.5;
           const size =
-            [64, 128, 192].find((s) => s >= diam * window.devicePixelRatio) ||
-            192;
-          const img = tokenImages[color][size];
-          ctx.save();
-          ctx.globalAlpha = alpha;
-          ctx.translate(cx, cy - diam * 0.2);
-          ctx.drawImage(img, -diam / 2, -diam / 2, diam, diam);
-          ctx.restore();
+            [64, 128].find((s) => s >= diam * window.devicePixelRatio) || 128;
+          const img = getTokenImage(color, size, drawCanvas);
+          if (img.complete) {
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.translate(cx, cy - diam * 0.2);
+            ctx.drawImage(img, -diam / 2, -diam / 2, diam, diam);
+            ctx.restore();
+          }
           stillFades.push({ color, tokenIdx, step, start, dest });
         } else {
           // fade complete → queue spark at home
@@ -1367,14 +1374,14 @@ const LudoCanvas = ({
       const unit = tile * 0.25;
       const diam = baseDiam * (staticTokens.length > 1 ? 0.8 : 1);
       const realPx = diam * window.devicePixelRatio;
-      const size = [64, 128, 192].find((s) => s >= realPx) || 192;
+      const size = [64, 128].find((s) => s >= realPx) || 128;
 
       // draw each of the up-to-4 tokens
       toDraw.forEach((t, i) => {
         const [ox, oy] = gridOffsets[i];
         const x = cx + ox * unit;
         const y = cy - lift + oy * unit;
-        const img = tokenImages[t.color][size];
+        const img = getTokenImage(t.color, size, drawCanvas);
         if (!img.complete) return;
         ctx.save();
         ctx.translate(x, y);
@@ -1410,22 +1417,9 @@ const LudoCanvas = ({
 
     window.addEventListener("resize", handleResize);
 
-    // hook up onload for token images, but remember old handlers
-    const prevOnloads = [];
-    Object.values(tokenImages).forEach((map) =>
-      Object.values(map).forEach((img) => {
-        prevOnloads.push({ img, old: img.onload });
-        img.onload = drawCanvas;
-      })
-    );
-
     return () => {
       window.removeEventListener("resize", handleResize);
       clearTimeout(resizeTimeoutRef.current);
-      // restore each img.onload to its previous value
-      prevOnloads.forEach(({ img, old }) => {
-        img.onload = old;
-      });
     };
   }, [drawCanvas]);
 
