@@ -154,6 +154,7 @@ const PlayRoom = () => {
         offline: p.offline,
         bot: botActive ? botActive[p.color] : false,
         diceDesign: p.diceDesign || "default",
+        tokenDesign: p.tokenDesign || "default",
       }));
       setPlayers(transformed);
       // keep track of everyone who has ever been in the room
@@ -288,10 +289,18 @@ const PlayRoom = () => {
 
   // ─── Listen for “dice-rolled-broadcast” from server ────────────────────
   useEffect(() => {
-    const onDiceBroadcast = ({ color, finished, diceDesign }) => {
-      if (diceDesign) {
+    const onDiceBroadcast = ({ color, finished, diceDesign, tokenDesign }) => {
+      if (diceDesign || tokenDesign) {
         setPlayers((prev) =>
-          prev.map((p) => (p.color === color ? { ...p, diceDesign } : p))
+          prev.map((p) =>
+            p.color === color
+              ? {
+                  ...p,
+                  diceDesign: diceDesign || p.diceDesign,
+                  tokenDesign: tokenDesign || p.tokenDesign,
+                }
+              : p
+          )
         );
       }
       if (!finished) return;

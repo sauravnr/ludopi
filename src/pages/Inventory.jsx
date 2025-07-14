@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import DiceList from "../components/Inventory/DiceList";
 import FrameList from "../components/Inventory/FrameList";
+import TokenList from "../components/Inventory/TokenList";
 
 const tabs = [
   { key: "dice", label: "Dice", icon: "/inventory-icons/dice.png" },
@@ -41,9 +42,7 @@ const Inventory = () => {
           {activeTab === "board" && (
             <div className="p-4">Your boards collection goes here.</div>
           )}
-          {activeTab === "token" && (
-            <div className="p-4">Your tokens collection goes here.</div>
-          )}
+          {activeTab === "token" && <TokenList />}
         </div>
       </div>
     </div>

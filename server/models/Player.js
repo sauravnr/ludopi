@@ -109,6 +109,11 @@ const playerSchema = new Schema(
       type: String,
       default: null,
     },
+    ownedTokenDesigns: [{ type: String }],
+    tokenDesign: {
+      type: String,
+      default: null,
+    },
     lastPurchaseDate: {
       type: Date,
       default: null,

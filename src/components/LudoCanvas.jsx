@@ -8,16 +8,18 @@ const DICE_SIZE = 56;
 
 // lazily load token PNGs at two resolutions (64,128 px)
 const tokenImages = {};
-["red", "yellow", "green", "blue"].forEach((color) => {
-  tokenImages[color] = {};
-});
 
-const getTokenImage = (color, size, onLoad) => {
-  const map = tokenImages[color];
+const getTokenImage = (design, color, size, onLoad) => {
+  if (!tokenImages[design]) tokenImages[design] = {};
+  if (!tokenImages[design][color]) tokenImages[design][color] = {};
+  const map = tokenImages[design][color];
   if (!map[size]) {
     const img = new Image();
     if (onLoad) img.onload = onLoad;
-    img.src = `/tokens/${color}-${size}.png`;
+    img.src =
+      design === "default"
+        ? `/tokens/${color}-${size}.png`
+        : `/tokens/${design}/${color}-${size}.png`;
     map[size] = img;
   }
   return map[size];
@@ -1175,7 +1177,9 @@ const LudoCanvas = ({
         const diam = tileSize * 1.5;
         const realPx = diam * window.devicePixelRatio;
         const size = [64, 128].find((s) => s >= realPx) || 128;
-        const img = getTokenImage(color, size, drawCanvas);
+        const design =
+          players.find((pl) => pl.color === color)?.tokenDesign || "default";
+        const img = getTokenImage(design, color, size, drawCanvas);
         if (img.complete) {
           // draw a subtle shadow beneath the hopping token
           ctx.save();
@@ -1226,7 +1230,9 @@ const LudoCanvas = ({
           const diam = tile * 1.5;
           const size =
             [64, 128].find((s) => s >= diam * window.devicePixelRatio) || 128;
-          const img = getTokenImage(color, size, drawCanvas);
+          const design =
+            players.find((pl) => pl.color === color)?.tokenDesign || "default";
+          const img = getTokenImage(design, color, size, drawCanvas);
           if (img.complete) {
             ctx.save();
             ctx.globalAlpha = alpha;
@@ -1381,7 +1387,9 @@ const LudoCanvas = ({
         const [ox, oy] = gridOffsets[i];
         const x = cx + ox * unit;
         const y = cy - lift + oy * unit;
-        const img = getTokenImage(t.color, size, drawCanvas);
+        const design =
+          players.find((pl) => pl.color === t.color)?.tokenDesign || "default";
+        const img = getTokenImage(design, t.color, size, drawCanvas);
         if (!img.complete) return;
         ctx.save();
         ctx.translate(x, y);

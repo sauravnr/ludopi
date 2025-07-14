@@ -699,6 +699,8 @@ function applySpin(roomCode, color, value) {
   room.hasRolled[color] = true;
   const design =
     room.players.find((p) => p.color === color)?.diceDesign || null;
+  const tokenD =
+    room.players.find((p) => p.color === color)?.tokenDesign || null;
   io.to(roomCode).emit("dice-rolled-broadcast", {
     color,
     value: rolled,
@@ -706,6 +708,7 @@ function applySpin(roomCode, color, value) {
     capture: false,
     finished: false,
     diceDesign: design,
+    tokenDesign: tokenD,
   });
 }
 
@@ -738,6 +741,8 @@ async function applyMove(roomCode, color, tokenIdx, value) {
       finished: false,
       diceDesign:
         room.players.find((p) => p.color === color)?.diceDesign || null,
+      tokenDesign:
+        room.players.find((p) => p.color === color)?.tokenDesign || null,
     });
     setTimeout(() => {
       const nextColor = room.players[room.currentTurnIndex].color;
@@ -933,6 +938,8 @@ async function applyMove(roomCode, color, tokenIdx, value) {
     capture: isCapture,
     finished,
     diceDesign: room.players.find((p) => p.color === color)?.diceDesign || null,
+    tokenDesign:
+      room.players.find((p) => p.color === color)?.tokenDesign || null,
   });
 
   setTimeout(() => {
@@ -1137,7 +1144,7 @@ io.on("connection", (socket) => {
     }
     // Check if user is already in another active room
     const playerDoc = await Player.findOne({ userId: user._id })
-      .select("coins activeRoomCode diceDesign")
+      .select("coins activeRoomCode diceDesign tokenDesign")
       .lean();
     if (!playerDoc) return socket.emit("server-error");
     if (playerDoc.activeRoomCode && playerDoc.activeRoomCode !== roomCode) {
@@ -1188,6 +1195,7 @@ io.on("connection", (socket) => {
           username: user.username,
           color: chosen,
           diceDesign: playerDoc.diceDesign || null,
+          tokenDesign: playerDoc.tokenDesign || null,
         };
         room.players.push(player);
       } else {
@@ -1209,6 +1217,7 @@ io.on("connection", (socket) => {
       player.socketId = socket.id;
       player.offline = false;
       player.diceDesign = playerDoc.diceDesign || null;
+      player.tokenDesign = playerDoc.tokenDesign || null;
     }
 
     socket.join(roomCode);
