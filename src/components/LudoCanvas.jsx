@@ -9,10 +9,15 @@ const DICE_SIZE = 56;
 // lazily load token PNGs at two resolutions (64,128 px)
 const tokenImages = {};
 
-const getFrameSrc = (design) =>
-  design && design !== "default"
-    ? `/frames/${design}/idle-128.png`
+const getFrameSrc = (design) => {
+  const safe =
+    typeof design === "string" && /^[a-zA-Z0-9_-]+$/.test(design)
+      ? design
+      : "default";
+  return safe && safe !== "default"
+    ? `/frames/${encodeURIComponent(safe)}/idle-128.png`
     : "/frames/idle-128.png";
+};
 
 const getTokenImage = (design, color, size, onLoad) => {
   if (!tokenImages[design]) tokenImages[design] = {};

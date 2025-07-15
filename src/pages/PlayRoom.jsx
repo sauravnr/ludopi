@@ -56,6 +56,8 @@ const PlayRoom = () => {
 
   const [rejoinMsg, setRejoinMsg] = useState(null);
   const [botEnabled, setBotEnabled] = useState(false);
+  // Store avatar and frame info for players by their ID
+  const [playerInfo, setPlayerInfo] = useState({});
 
   const toggleBot = () => {
     const next = !botEnabled;
