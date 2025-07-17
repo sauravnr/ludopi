@@ -6,6 +6,9 @@ import { useSocket } from "../context/SocketContext";
 // dice dimensions in pixels
 const DICE_SIZE = 56;
 
+// scaling factor for token diameter relative to a board tile
+const TOKEN_SCALE = 1.1;
+
 // lazily load token PNGs at two resolutions (64,128 px)
 const tokenImages = {};
 
@@ -1136,7 +1139,7 @@ const LudoCanvas = ({
       if (step < 0 || step >= PATHS[color].length) return;
       // compute its screen center:
       const [cx, cy, tile] = project(...PATHS[color][step]);
-      const diam = tile * 1.5;
+      const diam = tile * TOKEN_SCALE;
       const offsetY = diam * 0.2; // same lift as your token
 
       // draw a rotating ring centered under the token:
@@ -1184,7 +1187,7 @@ const LudoCanvas = ({
         const x = fx + (tx - fx) * e;
         const y = fy + (ty - fy) * e - Math.sin(Math.PI * e) * height;
 
-        const diam = tileSize * 1.5;
+        const diam = tileSize * TOKEN_SCALE;
         const realPx = diam * window.devicePixelRatio;
         const size = [64, 128].find((s) => s >= realPx) || 128;
         const design =
@@ -1237,7 +1240,7 @@ const LudoCanvas = ({
           const alpha = 1 - t;
           // compute on-board pixel position:
           const [cx, cy, tile] = project(...PATHS[color][step]);
-          const diam = tile * 1.5;
+          const diam = tile * TOKEN_SCALE;
           const size =
             [64, 128].find((s) => s >= diam * window.devicePixelRatio) || 128;
           const design =
@@ -1360,7 +1363,7 @@ const LudoCanvas = ({
 
       const [row, col] = cell.split("-").map(Number);
       const [cx, cy, tile] = project(row, col);
-      const baseDiam = tile * 1.5;
+      const baseDiam = tile * TOKEN_SCALE;
       const lift = baseDiam * 0.2;
 
       // clamp to at most 4 tokens drawn
