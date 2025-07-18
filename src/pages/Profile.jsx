@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../utils/api";
-import { FaArrowLeft, FaEdit, FaCoins } from "react-icons/fa";
+import { FaArrowLeft, FaEdit } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 import { useAlert } from "../context/AlertContext";
 import { COUNTRY_NAMES, getCountryFlag } from "../utils/countries";
@@ -281,7 +281,7 @@ export default function Profile() {
               <div className="flex items-center space-x-2">
                 <h2 className="text-2xl font-semibold">{username}</h2>
                 <div className="flex items-center space-x-1 text-yellow-600">
-                  <FaCoins />
+                  <img src="/icons/coin.png" alt="Coins" className="w-4 h-4" />
                   <span>{coins}</span>
                 </div>
               </div>

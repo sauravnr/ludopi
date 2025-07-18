@@ -1,14 +1,7 @@
 // src/components/Header.jsx
 import React from "react";
 import { Link } from "react-router-dom";
-import {
-  FaCoins,
-  FaGem,
-  FaCog,
-  FaVolumeUp,
-  FaMusic,
-  FaComments,
-} from "react-icons/fa";
+import { FaVolumeUp, FaMusic, FaComments } from "react-icons/fa";
 import Modal, { ToggleSwitch } from "./Modal";
 
 export default function Header({
@@ -75,13 +68,15 @@ export default function Header({
         </div>
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-1">
-            <FaCoins /> <span>{coins}</span>
+            <img src="/icons/coin.png" alt="Coins" className="w-6 h-6" />
+            <span>{coins}</span>
           </div>
           <div className="flex items-center space-x-1">
-            <FaGem /> <span>30</span>
+            <img src="/icons/diamond.png" alt="Diamonds" className="w-6 h-6" />
+            <span>30</span>
           </div>
           <button onClick={onSettingsClick}>
-            <FaCog className="w-6 h-6" />
+            <img src="/icons/setting.png" alt="Settings" className="w-6 h-6" />
           </button>
           {/* ← new Users link */}
           <Link to="/users" className="ml-4 text-sm hover:underline">
