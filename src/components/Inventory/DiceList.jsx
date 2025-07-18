@@ -12,6 +12,7 @@ export default function DiceList() {
   const [loading, setLoading] = useState(null);
   const [preview, setPreview] = useState(null);
   const [imagesLoading, setImagesLoading] = useState(!imagesLoaded);
+  const [buyItem, setBuyItem] = useState(null);
 
   useEffect(() => {
     if (imagesLoaded) return;
@@ -44,7 +45,7 @@ export default function DiceList() {
     }
   };
 
-  const purchase = async (id, price) => {
+  const doPurchase = async (id, price) => {
     setLoading(id);
     try {
       const { data } = await api.post("/player/dice/purchase", {
@@ -69,6 +70,13 @@ export default function DiceList() {
     id === "default" ? `/dice/idle-256.png` : `/dice/${id}/idle-256.png`;
   const previewSrc = (id) =>
     id === "default" ? `/dice/idle-256.png` : `/dice/${id}/idle-256.png`;
+
+  const handleConfirm = async () => {
+    if (buyItem) {
+      await doPurchase(buyItem.id, buyItem.price);
+      setBuyItem(null);
+    }
+  };
 
   return imagesLoading ? (
     <Loader />
@@ -109,7 +117,7 @@ export default function DiceList() {
               ) : (
                 <button
                   disabled={loading === d.id}
-                  onClick={() => purchase(d.id, d.price)}
+                  onClick={() => setBuyItem(d)}
                   className="btn btn-primary text-sm px-2 py-1"
                 >
                   Buy
@@ -135,6 +143,40 @@ export default function DiceList() {
               decoding="async"
             />
           </div>
+        )}
+      </Modal>
+      <Modal
+        show={!!buyItem}
+        onClose={() => setBuyItem(null)}
+        title={
+          player && buyItem && player.coins >= buyItem.price
+            ? "Confirm Purchase"
+            : "Insufficient Coins"
+        }
+        width="sm"
+        footer={
+          buyItem && player && player.coins >= buyItem.price
+            ? [
+                {
+                  label: "Confirm",
+                  onClick: handleConfirm,
+                  variant: "primary",
+                },
+                {
+                  label: "Cancel",
+                  onClick: () => setBuyItem(null),
+                  variant: "secondary",
+                },
+              ]
+            : [{ label: "Buy coin", onClick: () => {}, variant: "secondary" }]
+        }
+      >
+        {buyItem && player && player.coins >= buyItem.price ? (
+          <p className="text-center">
+            Buy {buyItem.name} for {buyItem.price} coins?
+          </p>
+        ) : (
+          <p className="text-center">Insufficient coin</p>
         )}
       </Modal>
     </>
