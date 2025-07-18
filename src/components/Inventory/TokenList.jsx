@@ -107,7 +107,7 @@ export default function TokenList() {
                 <button
                   disabled={loading === d.id || selected(d.id)}
                   onClick={() => selectDesign(d.id)}
-                  className="bg-green-500 text-white px-3 py-1 rounded"
+                  className="btn btn-secondary text-sm px-2 py-1"
                 >
                   {selected(d.id) ? "Selected" : "Use"}
                 </button>
@@ -115,7 +115,7 @@ export default function TokenList() {
                 <button
                   disabled={loading === d.id}
                   onClick={() => purchase(d.id, d.price)}
-                  className="bg-blue-500 text-white px-3 py-1 rounded"
+                  className="btn btn-primary text-sm px-2 py-1"
                 >
                   Buy
                 </button>

@@ -36,6 +36,15 @@ export default function Header({
     ? `${user.avatarUrl}?format=auto&width=32&quality=60 32w,
        ${user.avatarUrl}?format=auto&width=64&quality=60 64w`
     : "";
+  const getFrameSrc = (design) => {
+    const safe =
+      typeof design === "string" && /^[a-zA-Z0-9_-]+$/.test(design)
+        ? design
+        : "default";
+    return safe && safe !== "default"
+      ? `/frames/${encodeURIComponent(safe)}/idle-128.png`
+      : "/frames/idle-128.png";
+  };
   const coins = Number(player?.coins || 0).toLocaleString();
   return (
     <>
@@ -43,7 +52,7 @@ export default function Header({
         <div className="flex items-center space-x-2">
           <Link
             to="/profile"
-            className="relative -mt-2 -mb-2 w-9 h-9 ring-offset-1 ring-offset-blue-800 rounded-md overflow-hidden hover:ring-2 hover:ring-white transition"
+            className="relative -mt-2 -mb-2 w-9 h-9 overflow-hidden"
           >
             <img
               src={smallAvatar}
@@ -54,8 +63,13 @@ export default function Header({
               decoding="async"
               fetchPriority={isCdn ? "high" : undefined}
             />
+            <img
+              src={getFrameSrc(player?.frameDesign)}
+              alt=""
+              className="absolute inset-0 w-full h-full pointer-events-none"
+            />
           </Link>
-          <Link to="/profile" className="font-semibold">
+          <Link to="/profile" className="font-semibold text-white">
             {user?.username}
           </Link>
         </div>
