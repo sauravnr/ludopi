@@ -1499,7 +1499,7 @@ const LudoCanvas = ({
             {isLeftSide ? (
               <>
                 {/* Avatar on left-side players */}
-                <div className="w-12 h-12 bg-white rounded-lg border border-gray-300 relative overflow-hidden">
+                <div className="w-12 h-12 relative overflow-hidden">
                   <img
                     src={p.avatarUrl || "/default-avatar.png"}
                     alt={p.name}
@@ -1571,7 +1571,7 @@ const LudoCanvas = ({
                   )}
                 </div>
                 {/* Avatar on right-side players */}
-                <div className="w-12 h-12 bg-white rounded-lg border border-gray-300 relative overflow-hidden">
+                <div className="w-12 h-12 relative overflow-hidden">
                   <img
                     src={p.avatarUrl || "/default-avatar.png"}
                     alt={p.name}

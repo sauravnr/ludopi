@@ -1,13 +1,36 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../utils/api";
 import Modal from "../Modal";
+import Loader from "../Loader";
 import DICE_SKINS from "../../utils/diceSkins";
+
+let imagesLoaded = false;
 
 export default function DiceList() {
   const { player, setPlayer } = useAuth();
   const [loading, setLoading] = useState(null);
   const [preview, setPreview] = useState(null);
+  const [imagesLoading, setImagesLoading] = useState(!imagesLoaded);
+
+  useEffect(() => {
+    if (imagesLoaded) return;
+    const sources = DICE_SKINS.flatMap((d) => [imgSrc(d.id), previewSrc(d.id)]);
+    Promise.all(
+      sources.map(
+        (src) =>
+          new Promise((resolve) => {
+            const img = new Image();
+            img.onload = resolve;
+            img.onerror = resolve;
+            img.src = src;
+          })
+      )
+    ).then(() => {
+      imagesLoaded = true;
+      setImagesLoading(false);
+    });
+  }, []);
 
   const selectDesign = async (id) => {
     setLoading(id);
@@ -47,7 +70,9 @@ export default function DiceList() {
   const previewSrc = (id) =>
     id === "default" ? `/dice/idle-256.png` : `/dice/${id}/idle-256.png`;
 
-  return (
+  return imagesLoading ? (
+    <Loader />
+  ) : (
     <>
       <div className="p-4">
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -63,6 +88,8 @@ export default function DiceList() {
                 src={imgSrc(d.id)}
                 alt={d.name}
                 className="w-16 h-16 cursor-pointer mb-2"
+                loading="lazy"
+                decoding="async"
                 onClick={() => setPreview(d.id)}
                 onError={(e) => (e.currentTarget.style.display = "none")}
               />
@@ -104,6 +131,8 @@ export default function DiceList() {
               src={previewSrc(preview)}
               alt={preview}
               className="w-64 h-64"
+              loading="lazy"
+              decoding="async"
             />
           </div>
         )}

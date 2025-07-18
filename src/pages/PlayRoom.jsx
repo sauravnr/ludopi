@@ -141,6 +141,12 @@ const PlayRoom = () => {
     };
     doJoin();
 
+    const handleRoomNotFound = () => {
+      showAlert("Room not found", "error");
+      navigate("/");
+    };
+    socket.on("room-not-found", handleRoomNotFound);
+
     // If no color after 5s, alert user
     timeoutId = setTimeout(() => {
       if (!playerColor) {
@@ -158,8 +164,9 @@ const PlayRoom = () => {
         socket.emit("leave-room", { roomCode });
       }
       socket.off("connect", sendJoin);
+      socket.off("room-not-found", handleRoomNotFound);
     };
-  }, [loading, roomCode, mode, playerColor, navigate]);
+  }, [loading, roomCode, mode, playerColor, navigate, showAlert]);
 
   useEffect(() => {
     // Now the server emits { players: [...], mode: "2P"|"4P" }

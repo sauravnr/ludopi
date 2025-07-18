@@ -1,7 +1,11 @@
-import React, { useState } from "react";
-import DiceList from "../components/Inventory/DiceList";
-import FrameList from "../components/Inventory/FrameList";
-import TokenList from "../components/Inventory/TokenList";
+import React, { useState, lazy, Suspense } from "react";
+import Loader from "../components/Loader";
+
+const DiceList = lazy(() => import("../components/Inventory/DiceList"));
+const FrameList = lazy(() => import("../components/Inventory/FrameList"));
+const TokenList = lazy(() => import("../components/Inventory/TokenList"));
+const EmojiList = lazy(() => import("../components/Inventory/EmojiList"));
+const BoardList = lazy(() => import("../components/Inventory/BoardList"));
 
 const tabs = [
   { key: "dice", label: "Dice", icon: "/inventory-icons/dice.png" },
@@ -34,15 +38,31 @@ const Inventory = () => {
           ))}
         </div>
         <div className="flex-1 overflow-auto">
-          {activeTab === "dice" && <DiceList />}
-          {activeTab === "frame" && <FrameList />}
+          {activeTab === "dice" && (
+            <Suspense fallback={<Loader />}>
+              <DiceList />
+            </Suspense>
+          )}
+          {activeTab === "frame" && (
+            <Suspense fallback={<Loader />}>
+              <FrameList />
+            </Suspense>
+          )}
           {activeTab === "emoji" && (
-            <div className="p-4">Your emojis collection goes here.</div>
+            <Suspense fallback={<Loader />}>
+              <EmojiList />
+            </Suspense>
           )}
           {activeTab === "board" && (
-            <div className="p-4">Your boards collection goes here.</div>
+            <Suspense fallback={<Loader />}>
+              <BoardList />
+            </Suspense>
           )}
-          {activeTab === "token" && <TokenList />}
+          {activeTab === "token" && (
+            <Suspense fallback={<Loader />}>
+              <TokenList />
+            </Suspense>
+          )}
         </div>
       </div>
     </div>
