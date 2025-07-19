@@ -5,6 +5,134 @@ const Player = require("../models/Player");
 
 const RANK_FIELDS = "playerId trophies trophyUpdatedAt coins country";
 
+async function aggregateTrophyRanks(player) {
+  const trophies = player.trophies || 0;
+  const country = player.country || "Worldwide";
+  const [stats] = await Player.aggregate([
+    {
+      $facet: {
+        worldTotal: [{ $count: "c" }],
+        countryTotal: [{ $match: { country } }, { $count: "c" }],
+        worldRank: [
+          {
+            $match: {
+              $or: [
+                { trophies: { $gt: trophies } },
+                { trophies, trophyUpdatedAt: { $lt: player.trophyUpdatedAt } },
+                {
+                  trophies,
+                  trophyUpdatedAt: player.trophyUpdatedAt,
+                  playerId: { $lt: player.playerId },
+                },
+              ],
+            },
+          },
+          { $count: "c" },
+        ],
+        countryRank: [
+          {
+            $match: {
+              country,
+              $or: [
+                { trophies: { $gt: trophies } },
+                { trophies, trophyUpdatedAt: { $lt: player.trophyUpdatedAt } },
+                {
+                  trophies,
+                  trophyUpdatedAt: player.trophyUpdatedAt,
+                  playerId: { $lt: player.playerId },
+                },
+              ],
+            },
+          },
+          { $count: "c" },
+        ],
+      },
+    },
+    {
+      $project: {
+        worldTotal: { $ifNull: [{ $arrayElemAt: ["$worldTotal.c", 0] }, 0] },
+        countryTotal: {
+          $ifNull: [{ $arrayElemAt: ["$countryTotal.c", 0] }, 0],
+        },
+        worldRank: {
+          $add: [{ $ifNull: [{ $arrayElemAt: ["$worldRank.c", 0] }, 0] }, 1],
+        },
+        countryRank: {
+          $add: [{ $ifNull: [{ $arrayElemAt: ["$countryRank.c", 0] }, 0] }, 1],
+        },
+      },
+    },
+  ]);
+
+  return {
+    trophies,
+    country,
+    worldRank: stats.worldRank,
+    worldTotal: stats.worldTotal,
+    countryRank: stats.countryRank,
+    countryTotal: stats.countryTotal,
+  };
+}
+
+async function aggregateCoinRanks(player) {
+  const coins = player.coins || 0;
+  const country = player.country || "Worldwide";
+  const [stats] = await Player.aggregate([
+    {
+      $facet: {
+        worldTotal: [{ $count: "c" }],
+        countryTotal: [{ $match: { country } }, { $count: "c" }],
+        worldRank: [
+          {
+            $match: {
+              $or: [
+                { coins: { $gt: coins } },
+                { coins, playerId: { $lt: player.playerId } },
+              ],
+            },
+          },
+          { $count: "c" },
+        ],
+        countryRank: [
+          {
+            $match: {
+              country,
+              $or: [
+                { coins: { $gt: coins } },
+                { coins, playerId: { $lt: player.playerId } },
+              ],
+            },
+          },
+          { $count: "c" },
+        ],
+      },
+    },
+    {
+      $project: {
+        worldTotal: { $ifNull: [{ $arrayElemAt: ["$worldTotal.c", 0] }, 0] },
+        countryTotal: {
+          $ifNull: [{ $arrayElemAt: ["$countryTotal.c", 0] }, 0],
+        },
+        worldRank: {
+          $add: [{ $ifNull: [{ $arrayElemAt: ["$worldRank.c", 0] }, 0] }, 1],
+        },
+        countryRank: {
+          $add: [{ $ifNull: [{ $arrayElemAt: ["$countryRank.c", 0] }, 0] }, 1],
+        },
+      },
+    },
+  ]);
+
+  return {
+    coins,
+    country,
+    worldRank: stats.worldRank,
+    worldTotal: stats.worldTotal,
+    countryRank: stats.countryRank,
+    countryTotal: stats.countryTotal,
+  };
+}
+
 // simple in-memory cache so ranks don't recalc every request
 const CACHE_TTL = 1 * 60 * 60 * 1000; // 1 hour
 const rankCache = new Map();
@@ -21,44 +149,7 @@ router.get("/me", protect, async (req, res) => {
     return res.json(cached.data);
   }
 
-  const trophies = player.trophies || 0;
-  const worldTotal = await Player.countDocuments();
-  const worldRank =
-    (await Player.countDocuments({
-      $or: [
-        { trophies: { $gt: trophies } },
-        { trophies, trophyUpdatedAt: { $lt: player.trophyUpdatedAt } },
-        {
-          trophies,
-          trophyUpdatedAt: player.trophyUpdatedAt,
-          playerId: { $lt: player.playerId },
-        },
-      ],
-    })) + 1;
-  const country = player.country || "Worldwide";
-  const countryTotal = await Player.countDocuments({ country });
-  const countryRank =
-    (await Player.countDocuments({
-      $or: [
-        { country, trophies: { $gt: trophies } },
-        { country, trophies, trophyUpdatedAt: { $lt: player.trophyUpdatedAt } },
-        {
-          country,
-          trophies,
-          trophyUpdatedAt: player.trophyUpdatedAt,
-          playerId: { $lt: player.playerId },
-        },
-      ],
-    })) + 1;
-
-  const result = {
-    trophies,
-    country,
-    worldRank,
-    worldTotal,
-    countryRank,
-    countryTotal,
-  };
+  const result = await aggregateTrophyRanks(player);
 
   rankCache.set(cacheKey, { time: Date.now(), data: result });
   res.json(result);
@@ -131,35 +222,7 @@ router.get("/coins/me", protect, async (req, res) => {
     return res.json(cached.data);
   }
 
-  const coins = player.coins || 0;
-  const worldTotal = await Player.countDocuments();
-  const worldRank =
-    (await Player.countDocuments({
-      // players with more coins or same coins but smaller playerId rank ahead
-      $or: [
-        { coins: { $gt: coins } },
-        { coins, playerId: { $lt: player.playerId } },
-      ],
-    })) + 1;
-  const country = player.country || "Worldwide";
-  const countryTotal = await Player.countDocuments({ country });
-  const countryRank =
-    (await Player.countDocuments({
-      // same tie-breaker within the country scope
-      $or: [
-        { country, coins: { $gt: coins } },
-        { country, coins, playerId: { $lt: player.playerId } },
-      ],
-    })) + 1;
-
-  const result = {
-    coins,
-    country,
-    worldRank,
-    worldTotal,
-    countryRank,
-    countryTotal,
-  };
+  const result = await aggregateCoinRanks(player);
 
   rankCache.set(cacheKey, { time: Date.now(), data: result });
   res.json(result);
@@ -180,34 +243,7 @@ router.get("/coins/:userId", protect, async (req, res) => {
       return res.json(cached.data);
     }
 
-    const coins = player.coins || 0;
-    const worldTotal = await Player.countDocuments();
-    const worldRank =
-      (await Player.countDocuments({
-        // players with more coins or same coins but smaller playerId rank ahead
-        $or: [
-          { coins: { $gt: coins } },
-          { coins, playerId: { $lt: player.playerId } },
-        ],
-      })) + 1;
-    const country = player.country || "Worldwide";
-    const countryTotal = await Player.countDocuments({ country });
-    const countryRank =
-      (await Player.countDocuments({
-        // same tie-breaker within the country scope
-        $or: [
-          { country, coins: { $gt: coins } },
-          { country, coins, playerId: { $lt: player.playerId } },
-        ],
-      })) + 1;
-    const result = {
-      coins,
-      country,
-      worldRank,
-      worldTotal,
-      countryRank,
-      countryTotal,
-    };
+    const result = await aggregateCoinRanks(player);
 
     rankCache.set(cacheKey, { time: Date.now(), data: result });
     res.json(result);
@@ -232,47 +268,7 @@ router.get("/:userId", protect, async (req, res) => {
       return res.json(cached.data);
     }
 
-    const trophies = player.trophies || 0;
-    const worldTotal = await Player.countDocuments();
-    const worldRank =
-      (await Player.countDocuments({
-        $or: [
-          { trophies: { $gt: trophies } },
-          { trophies, trophyUpdatedAt: { $lt: player.trophyUpdatedAt } },
-          {
-            trophies,
-            trophyUpdatedAt: player.trophyUpdatedAt,
-            playerId: { $lt: player.playerId },
-          },
-        ],
-      })) + 1;
-    const country = player.country || "Worldwide";
-    const countryTotal = await Player.countDocuments({ country });
-    const countryRank =
-      (await Player.countDocuments({
-        $or: [
-          { country, trophies: { $gt: trophies } },
-          {
-            country,
-            trophies,
-            trophyUpdatedAt: { $lt: player.trophyUpdatedAt },
-          },
-          {
-            country,
-            trophies,
-            trophyUpdatedAt: player.trophyUpdatedAt,
-            playerId: { $lt: player.playerId },
-          },
-        ],
-      })) + 1;
-    const result = {
-      trophies,
-      country,
-      worldRank,
-      worldTotal,
-      countryRank,
-      countryTotal,
-    };
+    const result = await aggregateTrophyRanks(player);
 
     rankCache.set(cacheKey, { time: Date.now(), data: result });
     res.json(result);

@@ -202,7 +202,7 @@ export default function Profile() {
   return (
     <div
       className="min-h-screen bg-cover bg-center p-4 overflow-y-auto"
-      style={{ backgroundImage: "url(/images/cosmic-bg.png)" }}
+      style={{ backgroundImage: "url(/images/cosmic-bg.webp)" }}
     >
       <button
         onClick={() => navigate(-1)}

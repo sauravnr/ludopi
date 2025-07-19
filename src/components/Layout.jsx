@@ -49,7 +49,7 @@ export default function Layout() {
 
       <main
         className="flex-1 overflow-auto bg-cover bg-center"
-        style={{ backgroundImage: "url(/images/cosmic-bg.png)" }}
+        style={{ backgroundImage: "url(/images/cosmic-bg.webp)" }}
       >
         <Outlet />
       </main>

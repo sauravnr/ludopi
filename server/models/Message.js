@@ -23,6 +23,11 @@ const messageSchema = new mongoose.Schema(
 
 // Index for efficient chat lookups
 messageSchema.index({ from: 1, to: 1, createdAt: -1 });
+// Automatically expire messages after 30 days
+messageSchema.index(
+  { createdAt: 1 },
+  { expireAfterSeconds: 60 * 60 * 24 * 30 }
+);
 
 // strip any HTML before saving
 messageSchema.pre("save", function (next) {
