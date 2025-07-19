@@ -8,6 +8,7 @@ const https = require("https");
 const fs = require("fs");
 const cors = require("cors");
 const helmet = require("helmet");
+const compression = require("compression");
 const cookieParser = require("cookie-parser");
 const cookie = require("cookie");
 const crypto = require("crypto");
@@ -71,6 +72,7 @@ app.set("trust proxy", 1);
 // ─── PARSE COOKIES ───────────────────────────────────────
 app.use(cookieParser());
 app.use(helmet());
+app.use(compression());
 
 // ─── TIGHTEN CORS ────────────────────────────────────────────────────────
 app.use(

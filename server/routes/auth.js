@@ -26,6 +26,10 @@ function randomAvatar() {
   return defaultAvatars[Math.floor(Math.random() * defaultAvatars.length)];
 }
 
+// Fields required by the front-end player profile
+const PROFILE_FIELDS =
+  "userId username avatarUrl bio country badges totalGamesPlayed wins2P wins4P coins diceDesign ownedDiceDesigns frameDesign ownedFrameDesigns tokenDesign ownedTokenDesigns createdAt role";
+
 // POST /api/auth/pi-login
 router.post("/pi-login", piLoginLimiter, async (req, res) => {
   try {
@@ -65,6 +69,11 @@ router.post("/pi-login", piLoginLimiter, async (req, res) => {
       { $set: { lastLogin: new Date() } }
     ).catch((err) => console.error("Failed to update lastLogin:", err));
 
+    // fetch profile fields for response
+    const playerProfile = await Player.findOne({ userId: user._id })
+      .select(PROFILE_FIELDS)
+      .lean();
+
     // 5) Issue JWT and set cookie
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
@@ -83,6 +92,7 @@ router.post("/pi-login", piLoginLimiter, async (req, res) => {
           piUid: user.piUid,
           avatarUrl: user.avatarUrl,
         },
+        player: playerProfile,
       });
   } catch (err) {
     console.error("Pi login error:", err);
@@ -109,6 +119,10 @@ router.post("/register", async (req, res) => {
       avatarUrl: user.avatarUrl,
     });
 
+    const playerProfile = await Player.findOne({ userId: user._id })
+      .select(PROFILE_FIELDS)
+      .lean();
+
     // 3) Issue JWT and set cookie
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
@@ -128,6 +142,7 @@ router.post("/register", async (req, res) => {
           email,
           avatarUrl: user.avatarUrl,
         },
+        player: playerProfile,
       });
   } catch (err) {
     return res.status(400).json({ message: err.message });
@@ -147,6 +162,10 @@ router.post("/login", async (req, res) => {
       { userId: user._id },
       { $set: { lastLogin: new Date() } }
     ).catch((err) => console.error("Failed to update lastLogin:", err));
+    const playerProfile = await Player.findOne({ userId: user._id })
+      .select(PROFILE_FIELDS)
+      .lean();
+
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
@@ -164,6 +183,7 @@ router.post("/login", async (req, res) => {
           email: user.email,
           avatarUrl: user.avatarUrl,
         },
+        player: playerProfile,
       });
   } catch (err) {
     return res.status(500).json({ message: "Server error" });
@@ -182,9 +202,11 @@ router.post("/logout", (req, res) => {
 });
 
 // GET /api/auth/me
-router.get("/me", protect, (req, res) => {
-  // req.user already has avatarUrl, since we did .select("-password")
-  res.json({ user: req.user });
+router.get("/me", protect, async (req, res) => {
+  const player = await Player.findOne({ userId: req.user._id })
+    .select(PROFILE_FIELDS)
+    .lean();
+  res.json({ user: req.user, player });
 });
 
 module.exports = router;

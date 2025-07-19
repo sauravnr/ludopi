@@ -9,16 +9,12 @@ export function AuthProvider({ children }) {
   const [player, setPlayer] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // On mount, load auth→user, then load player
+  // On mount, load user + player once
   useEffect(() => {
     api
       .get("/auth/me")
       .then(({ data }) => {
         setUser(data.user);
-        // now fetch the player profile
-        return api.get("/player/me");
-      })
-      .then(({ data }) => {
         setPlayer(data.player);
       })
       .catch((err) => {
@@ -34,8 +30,12 @@ export function AuthProvider({ children }) {
   const login = async ({ email, password }) => {
     const { data } = await api.post("/auth/login", { email, password });
     setUser(data.user);
-    const { data: pd } = await api.get("/player/me");
-    setPlayer(pd.player);
+    if (data.player) {
+      setPlayer(data.player);
+    } else {
+      const { data: me } = await api.get("/auth/me");
+      setPlayer(me.player);
+    }
   };
 
   // Register + fetch player
@@ -46,16 +46,24 @@ export function AuthProvider({ children }) {
       password,
     });
     setUser(data.user);
-    const { data: pd } = await api.get("/player/me");
-    setPlayer(pd.player);
+    if (data.player) {
+      setPlayer(data.player);
+    } else {
+      const { data: me } = await api.get("/auth/me");
+      setPlayer(me.player);
+    }
   };
 
   // Pi Network login
   const piLogin = async (accessToken) => {
     const { data } = await api.post("/auth/pi-login", { accessToken });
     setUser(data.user);
-    const { data: pd } = await api.get("/player/me");
-    setPlayer(pd.player);
+    if (data.player) {
+      setPlayer(data.player);
+    } else {
+      const { data: me } = await api.get("/auth/me");
+      setPlayer(me.player);
+    }
   };
 
   const logout = async () => {

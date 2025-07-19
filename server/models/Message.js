@@ -21,6 +21,9 @@ const messageSchema = new mongoose.Schema(
   }
 );
 
+// Index for efficient chat lookups
+messageSchema.index({ from: 1, to: 1, createdAt: -1 });
+
 // strip any HTML before saving
 messageSchema.pre("save", function (next) {
   if (this.isModified("text")) {
