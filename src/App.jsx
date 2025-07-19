@@ -4,7 +4,7 @@ import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import Loader from "./components/Loader";
 
-import Layout from "./components/Layout";
+const Layout = lazy(() => import("./components/Layout"));
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 
@@ -65,7 +65,13 @@ export default function App() {
 
           {/* protected */}
           <Route element={<RequireAuth />}>
-            <Route element={<Layout />}>
+            <Route
+              element={
+                <Suspense fallback={<Loader />}>
+                  <Layout />
+                </Suspense>
+              }
+            >
               {/* wrap each lazy page in Suspense */}
               <Route
                 path="/"
