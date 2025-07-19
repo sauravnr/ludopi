@@ -27,8 +27,7 @@ function randomAvatar() {
 }
 
 // Fields required by the front-end player profile
-const PROFILE_FIELDS =
-  "userId username avatarUrl bio country badges totalGamesPlayed wins2P wins4P coins diceDesign ownedDiceDesigns frameDesign ownedFrameDesigns tokenDesign ownedTokenDesigns createdAt role";
+const PROFILE_FIELDS = require("../utils/profileFields");
 
 // POST /api/auth/pi-login
 router.post("/pi-login", piLoginLimiter, async (req, res) => {

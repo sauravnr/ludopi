@@ -7,8 +7,7 @@ const CoinTransaction = require("../models/CoinTransaction");
 const MAX_BIO_LEN = 30;
 
 // Fields needed by the front-end profile views
-const PROFILE_FIELDS =
-  "userId username avatarUrl bio country badges totalGamesPlayed wins2P wins4P coins diceDesign ownedDiceDesigns frameDesign ownedFrameDesigns tokenDesign ownedTokenDesigns createdAt role";
+const PROFILE_FIELDS = require("../utils/profileFields");
 
 router.get("/me", protect, async (req, res) => {
   const player = await Player.findOne({ userId: req.user._id })
