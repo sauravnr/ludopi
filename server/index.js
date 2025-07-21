@@ -207,6 +207,13 @@ app.post(
         green: false,
         blue: false,
       },
+      // store the dice value rolled for each color this turn
+      currentRoll: {
+        red: null,
+        yellow: null,
+        green: null,
+        blue: null,
+      },
       tokenSteps: {
         red: [-1, -1, -1, -1],
         yellow: [-1, -1, -1, -1],
@@ -699,6 +706,7 @@ function applySpin(roomCode, color, value) {
   const rolled =
     typeof value === "number" ? value : Math.floor(Math.random() * 6) + 1;
   room.hasRolled[color] = true;
+  room.currentRoll[color] = rolled;
   const design =
     room.players.find((p) => p.color === color)?.diceDesign || null;
   const tokenD =
@@ -714,9 +722,15 @@ function applySpin(roomCode, color, value) {
   });
 }
 
-async function applyMove(roomCode, color, tokenIdx, value) {
+async function applyMove(roomCode, color, tokenIdx) {
   const room = rooms[roomCode];
   if (!room) return;
+
+  const value = room.currentRoll[color];
+  room.currentRoll[color] = null;
+  if (typeof value !== "number") {
+    return;
+  }
 
   if (!room.hasRolled[color] || room.hasMoved[color]) {
     return;
@@ -979,7 +993,7 @@ function scheduleBotTurn(roomCode) {
         }
       }
       const tokenIdx = moves.length > 0 ? moves[0] : undefined;
-      applyMove(roomCode, color, tokenIdx, value);
+      applyMove(roomCode, color, tokenIdx);
     }, 1000);
   }, 1000);
 }
@@ -1380,22 +1394,19 @@ io.on("connection", (socket) => {
   });
 
   // 2) “Move token” event: apply three‐sixes + movement logic, broadcast updatedSteps
-  socket.on(
-    "dice-move-intent",
-    async ({ roomCode, color, tokenIdx, value }) => {
-      const room = rooms[roomCode];
-      if (!room) return;
+  socket.on("dice-move-intent", async ({ roomCode, color, tokenIdx }) => {
+    const room = rooms[roomCode];
+    if (!room) return;
 
-      const playerObj = room.players.find((p) => p.color === color);
-      if (!playerObj) return;
-      if (socket.user._id.toString() !== playerObj.userId) return;
+    const playerObj = room.players.find((p) => p.color === color);
+    if (!playerObj) return;
+    if (socket.user._id.toString() !== playerObj.userId) return;
 
-      const currentColor = room.players[room.currentTurnIndex]?.color;
-      if (currentColor !== color) return;
+    const currentColor = room.players[room.currentTurnIndex]?.color;
+    if (currentColor !== color) return;
 
-      await applyMove(roomCode, color, tokenIdx, value);
-    }
-  );
+    await applyMove(roomCode, color, tokenIdx);
+  });
 
   socket.on("forfeit-game", ({ roomCode }) => {
     socket.leave(roomCode);
