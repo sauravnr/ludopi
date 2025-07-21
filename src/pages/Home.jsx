@@ -1,7 +1,6 @@
 // src/pages/Home.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaUsers, FaUserFriends, FaGlobe, FaSignInAlt } from "react-icons/fa";
 import Modal from "../components/Modal";
 import BetModal from "../components/BetModal";
 import api from "../utils/api";
@@ -72,39 +71,39 @@ const Home = () => {
   const cards = [
     {
       label: "2 Players",
-      icon: FaUsers,
+      iconSrc: "/icons/2players-128.png",
       onClick: () => handleCreateRoom("2P"),
       bg: "bg-gradient-to-br from-teal-400 to-teal-600",
-      shadowClass: "shadow-[0px_5px_0px_#16a34a]",
-      activeShadowClass: "active:shadow-[0px_2px_0px_#16a34a]",
-      borderClass: "border-gray-200/50",
+      shadowClass: "shadow-[0_5px_0_#0f766e]",
+      activeShadowClass: "active:shadow-[0_2px_0_#0f766e]",
+      borderClass: "border-teal-300/30 ring-1 ring-inset ring-white/10",
     },
     {
       label: "4 Players",
-      icon: FaUserFriends,
+      iconSrc: "/icons/4players-128.png",
       onClick: () => handleCreateRoom("4P"),
       bg: "bg-gradient-to-br from-yellow-400 to-yellow-600",
-      shadowClass: "shadow-[0px_5px_0px_#ca8a04]",
-      activeShadowClass: "active:shadow-[0px_2px_0px_#ca8a04]",
-      borderClass: "border-gray-200/50",
+      shadowClass: "shadow-[0_5px_0_#a16207]",
+      activeShadowClass: "active:shadow-[0_2px_0_#a16207]",
+      borderClass: "border-yellow-300/30 ring-1 ring-inset ring-white/10",
     },
     {
       label: "Online",
-      icon: FaGlobe,
+      iconSrc: "/icons/online-128.png",
       onClick: handleOnline,
       bg: "bg-gradient-to-br from-green-400 to-green-600",
-      shadowClass: "shadow-[0px_5px_0px_#16a34a]",
-      activeShadowClass: "active:shadow-[0px_2px_0px_#16a34a]",
-      borderClass: "border-white/30",
+      shadowClass: "shadow-[0_5px_0_#15803d]",
+      activeShadowClass: "active:shadow-[0_2px_0_#15803d]",
+      borderClass: "border-green-300/30 ring-1 ring-inset ring-white/10",
     },
     {
       label: "Join Room",
-      icon: FaSignInAlt,
+      iconSrc: "/icons/joinroom-128.png",
       onClick: () => setShowJoinModal(true),
       bg: "bg-gradient-to-br from-red-400 to-red-600",
-      shadowClass: "shadow-[0px_5px_0px_#dc2626]",
-      activeShadowClass: "active:shadow-[0px_2px_0px_#dc2626]",
-      borderClass: "border-gray-200/50",
+      shadowClass: "shadow-[0_5px_0_#b91c1c]",
+      activeShadowClass: "active:shadow-[0_2px_0_#b91c1c]",
+      borderClass: "border-red-300/30 ring-1 ring-inset ring-white/10",
     },
   ];
 
@@ -114,7 +113,7 @@ const Home = () => {
         {cards.map(
           ({
             label,
-            icon: Icon,
+            iconSrc,
             onClick,
             bg,
             shadowClass,
@@ -125,15 +124,16 @@ const Home = () => {
               key={label}
               onClick={onClick}
               className={`
-                ${bg} ${borderClass} relative rounded-2xl cursor-pointer
-                w-32 h-32 flex items-center justify-center
-                transition-all duration-100 ease-out filter
-                ${shadowClass} ${activeShadowClass}
-                active:translate-y-1 active:brightness-75
-              `}
+    ${bg} ${borderClass} relative rounded-2xl cursor-pointer
+    w-32 h-32 flex items-center justify-center
+    transition-all duration-100 ease-out filter
+    ${shadowClass} ${activeShadowClass}
+    active:translate-y-1 active:brightness-75
+  `}
             >
-              <div className="flex flex-col items-center text-white">
-                <Icon size={48} className="mb-1" />
+              <div className="absolute inset-0 bg-white/5 rounded-2xl pointer-events-none z-0" />
+              <div className="flex flex-col items-center text-white z-10">
+                <img src={iconSrc} alt={label} className="mb-1 w-16 h-16" />
                 <span className="text-xl font-bold">{label}</span>
               </div>
             </div>
