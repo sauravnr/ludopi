@@ -641,6 +641,7 @@ const LudoCanvas = ({
   const [localTurnColor, setLocalTurnColor] = useState(null);
   const [hasRolled, setHasRolled] = useState(false);
   const [pendingRoll, setPendingRoll] = useState(null);
+  const isBotActive = players.find((p) => p.color === playerColor)?.bot;
   // tracks whether countdown is waiting for a roll or a move
   const [autoPhase, setAutoPhase] = useState(null); // 'roll' | 'move'
   // track four tokens per color; -1 = still at home
@@ -913,7 +914,7 @@ const LudoCanvas = ({
           return u;
         });
         setRolledDice((r) => ({ ...r, [color]: value }));
-        if (color === playerColor) {
+        if (color === playerColor && !isBotActive) {
           setPendingRoll(value);
           setAutoPhase("move");
           setTimer(12);
@@ -975,7 +976,7 @@ const LudoCanvas = ({
       socket.off("turn-change", onTurn);
       socket.off("state-sync", onSync);
     };
-  }, [playerColor]);
+  }, [playerColor, players]);
 
   const handleDiceRoll = () => {
     if (gameOver) return; // don’t let anyone roll once game is over
@@ -1095,13 +1096,18 @@ const LudoCanvas = ({
       });
     });
     // ── SPINNERS FOR PENDING ROLLS ──────────────────────
-    if (pendingRoll != null) {
-      // Collect screen coords for every pending token
+    if (pendingRoll != null && !isBotActive) {
+      // Collect screen coords for every token that can legally move
       const spinCoords = [];
-      tokenSteps[playerColor].forEach((pos, idx) => {
-        if (pendingRoll === 6 && pos === -1) {
-          spinCoords.push(homeIntersections[playerColor][idx]);
-        } else if (pos >= 0) {
+      const arr = tokenSteps[playerColor] || [];
+      const pathLen = PATHS[playerColor].length;
+      arr.forEach((pos, idx) => {
+        if (pos === FINISHED) return; // already home
+        if (pos === -1) {
+          if (pendingRoll === 6) {
+            spinCoords.push(homeIntersections[playerColor][idx]);
+          }
+        } else if (pos + pendingRoll <= pathLen - 1) {
           spinCoords.push(PATHS[playerColor][pos]);
         }
       });
