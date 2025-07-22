@@ -813,6 +813,18 @@ async function applyMove(roomCode, color, tokenIdx) {
       if (!SAFE_COORDS.some(([r, c]) => r === coord[0] && c === coord[1])) {
         for (const [otherColor, otherArr] of Object.entries(room.tokenSteps)) {
           if (otherColor === color) continue;
+
+          // how many of this color's tokens occupy the landing cell?
+          const countAtCoord = otherArr.reduce((cnt, step) => {
+            if (step >= 0) {
+              const oc = PATHS[otherColor][step];
+              if (oc[0] === coord[0] && oc[1] === coord[1]) return cnt + 1;
+            }
+            return cnt;
+          }, 0);
+
+          // two or more tokens form a blockade and cannot be captured
+          if (countAtCoord >= 2) continue;
           for (let i = 0; i < otherArr.length; i++) {
             const os = otherArr[i];
             if (os < 0) continue;
