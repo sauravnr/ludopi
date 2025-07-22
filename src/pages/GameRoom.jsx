@@ -97,6 +97,15 @@ const GameRoom = () => {
     socket.on("room-not-found", handleRoomNotFound);
     socket.on("room-full", handleRoomFull);
     socket.on("start-game", handleStart);
+    const handleResume = () => {
+      if (!sessionStorage.getItem("navigatingToRoom")) {
+        sessionStorage.setItem("navigatingToRoom", "true");
+        navigate(`/play/${roomCode}`, {
+          state: { players: playersRef.current, mode },
+        });
+      }
+    };
+    socket.on("turn-change", handleResume);
     socket.on("start-failed", ({ message }) => {
       showAlert(message || "Unable to start game.", "error");
     });
@@ -150,6 +159,7 @@ const GameRoom = () => {
       socket.off("start-game", handleStart);
       socket.off("start-failed");
       socket.off("insufficient-coins");
+      socket.off("turn-change", handleResume);
       socket.off("connect", fetchAndJoin);
     };
   }, [roomCode, navigate, user._id]);

@@ -14,7 +14,7 @@ import Loader from "../components/Loader";
 import { useAlert } from "../context/AlertContext";
 
 const PlayRoom = () => {
-  const { user, player: me, loading } = useAuth();
+  const { user, player: me, loading, refreshAuth } = useAuth();
   const socket = useSocket();
   const navigate = useNavigate();
   const { roomCode } = useParams();
@@ -81,8 +81,12 @@ const PlayRoom = () => {
       } else if (socket.connected) {
         socket.emit("leave-room", { roomCode });
       }
-      navigate("/");
+      refreshAuth().finally(() => navigate("/"));
     }
+  };
+
+  const goLobby = () => {
+    refreshAuth().finally(() => navigate("/"));
   };
 
   // Only show the board once we know our color and have >0 players
@@ -404,7 +408,7 @@ const PlayRoom = () => {
           <WinnerPopup
             winners={allFinishers}
             isFinal={true} // non-closeable
-            onLobby={() => navigate("/")}
+            onLobby={goLobby}
           />
         )}
 
@@ -415,7 +419,7 @@ const PlayRoom = () => {
               winners={allFinishers}
               isFinal={false} // still closable for intermediate 1st/2nd
               onClose={() => setCurrentFinish(null)}
-              onLobby={() => navigate("/")}
+              onLobby={goLobby}
             />
           )}
 
@@ -425,7 +429,7 @@ const PlayRoom = () => {
           <WinnerPopup
             winners={allFinishers}
             isFinal={true} // non-closeable
-            onLobby={() => navigate("/")}
+            onLobby={goLobby}
           />
         ) : null}
 

@@ -77,6 +77,16 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const refreshAuth = async () => {
+    try {
+      const { data } = await api.get("/auth/me");
+      setUser(data.user);
+      setPlayer(data.player);
+    } catch (err) {
+      console.error("Failed to refresh auth:", err);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -88,6 +98,7 @@ export function AuthProvider({ children }) {
         register,
         piLogin,
         logout,
+        refreshAuth,
       }}
     >
       {children}
