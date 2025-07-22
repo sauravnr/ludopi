@@ -78,10 +78,6 @@ export default function Header({
           <button onClick={onSettingsClick}>
             <img src="/icons/setting.png" alt="Settings" className="w-6 h-6" />
           </button>
-          {/* ← new Users link */}
-          <Link to="/users" className="ml-4 text-sm hover:underline">
-            Users
-          </Link>
           {user && (
             <button onClick={onLogout} className="ml-4 text-sm hover:underline">
               Logout

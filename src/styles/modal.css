@@ -62,11 +62,21 @@
   border-radius: 0.75rem;
   box-shadow: 0 3px 0 #d18c00, 0 6px 2px rgba(0, 0, 0, 0.25);
   z-index: 10;
+  max-width: 90%; /* prevent overflows on narrow screens */
+  text-align: center;
 }
 .modal-title {
   color: #fff;
   font-size: 1.25rem;
   font-weight: bold;
+  line-height: 1.2;
+}
+
+@media (max-width: 480px) {
+  .modal-title-bar {
+    padding: 0.7rem 1.2rem;
+    top: -1.5rem; /* lift above the window */
+  }
 }
 
 /* round X button on top‐right edge */

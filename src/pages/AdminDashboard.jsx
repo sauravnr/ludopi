@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../utils/api";
 
@@ -46,6 +47,11 @@ export default function AdminDashboard() {
 
   return (
     <div className="p-4 space-y-6 overflow-y-auto">
+      <div className="mb-4">
+        <Link to="/users" className="text-sm text-blue-600 hover:underline">
+          View Users
+        </Link>
+      </div>
       <section>
         <h2 className="text-lg font-bold mb-2">Room Activity</h2>
         <table className="w-full text-sm">
