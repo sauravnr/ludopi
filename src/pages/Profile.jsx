@@ -189,6 +189,9 @@ export default function Profile() {
     totalGamesPlayed: totalGames = 0,
     wins2P: twoWins = 0,
     wins4P: fourWins = 0,
+    tokenCaptures: captures = 0,
+    sixesRolled = 0,
+    tokensHomed = 0,
     joinedAt,
     username,
     coins: coinBalance = 0,
@@ -423,6 +426,9 @@ export default function Profile() {
             <Stat title="2-Player Wins" value={twoWins} />
             <Stat title="4-Player Wins" value={fourWins} />
             <Stat title="Win Rate" value={`${winRate}%`} />
+            <Stat title="Tokens Captured" value={captures} />
+            <Stat title="Sixes Rolled" value={sixesRolled} />
+            <Stat title="Tokens Homed" value={tokensHomed} />
             {joinedAt && (
               <Stat
                 title="Joined"

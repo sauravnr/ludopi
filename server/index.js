@@ -726,6 +726,9 @@ async function applyMove(roomCode, color, tokenIdx) {
   const room = rooms[roomCode];
   if (!room) return;
 
+  const playerObj = room.players.find((p) => p.color === color);
+  const statInc = {};
+
   const value = room.currentRoll[color];
   room.currentRoll[color] = null;
   if (typeof value !== "number") {
@@ -739,6 +742,7 @@ async function applyMove(roomCode, color, tokenIdx) {
 
   if (value === 6) {
     room.consecutiveSixes[color] += 1;
+    if (playerObj) statInc.sixesRolled = (statInc.sixesRolled || 0) + 1;
   } else {
     room.consecutiveSixes[color] = 0;
   }
@@ -773,6 +777,7 @@ async function applyMove(roomCode, color, tokenIdx) {
   const oldArr = room.tokenSteps[color].slice();
   const newArr = oldArr.slice();
   let isCapture = false;
+  let captureCount = 0;
   let finished = false;
   const updatedSteps = {};
 
@@ -818,6 +823,7 @@ async function applyMove(roomCode, color, tokenIdx) {
               }
               updatedSteps[otherColor][i] = -1;
               isCapture = true;
+              captureCount += 1;
             }
           }
         }
@@ -827,6 +833,24 @@ async function applyMove(roomCode, color, tokenIdx) {
 
   for (const [clr, arr] of Object.entries(updatedSteps)) {
     room.tokenSteps[clr] = arr.slice();
+  }
+
+  if (playerObj) {
+    if (captureCount > 0) {
+      statInc.tokenCaptures = (statInc.tokenCaptures || 0) + captureCount;
+    }
+    if (
+      typeof tokenIdx === "number" &&
+      oldArr[tokenIdx] !== FINISHED &&
+      newArr[tokenIdx] === FINISHED
+    ) {
+      statInc.tokensHomed = (statInc.tokensHomed || 0) + 1;
+    }
+    if (Object.keys(statInc).length > 0) {
+      Player.updateOne({ userId: playerObj.userId }, { $inc: statInc }).catch(
+        (e) => console.error("Failed to update stats:", e)
+      );
+    }
   }
 
   if (finished) {

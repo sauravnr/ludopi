@@ -70,6 +70,18 @@ const playerSchema = new Schema(
       type: Number,
       default: 0,
     },
+    tokenCaptures: {
+      type: Number,
+      default: 0,
+    },
+    sixesRolled: {
+      type: Number,
+      default: 0,
+    },
+    tokensHomed: {
+      type: Number,
+      default: 0,
+    },
     // Ranking
     trophies: {
       type: Number,
