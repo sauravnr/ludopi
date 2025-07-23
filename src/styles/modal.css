@@ -113,6 +113,18 @@
   display: flex;
   justify-content: center;
   gap: 0.8rem;
+  flex-wrap: wrap;
+}
+.modal-footer button {
+  flex: 1 1 auto;
+}
+.modal-footer button.btn-warning {
+  flex-basis: 100%;
+}
+@media (max-width: 400px) {
+  .modal-footer button {
+    flex-basis: 100%;
+  }
 }
 /* center icon + text */
 .setting-label {

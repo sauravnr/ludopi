@@ -66,23 +66,45 @@ export default function Header({
             {user?.username}
           </Link>
         </div>
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-1">
-            <img src="/icons/coin.png" alt="Coins" className="w-6 h-6" />
-            <span>{coins}</span>
+        <div className="flex items-center space-x-7">
+          {/* Coins pill */}
+          <div className="relative bg-white/10 px-10 rounded-full flex justify-center items-center h-5">
+            <img
+              src="/icons/coin.png"
+              alt="Coins"
+              className="absolute left-0 top-1/2 w-6 h-6
+                 transform -translate-x-1/1 -translate-y-1/2"
+            />
+            <span className="text-white font-semibold">{coins}</span>
+            <button
+              className="absolute right-0 top-1/2
+                 transform translate-x-1/1 -translate-y-1/2"
+            >
+              <img src="/icons/add.png" alt="Add Coins" className="w-5 h-5" />
+            </button>
           </div>
-          <div className="flex items-center space-x-1">
-            <img src="/icons/diamond.png" alt="Diamonds" className="w-6 h-6" />
-            <span>30</span>
+
+          {/* PiPips pill */}
+          <div className="relative bg-white/10 px-10 rounded-full flex justify-center items-center h-5">
+            <img
+              src="/icons/pipips.png"
+              alt="PiPips"
+              className="absolute left-0 top-1/2 w-6 h-6
+                 transform -translate-x-1/1 -translate-y-1/2"
+            />
+            <span className="text-white font-semibold">0</span>
+            <button
+              className="absolute right-0 top-1/2
+                 transform translate-x-1/1 -translate-y-1/2"
+            >
+              <img src="/icons/add.png" alt="Add PiPips" className="w-5 h-5" />
+            </button>
           </div>
+
+          {/* Settings button */}
           <button onClick={onSettingsClick}>
             <img src="/icons/setting.png" alt="Settings" className="w-6 h-6" />
           </button>
-          {user && (
-            <button onClick={onLogout} className="ml-4 text-sm hover:underline">
-              Logout
-            </button>
-          )}
         </div>
       </header>
 
@@ -96,41 +118,36 @@ export default function Header({
           footer={[
             { label: "Support", variant: "secondary", onClick: onSupport },
             { label: "Feedback", variant: "primary", onClick: onFeedback },
+            { label: "Logout", variant: "warning", onClick: onLogout },
           ]}
         >
-          <div className="space-y-4 w-52 mx-auto">
-            <div className="flex items-center justify-start gap-4">
+          <div className="space-y-4 w-full max-w-xs mx-auto">
+            <div className="flex items-center justify-between gap-2">
               <FaVolumeUp size={24} />
               <span>Sound</span>
-              <div className="ml-auto">
-                <ToggleSwitch
-                  id="sound-switch"
-                  checked={soundOn}
-                  onChange={toggleSound}
-                />
-              </div>
+              <ToggleSwitch
+                id="sound-switch"
+                checked={soundOn}
+                onChange={toggleSound}
+              />
             </div>
-            <div className="flex items-center justify-start gap-4">
+            <div className="flex items-center justify-between gap-2">
               <FaMusic size={24} />
               <span>Music</span>
-              <div className="ml-auto">
-                <ToggleSwitch
-                  id="music-switch"
-                  checked={musicOn}
-                  onChange={toggleMusic}
-                />
-              </div>
+              <ToggleSwitch
+                id="music-switch"
+                checked={musicOn}
+                onChange={toggleMusic}
+              />
             </div>
-            <div className="flex items-center justify-start gap-4">
+            <div className="flex items-center justify-between gap-2">
               <FaComments size={24} />
               <span>Chat</span>
-              <div className="ml-auto">
-                <ToggleSwitch
-                  id="chat-switch"
-                  checked={chatOn}
-                  onChange={toggleChat}
-                />
-              </div>
+              <ToggleSwitch
+                id="chat-switch"
+                checked={chatOn}
+                onChange={toggleChat}
+              />
             </div>
           </div>
         </Modal>
