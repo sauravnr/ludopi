@@ -231,38 +231,6 @@ export default function Profile() {
       </button>
 
       <div className="bg-[#fff8e6] border border-[#e0c08b] rounded-2xl shadow-[0_3px_0_#c7994a,0_8px_2px_rgba(0,0,0,0.5)] text-gray-900 p-4 space-y-6">
-        {/* --- Action Button (only when viewing someone else's profile) --- */}
-        {!isOwn && (
-          <div className="text-right">
-            {relationship === "none" && (
-              <button
-                disabled={buttonLoading}
-                onClick={sendRequest}
-                className="px-4 py-2 bg-blue-500 text-white rounded-md"
-              >
-                {buttonLoading ? "..." : "Add Friend"}
-              </button>
-            )}
-            {relationship === "sent" && (
-              <button
-                disabled={buttonLoading}
-                onClick={cancelRequest}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md"
-              >
-                {buttonLoading ? "..." : "Sent"}
-              </button>
-            )}
-            {relationship === "friends" && (
-              <button
-                disabled={buttonLoading}
-                onClick={unfriend}
-                className="px-4 py-2 bg-green-500 text-white rounded-md"
-              >
-                {buttonLoading ? "..." : "Friends"}
-              </button>
-            )}
-          </div>
-        )}
         {/* Avatar & upload button */}
         <div className="flex items-center bg-[#eeebe3] rounded-xl p-4 shadow">
           <div className="relative">
@@ -286,13 +254,43 @@ export default function Profile() {
                   <span>{coins}</span>
                 </div>
               </div>
-              {isOwn && (
+              {isOwn ? (
                 <button
                   onClick={() => setShowEditModal(true)}
-                  className="px-2 py-1 text-sm bg-blue-500 text-white rounded"
+                  className="btn btn-primary text-sm px-2 py-1"
                 >
                   Edit
                 </button>
+              ) : (
+                <>
+                  {relationship === "none" && (
+                    <button
+                      disabled={buttonLoading}
+                      onClick={sendRequest}
+                      className="btn btn-primary text-sm px-2 py-1"
+                    >
+                      {buttonLoading ? "..." : "Add"}
+                    </button>
+                  )}
+                  {relationship === "sent" && (
+                    <button
+                      disabled={buttonLoading}
+                      onClick={cancelRequest}
+                      className="btn btn-yellow text-sm px-2 py-1"
+                    >
+                      {buttonLoading ? "..." : "Sent"}
+                    </button>
+                  )}
+                  {relationship === "friends" && (
+                    <button
+                      disabled={buttonLoading}
+                      onClick={unfriend}
+                      className="btn btn-secondary text-sm px-2 py-1"
+                    >
+                      {buttonLoading ? "..." : "Friends"}
+                    </button>
+                  )}
+                </>
               )}
             </div>
             {bio && <p className="mt-2">{bio}</p>}
