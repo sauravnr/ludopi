@@ -298,7 +298,7 @@ export default function Profile() {
             {isEditing ? (
               <>
                 <textarea
-                  className="mt-2 w-full border rounded p-2"
+                  className="mt-2"
                   rows={3}
                   maxLength={maxLength}
                   placeholder="Tell us about yourself..."
@@ -337,7 +337,7 @@ export default function Profile() {
                 {countryEditing ? (
                   <>
                     <select
-                      className="border p-1 rounded mr-2"
+                      className="mr-2 w-auto"
                       value={countryInput}
                       onChange={(e) => setCountryInput(e.target.value)}
                     >

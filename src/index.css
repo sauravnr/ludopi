@@ -119,6 +119,27 @@ input:focus {
   outline: none !important;
   box-shadow: none !important;
 }
+
+/* match input styles for textarea and select */
+textarea,
+select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e0c08b;
+  border-radius: 0.75rem;
+  background-color: #fff;
+  color: #333;
+
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+textarea:focus,
+select:focus {
+  border-color: #c3a472;
+  outline: none !important;
+  box-shadow: none !important;
+}
 /* Header */
 .bg-header {
   background: #4060b7;
