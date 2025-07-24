@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../utils/api";
-import { FaArrowLeft, FaEdit } from "react-icons/fa";
+import { FaArrowLeft } from "react-icons/fa";
+import Modal from "../components/Modal";
 import { useAuth } from "../context/AuthContext";
 import { useAlert } from "../context/AlertContext";
 import { COUNTRY_NAMES, getCountryFlag } from "../utils/countries";
@@ -19,13 +20,13 @@ export default function Profile() {
   const [requestId, setRequestId] = useState(null);
   const [buttonLoading, setButtonLoading] = useState(false);
 
-  // Editing state for bio
-  const [isEditing, setIsEditing] = useState(false);
+  // Profile fields
   const [bioInput, setBioInput] = useState("");
   const maxLength = 30;
-  const [countryEditing, setCountryEditing] = useState(false);
   const [countryInput, setCountryInput] = useState("Worldwide");
   const [ranking, setRanking] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [avatarFile, setAvatarFile] = useState(null);
   // Countries list for the dropdown. We keep "Worldwide" as a custom option.
   const countries = ["Worldwide", ...COUNTRY_NAMES];
 
@@ -126,7 +127,6 @@ export default function Profile() {
       const { data } = await api.patch("/player/me/bio", { bio: bioInput });
       setPlayer(data.player);
       setProfile(data.player);
-      setIsEditing(false);
     } catch (err) {
       console.error(err);
       const msg =
@@ -143,7 +143,6 @@ export default function Profile() {
       });
       setPlayer(data.player);
       setProfile(data.player);
-      setCountryEditing(false);
     } catch (err) {
       console.error(err);
       const msg = err?.response?.data?.message || "Failed to update country.";
@@ -151,29 +150,30 @@ export default function Profile() {
     }
   };
 
-  // Handle avatar file upload (only for your own)
-  const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const compressed = await compressImage(file, 300, 300, 0.7);
-
-    const formData = new FormData();
-    formData.append("avatar", compressed);
-
+  const saveProfileChanges = async () => {
     try {
-      const res = await api.post("/avatar/upload", formData);
-      if (res.data?.avatarUrl) {
-        showAlert("Avatar updated!");
-        window.location.reload();
-      } else {
-        showAlert("Upload failed.", "error");
+      if (avatarFile) {
+        const compressed = await compressImage(avatarFile, 300, 300, 0.7);
+        const formData = new FormData();
+        formData.append("avatar", compressed);
+        const res = await api.post("/avatar/upload", formData);
+        if (!res.data?.avatarUrl) {
+          showAlert("Upload failed.", "error");
+        } else {
+          showAlert("Avatar updated!");
+        }
       }
+      if (bioInput !== profile.bio) {
+        await saveBio();
+      }
+      if (countryInput !== profile.country) {
+        await saveCountry();
+      }
+      setShowEditModal(false);
+      setAvatarFile(null);
     } catch (err) {
-      console.error("Upload error:", err);
-      const msg =
-        err?.response?.data?.message ||
-        (err.message ? `Upload failed: ${err.message}` : "Upload failed.");
-      showAlert(msg, "error");
+      console.error(err);
+      showAlert("Failed to save changes.", "error");
     }
   };
 
@@ -256,23 +256,6 @@ export default function Profile() {
               decoding="async"
               onError={(e) => (e.currentTarget.src = "/default-avatar.png")}
             />
-            {isOwn && (
-              <>
-                <input
-                  type="file"
-                  accept="image/png, image/jpeg"
-                  hidden
-                  id="avatar-upload"
-                  onChange={handleImageUpload}
-                />
-                <label
-                  htmlFor="avatar-upload"
-                  className="absolute bottom-0 right-0 bg-white p-1 rounded-full shadow cursor-pointer"
-                >
-                  <FaEdit size={14} />
-                </label>
-              </>
-            )}
           </div>
 
           {/* Username & bio editing */}
@@ -287,94 +270,16 @@ export default function Profile() {
               </div>
               {isOwn && (
                 <button
-                  onClick={() => setIsEditing(!isEditing)}
-                  className="text-gray-900"
+                  onClick={() => setShowEditModal(true)}
+                  className="px-2 py-1 text-sm bg-blue-500 text-white rounded"
                 >
-                  <FaEdit size={16} />
+                  Edit
                 </button>
               )}
             </div>
-
-            {isEditing ? (
-              <>
-                <textarea
-                  className="mt-2"
-                  rows={3}
-                  maxLength={maxLength}
-                  placeholder="Tell us about yourself..."
-                  value={bioInput}
-                  onChange={(e) => setBioInput(e.target.value)}
-                />
-                <div className="flex justify-between items-center mt-1">
-                  <span className="text-sm text-gray-500">
-                    {bioInput.length}/{maxLength}
-                  </span>
-                  <div>
-                    <button
-                      onClick={saveBio}
-                      className="mr-2 text-blue-600 hover:underline"
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={() => {
-                        setIsEditing(false);
-                        setBioInput(profile.bio || "");
-                      }}
-                      className="text-gray-600 hover:underline"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              </>
-            ) : (
-              bio && <p className="mt-2">{bio}</p>
-            )}
-
+            {bio && <p className="mt-2">{bio}</p>}
             {isOwn && (
-              <div className="mt-2">
-                {countryEditing ? (
-                  <>
-                    <select
-                      className="mr-2 w-auto"
-                      value={countryInput}
-                      onChange={(e) => setCountryInput(e.target.value)}
-                    >
-                      {countries.map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      onClick={saveCountry}
-                      className="mr-2 text-blue-600 hover:underline"
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={() => {
-                        setCountryEditing(false);
-                        setCountryInput(profile.country || "Worldwide");
-                      }}
-                      className="text-gray-600 hover:underline"
-                    >
-                      Cancel
-                    </button>
-                  </>
-                ) : (
-                  <p>
-                    Country: {profile.country || "Worldwide"}{" "}
-                    <button
-                      onClick={() => setCountryEditing(true)}
-                      className="ml-2 text-gray-900"
-                    >
-                      <FaEdit size={12} />
-                    </button>
-                  </p>
-                )}
-              </div>
+              <p className="mt-2">Country: {profile.country || "Worldwide"}</p>
             )}
           </div>
         </div>
@@ -435,6 +340,67 @@ export default function Profile() {
           </div>
         </div>
       </div>
+      {isOwn && (
+        <Modal
+          show={showEditModal}
+          title="Edit Profile"
+          onClose={() => setShowEditModal(false)}
+          footer={[
+            { label: "Save", onClick: saveProfileChanges },
+            {
+              label: "Cancel",
+              variant: "secondary",
+              onClick: () => setShowEditModal(false),
+            },
+          ]}
+        >
+          <div className="space-y-4">
+            <div className="flex items-center space-x-4">
+              <img
+                src={
+                  avatarFile
+                    ? URL.createObjectURL(avatarFile)
+                    : avatarUrl || "/default-avatar.png"
+                }
+                alt="Avatar"
+                className="w-20 h-20 rounded-full object-cover"
+              />
+              <input
+                type="file"
+                accept="image/png, image/jpeg"
+                onChange={(e) => setAvatarFile(e.target.files[0])}
+              />
+            </div>
+            <div>
+              <label className="block mb-1 font-medium">Bio</label>
+              <textarea
+                rows={3}
+                maxLength={maxLength}
+                className="w-full border rounded p-2"
+                value={bioInput}
+                onChange={(e) => setBioInput(e.target.value)}
+              />
+              <div className="text-right text-sm text-gray-500">
+                {bioInput.length}/{maxLength}
+              </div>
+            </div>
+            <div>
+              <label className="block mb-1 font-medium">Country</label>
+              <select
+                className="w-full border rounded p-2"
+                value={countryInput}
+                onChange={(e) => setCountryInput(e.target.value)}
+              >
+                {countries.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
