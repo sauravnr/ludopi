@@ -8,6 +8,9 @@ import { useAuth } from "../context/AuthContext";
 import { useAlert } from "../context/AlertContext";
 import { COUNTRY_NAMES, getCountryFlag } from "../utils/countries";
 
+// Server enforces 2MB max avatar size
+const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
+
 export default function Profile() {
   const { user, player: me, setPlayer } = useAuth();
   const { userId } = useParams();
@@ -29,6 +32,16 @@ export default function Profile() {
   const [avatarFile, setAvatarFile] = useState(null);
   // Countries list for the dropdown. We keep "Worldwide" as a custom option.
   const countries = ["Worldwide", ...COUNTRY_NAMES];
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file && file.size > MAX_AVATAR_SIZE) {
+      showAlert("Avatar must be 2MB or less", "error");
+      e.target.value = "";
+      return;
+    }
+    setAvatarFile(file);
+  };
 
   // 1. load profile
   useEffect(() => {
@@ -127,6 +140,7 @@ export default function Profile() {
       const { data } = await api.patch("/player/me/bio", { bio: bioInput });
       setPlayer(data.player);
       setProfile(data.player);
+      showAlert("Bio updated!");
     } catch (err) {
       console.error(err);
       const msg =
@@ -143,6 +157,7 @@ export default function Profile() {
       });
       setPlayer(data.player);
       setProfile(data.player);
+      showAlert("Country will update!");
     } catch (err) {
       console.error(err);
       const msg = err?.response?.data?.message || "Failed to update country.";
@@ -160,6 +175,9 @@ export default function Profile() {
         if (!res.data?.avatarUrl) {
           showAlert("Upload failed.", "error");
         } else {
+          const url = `${res.data.avatarUrl}?t=${Date.now()}`;
+          setPlayer((p) => ({ ...p, avatarUrl: url }));
+          setProfile((p) => ({ ...p, avatarUrl: url }));
           showAlert("Avatar updated!");
         }
       }
@@ -368,7 +386,7 @@ export default function Profile() {
               <input
                 type="file"
                 accept="image/png, image/jpeg"
-                onChange={(e) => setAvatarFile(e.target.files[0])}
+                onChange={handleAvatarChange}
               />
             </div>
             <div>
