@@ -137,6 +137,16 @@ export default function App() {
                   </Suspense>
                 }
               />
+              <Route
+                path="/profile/:userId"
+                element={
+                  <Suspense fallback={<Loader />}>
+                    <Profile />
+                  </Suspense>
+                }
+              />
+              {/* if they hit "/profile" with no id, send them to their own */}
+              <Route path="/profile" element={<RequireAuthRedirectToOwn />} />
             </Route>
 
             {/* full-screen / no chrome (you can also wrap these if you want) */}
@@ -148,16 +158,6 @@ export default function App() {
                 </Suspense>
               }
             />
-            <Route
-              path="/profile/:userId"
-              element={
-                <Suspense fallback={<Loader />}>
-                  <Profile />
-                </Suspense>
-              }
-            />
-            {/* if they hit “/profile” with no id, send them to their own */}
-            <Route path="/profile" element={<RequireAuthRedirectToOwn />} />
           </Route>
 
           {/* fallback */}
