@@ -45,7 +45,7 @@ export default function Header({
         <div className="flex items-center space-x-2">
           <Link
             to="/profile"
-            className="relative -mt-2 -mb-2 w-9 h-9 overflow-hidden"
+            className="relative -mt-2 -mb-2 w-10 h-10 overflow-hidden"
           >
             <img
               src={smallAvatar}

@@ -22,39 +22,42 @@ export default function Register() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded shadow text-black">
-      <h2 className="text-xl mb-4">Register</h2>
-      <form onSubmit={submit}>
-        <label>Username</label>
-        <input
-          className="w-full p-2 border rounded mb-4"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
-        <label>Email</label>
-        <input
-          className="w-full p-2 border rounded mb-4"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <label>Password</label>
-        <input
-          className="w-full p-2 border rounded mb-4"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <button className="w-full p-2 bg-green-600 text-white rounded">
-          Sign Up
-        </button>
-      </form>
-      <p className="mt-4">
-        Have an account?{" "}
-        <Link to="/login" className="text-blue-600">
-          Log In
-        </Link>
-      </p>
+    <div className="min-h-screen flex items-center justify-center bg-cosmic p-4">
+      <div className="w-full max-w-sm bg-[#fff8e6] border border-[#e0c08b] rounded-2xl shadow-[0_3px_0_#c7994a,0_8px_2px_rgba(0,0,0,0.5)] text-gray-900 p-6 space-y-4">
+        <h2 className="text-2xl font-bold text-center">Create Account</h2>
+        <form onSubmit={submit} className="space-y-4">
+          <div>
+            <label>Username</label>
+            <input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+          </div>
+          <div>
+            <label>Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div>
+            <label>Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+          <button className="w-full btn btn-secondary">Sign Up</button>
+        </form>
+        <p className="text-center">
+          Have an account?{" "}
+          <Link to="/login" className="underline text-blue-600">
+            Log In
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }

@@ -43,50 +43,52 @@ export default function Login() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded text-black shadow">
-      <h2 className="text-xl mb-4">Login</h2>
+    <div className="min-h-screen flex items-center justify-center bg-cosmic p-4">
+      <div className="w-full max-w-sm bg-[#fff8e6] border border-[#e0c08b] rounded-2xl shadow-[0_3px_0_#c7994a,0_8px_2px_rgba(0,0,0,0.5)] text-gray-900 p-6 space-y-4">
+        <h2 className="text-2xl font-bold text-center">Login</h2>
 
-      {/* ——— Email / Password Form ——— */}
-      <form onSubmit={submit}>
-        <label>Email</label>
-        <input
-          className="w-full p-2 border rounded mb-4"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+        {/* ——— Email / Password Form ——— */}
+        <form onSubmit={submit} className="space-y-4">
+          <div>
+            <label>Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
 
-        <label>Password</label>
-        <input
-          className="w-full p-2 border rounded mb-4"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+          <div>
+            <label>Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
 
-        <button className="w-full p-2 bg-blue-600 text-white rounded">
-          Login
+          <button className="w-full btn btn-primary">Login</button>
+        </form>
+
+        {/* ——— OR separator ——— */}
+        <div className="text-center text-gray-500">OR</div>
+
+        {/* ——— Pi Button ——— */}
+        <button
+          type="button"
+          onClick={handlePi}
+          className="w-full btn btn-yellow"
+        >
+          Login with Pi Network
         </button>
-      </form>
 
-      {/* ——— OR separator ——— */}
-      <div className="my-6 text-center text-gray-500">OR</div>
-
-      {/* ——— Pi Button ——— */}
-      <button
-        type="button"
-        onClick={handlePi}
-        className="w-full p-2 bg-yellow-500 text-black rounded"
-      >
-        Login with Pi Network
-      </button>
-
-      <p className="mt-4 text-center">
-        No account?{" "}
-        <Link to="/register" className="text-blue-600">
-          Sign up
-        </Link>
-      </p>
+        <p className="text-center">
+          No account?{" "}
+          <Link to="/register" className="underline text-blue-600">
+            Sign up
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }
