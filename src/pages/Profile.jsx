@@ -203,7 +203,7 @@ export default function Profile() {
   const coins = Number(coinBalance).toLocaleString();
 
   return (
-    <div className="min-h-screen p-4 overflow-y-auto bg-cosmic">
+    <div className="min-h-screen p-2 overflow-y-auto bg-cosmic">
       <button
         onClick={() => navigate(-1)}
         className="flex items-center text-gray-900 mb-4"
@@ -212,7 +212,7 @@ export default function Profile() {
         <span className="font-medium">Back</span>
       </button>
 
-      <div className="bg-[#fff8e6] border border-[#e0c08b] rounded-2xl shadow-[0_3px_0_#c7994a,0_8px_2px_rgba(0,0,0,0.5)] text-gray-900 p-6 space-y-6">
+      <div className="bg-[#fff8e6] border border-[#e0c08b] rounded-2xl shadow-[0_3px_0_#c7994a,0_8px_2px_rgba(0,0,0,0.5)] text-gray-900 p-4 space-y-6">
         {/* --- Action Button (only when viewing someone else's profile) --- */}
         {!isOwn && (
           <div className="text-right">
