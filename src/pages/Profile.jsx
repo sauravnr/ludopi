@@ -224,7 +224,7 @@ export default function Profile() {
     <div className="min-h-screen p-2 overflow-y-auto bg-cosmic">
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center text-gray-900 mb-4"
+        className="flex items-center text-white hover:text-yellow-300 mb-4"
       >
         <FaArrowLeft className="mr-2" size={20} />
         <span className="font-medium">Back</span>
