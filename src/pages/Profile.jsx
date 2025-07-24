@@ -403,7 +403,7 @@ export default function Profile() {
             <div>
               <label className="block mb-1 font-medium">Country</label>
               <select
-                className="w-full border rounded p-2"
+                className="w-full max-w-full border rounded p-2"
                 value={countryInput}
                 onChange={(e) => setCountryInput(e.target.value)}
               >
