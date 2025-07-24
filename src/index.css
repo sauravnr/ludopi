@@ -243,3 +243,9 @@ input:focus {
   border-color: #fecaca;
   color: #b91c1c;
 }
+
+.bg-cosmic {
+  background-image: url("/images/cosmic-bg.webp");
+  background-size: cover;
+  background-position: center;
+}

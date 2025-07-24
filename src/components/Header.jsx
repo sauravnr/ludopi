@@ -51,7 +51,7 @@ export default function Header({
               src={smallAvatar}
               srcSet={srcSet}
               sizes="32px"
-              alt="Profile avatar"
+              alt="Avatar"
               className="w-full h-full object-cover"
               decoding="async"
               fetchPriority={isCdn ? "high" : undefined}

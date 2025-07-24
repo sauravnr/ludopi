@@ -43,7 +43,7 @@ function RedirectIfAuth({ children }) {
 export default function App() {
   return (
     <div className="flex items-center justify-center h-screen bg-gray-900">
-      <div className="w-full max-w-[425px] h-full bg-gray-100 overflow-hidden shadow-2xl flex flex-col relative">
+      <div className="w-full max-w-[425px] h-full overflow-hidden shadow-2xl flex flex-col relative">
         <Routes>
           {/* public */}
           <Route

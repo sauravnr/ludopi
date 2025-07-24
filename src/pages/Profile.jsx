@@ -203,10 +203,7 @@ export default function Profile() {
   const coins = Number(coinBalance).toLocaleString();
 
   return (
-    <div
-      className="min-h-screen bg-cover bg-center p-4 overflow-y-auto"
-      style={{ backgroundImage: "url(/images/cosmic-bg.webp)" }}
-    >
+    <div className="min-h-screen p-4 overflow-y-auto bg-cosmic">
       <button
         onClick={() => navigate(-1)}
         className="flex items-center text-gray-900 mb-4"

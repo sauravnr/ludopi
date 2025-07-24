@@ -374,7 +374,7 @@ const PlayRoom = () => {
   // ─── RENDER ────────────────────────────────────────────────────────────
   return (
     <ChatProvider roomCode={roomCode}>
-      <div className="flex flex-col h-full bg-slate-600 relative">
+      <div className="flex flex-col h-full relative bg-cosmic">
         <h1 className="text-xl font-semibold mb-2">Room Code: {roomCode}</h1>
 
         {rejoinMsg && (

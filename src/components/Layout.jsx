@@ -10,7 +10,6 @@ export default function Layout() {
   const location = useLocation(); // ← get current location
   const { pathname } = location;
 
-  // map pathnames → the same labels you use in Footer’s NavItem `active={…}`
   let activePage;
   if (pathname === "/") activePage = "Home";
   else if (pathname.startsWith("/store")) activePage = "Store";
@@ -19,7 +18,6 @@ export default function Layout() {
   else if (pathname.startsWith("/ranking")) activePage = "Ranking";
   else activePage = "";
 
-  // … all your existing header‐state & effects …
   const [showSettings, setShowSettings] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
   const [musicOn, setMusicOn] = useState(true);
@@ -47,14 +45,10 @@ export default function Layout() {
         onFeedback={handleFeedback}
       />
 
-      <main
-        className="flex-1 overflow-auto bg-cover bg-center"
-        style={{ backgroundImage: "url(/images/cosmic-bg.webp)" }}
-      >
+      <main className="flex-1 overflow-auto bg-cosmic">
         <Outlet />
       </main>
 
-      {/* ← pass the activePage you just computed */}
       <Footer activePage={activePage} />
     </div>
   );
