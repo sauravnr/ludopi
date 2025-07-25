@@ -1,9 +1,10 @@
 // src/pages/Profile.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../utils/api";
 import { FaArrowLeft } from "react-icons/fa";
 import Modal from "../components/Modal";
+const WithdrawModal = lazy(() => import("../components/WithdrawModal"));
 import { useAuth } from "../context/AuthContext";
 import { useAlert } from "../context/AlertContext";
 import { COUNTRY_NAMES, getCountryFlag } from "../utils/countries";
@@ -32,9 +33,6 @@ export default function Profile() {
   const [avatarFile, setAvatarFile] = useState(null);
   const [walletInput, setWalletInput] = useState("");
   const [showWithdraw, setShowWithdraw] = useState(false);
-  const [withdrawAmount, setWithdrawAmount] = useState("");
-  const [withdrawMsg, setWithdrawMsg] = useState("");
-  const [loading, setLoading] = useState(false);
   const withdrawMax = parseFloat(
     import.meta.env.VITE_PIP_WITHDRAW_MAX || "100"
   );
@@ -189,27 +187,6 @@ export default function Profile() {
     }
   };
 
-  const submitWithdraw = async () => {
-    const amt = parseFloat(withdrawAmount);
-    if (isNaN(amt) || amt <= 0 || amt > withdrawMax) {
-      setWithdrawMsg(`Enter amount up to ${withdrawMax}`);
-      return;
-    }
-    setLoading(true);
-    try {
-      const { data } = await api.post("/pip/withdraw", { amount: amt });
-      setPlayer(data.player);
-      setProfile(data.player);
-      setWithdrawMsg("Withdrawal requested!");
-      setWithdrawAmount("");
-    } catch (err) {
-      const msg = err?.response?.data?.message || "Request failed";
-      setWithdrawMsg(msg);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const saveProfileChanges = async () => {
     try {
       if (avatarFile) {
@@ -319,7 +296,6 @@ export default function Profile() {
                     {isOwn && (
                       <button
                         onClick={() => {
-                          setWithdrawMsg("");
                           setShowWithdraw(true);
                         }}
                         className="underline text-xs ml-1"
@@ -509,38 +485,17 @@ export default function Profile() {
         </Modal>
       )}
       {isOwn && (
-        <Modal
-          show={showWithdraw}
-          title="Withdraw"
-          width="sm"
-          onClose={() => setShowWithdraw(false)}
-          footer={[
-            { label: loading ? "..." : "Submit", onClick: submitWithdraw },
-            {
-              label: "Cancel",
-              variant: "secondary",
-              onClick: () => setShowWithdraw(false),
-            },
-          ]}
-        >
-          <div className="space-y-4">
-            <p className="text-center text-sm">
-              Max {withdrawMax} PIP per Withdraw
-            </p>
-            <input
-              type="number"
-              className="w-full border rounded p-2"
-              value={withdrawAmount}
-              onChange={(e) => setWithdrawAmount(e.target.value)}
-              max={withdrawMax}
-              min="0"
-              step="any"
-            />
-            {withdrawMsg && (
-              <p className="text-center text-sm text-red-600">{withdrawMsg}</p>
-            )}
-          </div>
-        </Modal>
+        <Suspense fallback={null}>
+          <WithdrawModal
+            show={showWithdraw}
+            max={withdrawMax}
+            onClose={() => setShowWithdraw(false)}
+            onSuccess={(player) => {
+              setPlayer(player);
+              setProfile(player);
+            }}
+          />
+        </Suspense>
       )}
     </div>
   );
