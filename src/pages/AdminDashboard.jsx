@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../utils/api";
+import PipBalances from "../components/Admin/PipBalances";
+import PipWithdrawals from "../components/Admin/PipWithdrawals";
 
 export default function AdminDashboard() {
   const { player } = useAuth();
@@ -178,6 +180,8 @@ export default function AdminDashboard() {
           </tbody>
         </table>
       </section>
+      <PipBalances />
+      <PipWithdrawals />
     </div>
   );
 }

@@ -152,6 +152,22 @@ router.get("/pip/transactions/:userId", async (req, res) => {
   }
 });
 
+// GET /api/admin/pip/balances - list players by PIP balance
+router.get("/pip/balances", async (req, res) => {
+  try {
+    const limit = Math.min(100, parseInt(req.query.limit, 10) || 50);
+    const players = await Player.find()
+      .sort({ pipBalance: -1 })
+      .limit(limit)
+      .select("playerId username pipBalance")
+      .lean();
+    res.json({ players });
+  } catch (err) {
+    console.error("admin pip balances error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 // GET /api/admin/pip/withdrawals - list pending PIP withdrawals
 router.get("/pip/withdrawals", async (req, res) => {
   try {
