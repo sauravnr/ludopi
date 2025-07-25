@@ -66,6 +66,25 @@ router.patch("/me/country", protect, async (req, res) => {
   return res.json({ player });
 });
 
+// PATCH /api/player/me/wallet
+router.patch("/me/wallet", protect, async (req, res) => {
+  const { address } = req.body;
+  if (
+    address != null &&
+    (typeof address !== "string" || !/^0x[a-fA-F0-9]{40}$/.test(address))
+  ) {
+    return res.status(400).json({ message: "Invalid wallet address" });
+  }
+  const player = await Player.findOneAndUpdate(
+    { userId: req.user._id },
+    { walletAddress: address },
+    { new: true }
+  )
+    .select(PROFILE_FIELDS)
+    .lean();
+  return res.json({ player });
+});
+
 // POST /api/player/purchase
 router.post("/purchase", protect, async (req, res) => {
   const { item, cost } = req.body;

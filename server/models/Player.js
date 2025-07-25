@@ -37,7 +37,11 @@ const playerSchema = new Schema(
       unique: true,
       sparse: true,
     },
-
+    walletAddress: {
+      type: String,
+      default: null,
+      match: /^0x[a-fA-F0-9]{40}$/,
+    },
     // Profile fields
     username: {
       type: String,
@@ -103,6 +107,11 @@ const playerSchema = new Schema(
     coins: {
       type: Number,
       default: 100,
+    },
+    pipBalance: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
     // Coins temporarily locked for an in-progress game
     lockedBet: {
