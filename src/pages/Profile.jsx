@@ -30,6 +30,7 @@ export default function Profile() {
   const [ranking, setRanking] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [avatarFile, setAvatarFile] = useState(null);
+  const [walletInput, setWalletInput] = useState("");
   // Countries list for the dropdown. We keep "Worldwide" as a custom option.
   const countries = ["Worldwide", ...COUNTRY_NAMES];
 
@@ -131,6 +132,7 @@ export default function Profile() {
     if (profile) {
       setBioInput(profile.bio || "");
       setCountryInput(profile.country || "Worldwide");
+      setWalletInput(profile.walletAddress || "");
     }
   }, [profile]);
 
@@ -165,6 +167,21 @@ export default function Profile() {
     }
   };
 
+  const saveWallet = async () => {
+    try {
+      const { data } = await api.patch("/player/me/wallet", {
+        address: walletInput || null,
+      });
+      setPlayer(data.player);
+      setProfile(data.player);
+      showAlert("Wallet updated!");
+    } catch (err) {
+      console.error(err);
+      const msg = err?.response?.data?.message || "Failed to update wallet.";
+      showAlert(msg, "error");
+    }
+  };
+
   const saveProfileChanges = async () => {
     try {
       if (avatarFile) {
@@ -186,6 +203,9 @@ export default function Profile() {
       }
       if (countryInput !== profile.country) {
         await saveCountry();
+      }
+      if (walletInput !== (profile.walletAddress || "")) {
+        await saveWallet();
       }
       setShowEditModal(false);
       setAvatarFile(null);
@@ -213,12 +233,15 @@ export default function Profile() {
     joinedAt,
     username,
     coins: coinBalance = 0,
+    pipBalance = 0,
+    walletAddress = "",
   } = profile;
 
   const winRate = totalGames
     ? Math.round(((twoWins + fourWins) / totalGames) * 100)
     : 0;
   const coins = Number(coinBalance).toLocaleString();
+  const pipCoins = Number(pipBalance).toLocaleString();
 
   return (
     <div className="min-h-screen p-2 overflow-y-auto bg-cosmic">
@@ -249,9 +272,23 @@ export default function Profile() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <h2 className="text-2xl font-semibold">{username}</h2>
-                <div className="flex items-center space-x-1 text-yellow-600">
-                  <img src="/icons/coin.png" alt="Coins" className="w-4 h-4" />
-                  <span>{coins}</span>
+                <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-1 text-yellow-600">
+                    <img
+                      src="/icons/coin.png"
+                      alt="Coins"
+                      className="w-4 h-4"
+                    />
+                    <span>{coins}</span>
+                  </div>
+                  <div className="flex items-center space-x-1 text-purple-700">
+                    <img
+                      src="/icons/pipips.png"
+                      alt="PIP"
+                      className="w-4 h-4"
+                    />
+                    <span>{pipCoins}</span>
+                  </div>
                 </div>
               </div>
               {isOwn ? (
@@ -296,6 +333,11 @@ export default function Profile() {
             {bio && <p className="mt-2">{bio}</p>}
             {isOwn && (
               <p className="mt-2">Country: {profile.country || "Worldwide"}</p>
+            )}
+            {isOwn && walletAddress && (
+              <p className="mt-1 break-all text-sm text-gray-700">
+                Wallet: {walletAddress}
+              </p>
             )}
           </div>
         </div>
@@ -413,6 +455,16 @@ export default function Profile() {
                   </option>
                 ))}
               </select>
+            </div>
+            <div>
+              <label className="block mb-1 font-medium">Wallet Address</label>
+              <input
+                type="text"
+                className="w-full border rounded p-2"
+                value={walletInput}
+                onChange={(e) => setWalletInput(e.target.value)}
+                placeholder="0x..."
+              />
             </div>
           </div>
         </Modal>
