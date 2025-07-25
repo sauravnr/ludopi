@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import useSWRInfinite from "swr/infinite";
 import api from "../../utils/api";
 
@@ -14,15 +14,65 @@ export default function PipWithdrawals() {
     getKey,
     fetcher
   );
+  const [search, setSearch] = useState("");
+  const [sortKey, setSortKey] = useState("date");
+  const [sortOrder, setSortOrder] = useState("desc");
   if (error)
     return <p className="p-4 alert alert-error">Failed to load withdrawals.</p>;
   if (!data) return null;
   const withdrawals = data.flatMap((p) => p.withdrawals);
   const hasMore = data[data.length - 1].withdrawals.length === LIMIT;
 
+  const filtered = withdrawals
+    .filter((w) => {
+      const q = search.toLowerCase();
+      return (
+        w.userId?.username?.toLowerCase().includes(q) ||
+        String(w.amount).includes(q)
+      );
+    })
+    .sort((a, b) => {
+      let valA;
+      let valB;
+      if (sortKey === "amount") {
+        valA = a.amount;
+        valB = b.amount;
+      } else {
+        valA = new Date(a.createdAt).getTime();
+        valB = new Date(b.createdAt).getTime();
+      }
+      if (valA < valB) return sortOrder === "asc" ? -1 : 1;
+      if (valA > valB) return sortOrder === "asc" ? 1 : -1;
+      return 0;
+    });
+
   return (
     <section className="mt-6">
       <h2 className="text-lg font-bold mb-2">Pending PIP Withdrawals</h2>
+      <div className="flex items-center gap-2 mb-2">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search"
+          className="input input-sm input-bordered flex-1"
+        />
+        <select
+          className="select select-sm"
+          value={sortKey}
+          onChange={(e) => setSortKey(e.target.value)}
+        >
+          <option value="date">Date</option>
+          <option value="amount">Amount</option>
+        </select>
+        <button
+          type="button"
+          className="btn btn-sm"
+          onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+        >
+          {sortOrder === "asc" ? "▲" : "▼"}
+        </button>
+      </div>
       <table className="w-full text-sm">
         <thead>
           <tr className="text-left">
@@ -32,7 +82,7 @@ export default function PipWithdrawals() {
           </tr>
         </thead>
         <tbody>
-          {withdrawals.map((w) => (
+          {filtered.map((w) => (
             <tr key={w._id} className="border-t">
               <td className="p-1">{w.userId?.username}</td>
               <td className="p-1 text-right">{w.amount}</td>
@@ -65,7 +115,7 @@ export default function PipWithdrawals() {
               </td>
             </tr>
           ))}
-          {!withdrawals.length && (
+          {!filtered.length && (
             <tr>
               <td className="p-2 text-center" colSpan="3">
                 No withdrawals

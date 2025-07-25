@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import useSWRInfinite from "swr/infinite";
 import api from "../../utils/api";
 import Loader from "../Loader";
@@ -15,15 +15,50 @@ export default function Messages() {
     getKey,
     fetcher
   );
+  const [search, setSearch] = useState("");
+  const [sortOrder, setSortOrder] = useState("desc");
   if (error)
     return <p className="p-4 alert alert-error">Failed to load messages.</p>;
   if (!data) return <Loader />;
   const messages = data.flatMap((p) => p.messages);
   const hasMore = data[data.length - 1].messages.length === LIMIT;
 
+  const filtered = messages
+    .filter((m) => {
+      const q = search.toLowerCase();
+      return (
+        m.text.toLowerCase().includes(q) ||
+        m.from?.username?.toLowerCase().includes(q) ||
+        m.to?.username?.toLowerCase().includes(q)
+      );
+    })
+    .sort((a, b) => {
+      const valA = new Date(a.createdAt).getTime();
+      const valB = new Date(b.createdAt).getTime();
+      if (valA < valB) return sortOrder === "asc" ? -1 : 1;
+      if (valA > valB) return sortOrder === "asc" ? 1 : -1;
+      return 0;
+    });
+
   return (
     <section className="overflow-y-auto">
       <h2 className="text-lg font-bold mb-2">Recent Messages</h2>
+      <div className="flex items-center gap-2 mb-2">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search"
+          className="input input-sm input-bordered flex-1"
+        />
+        <button
+          type="button"
+          className="btn btn-sm"
+          onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+        >
+          {sortOrder === "asc" ? "▲" : "▼"}
+        </button>
+      </div>
       <table className="w-full text-sm">
         <thead>
           <tr className="text-left">
@@ -34,7 +69,7 @@ export default function Messages() {
           </tr>
         </thead>
         <tbody>
-          {messages.map((m) => (
+          {filtered.map((m) => (
             <tr key={m._id} className="border-t">
               <td className="p-1">{m.from?.username}</td>
               <td className="p-1">{m.to?.username}</td>
@@ -42,7 +77,7 @@ export default function Messages() {
               <td className="p-1">{new Date(m.createdAt).toLocaleString()}</td>
             </tr>
           ))}
-          {!messages.length && (
+          {!filtered.length && (
             <tr>
               <td className="p-2 text-center" colSpan="4">
                 No messages

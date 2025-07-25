@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import useSWRInfinite from "swr/infinite";
 import api from "../../utils/api";
 
@@ -19,14 +19,60 @@ export default function Users() {
   const players = data ? data.flatMap((p) => p.players) : [];
   const hasMore = data ? data[data.length - 1].players.length === LIMIT : false;
 
+  const [search, setSearch] = useState("");
+  const [sortKey, setSortKey] = useState("username");
+  const [sortOrder, setSortOrder] = useState("asc");
+
+  const filtered = players
+    .filter((p) => {
+      const q = search.toLowerCase();
+      return (
+        p.username.toLowerCase().includes(q) ||
+        p.userId?.email?.toLowerCase().includes(q)
+      );
+    })
+    .sort((a, b) => {
+      const valA =
+        sortKey === "email" ? a.userId?.email || "" : a.username || "";
+      const valB =
+        sortKey === "email" ? b.userId?.email || "" : b.username || "";
+      if (valA < valB) return sortOrder === "asc" ? -1 : 1;
+      if (valA > valB) return sortOrder === "asc" ? 1 : -1;
+      return 0;
+    });
+
   if (error)
     return <p className="p-4 alert alert-error">Failed to load users.</p>;
 
   return (
     <div className="p-4">
       <h2 className="text-xl mb-4">Registered Users</h2>
+      <div className="flex items-center gap-2 mb-2">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search"
+          className="input input-sm input-bordered flex-1"
+        />
+        <select
+          className="select select-sm"
+          value={sortKey}
+          onChange={(e) => setSortKey(e.target.value)}
+        >
+          <option value="username">Username</option>
+          <option value="email">Email</option>
+        </select>
+        <button
+          type="button"
+          className="btn btn-sm"
+          onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+        >
+          {sortOrder === "asc" ? "▲" : "▼"}
+        </button>
+      </div>
       <ul className="space-y-2">
-        {players.map((p) => (
+        {filtered.map((p) => (
           <li
             key={p._id}
             className="p-2 border rounded flex justify-between items-center"
@@ -64,7 +110,7 @@ export default function Users() {
             </button>
           </li>
         ))}
-        {!players.length &&
+        {!filtered.length &&
           (isLoading ? (
             <li className="text-gray-500">Loading users…</li>
           ) : (
