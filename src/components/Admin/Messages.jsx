@@ -1,20 +1,25 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
+import useSWRInfinite from "swr/infinite";
 import api from "../../utils/api";
 import Loader from "../Loader";
 
 export default function Messages() {
-  const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const LIMIT = 50;
+  const fetcher = (url) => api.get(url).then((res) => res.data);
+  const getKey = (pageIndex, prev) =>
+    prev && prev.messages.length < LIMIT
+      ? null
+      : `/admin/messages?page=${pageIndex + 1}&limit=${LIMIT}`;
 
-  useEffect(() => {
-    api
-      .get("/admin/messages")
-      .then(({ data }) => setMessages(data.messages || []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
-
-  if (loading) return <Loader />;
+  const { data, error, size, setSize, isLoading } = useSWRInfinite(
+    getKey,
+    fetcher
+  );
+  if (error)
+    return <p className="p-4 alert alert-error">Failed to load messages.</p>;
+  if (!data) return <Loader />;
+  const messages = data.flatMap((p) => p.messages);
+  const hasMore = data[data.length - 1].messages.length === LIMIT;
 
   return (
     <section className="overflow-y-auto">
@@ -46,6 +51,17 @@ export default function Messages() {
           )}
         </tbody>
       </table>
+      {hasMore && (
+        <div className="mt-2 text-center">
+          <button
+            onClick={() => setSize(size + 1)}
+            disabled={isLoading}
+            className="text-sm text-blue-600 hover:underline"
+          >
+            {isLoading ? "Loading…" : "Load more"}
+          </button>
+        </div>
+      )}
     </section>
   );
 }

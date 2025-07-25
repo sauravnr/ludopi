@@ -1,13 +1,24 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
+import useSWRInfinite from "swr/infinite";
 import api from "../../utils/api";
 
 export default function PipBalances() {
-  const [players, setPlayers] = useState([]);
-  useEffect(() => {
-    api.get("/admin/pip/balances?limit=50").then(({ data }) => {
-      setPlayers(data.players || []);
-    });
-  }, []);
+  const LIMIT = 50;
+  const fetcher = (url) => api.get(url).then((res) => res.data);
+  const getKey = (pageIndex, prev) =>
+    prev && prev.players.length < LIMIT
+      ? null
+      : `/admin/pip/balances?page=${pageIndex + 1}&limit=${LIMIT}`;
+
+  const { data, error, size, setSize, isLoading } = useSWRInfinite(
+    getKey,
+    fetcher
+  );
+  if (error)
+    return <p className="p-4 alert alert-error">Failed to load balances.</p>;
+  if (!data) return null;
+  const players = data.flatMap((p) => p.players);
+  const hasMore = data[data.length - 1].players.length === LIMIT;
 
   return (
     <section className="mt-6">
@@ -35,6 +46,17 @@ export default function PipBalances() {
           )}
         </tbody>
       </table>
+      {hasMore && (
+        <div className="mt-2 text-center">
+          <button
+            onClick={() => setSize(size + 1)}
+            disabled={isLoading}
+            className="text-sm text-blue-600 hover:underline"
+          >
+            {isLoading ? "Loading…" : "Load more"}
+          </button>
+        </div>
+      )}
     </section>
   );
 }

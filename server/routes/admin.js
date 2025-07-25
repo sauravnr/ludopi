@@ -9,6 +9,8 @@ const Message = require("../models/Message");
 const CoinTransaction = require("../models/CoinTransaction");
 const PipTransaction = require("../models/PipTransaction");
 const rooms = require("../roomStore");
+const getPagination = require("../utils/pagination");
+const logAdminAction = require("../utils/adminLogger");
 const router = express.Router();
 
 // All admin routes require authentication and admin role
@@ -24,9 +26,15 @@ router.use(adminLimiter);
 // GET /api/admin/users
 router.get("/users", async (req, res) => {
   try {
-    const limit = Math.min(100, parseInt(req.query.limit, 10) || 50);
-    const users = await User.find().select("-password").limit(limit).lean();
-    res.json({ users });
+    const { limit, skip } = getPagination(req.query, 50);
+    const players = await Player.find()
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate("userId", "email")
+      .select("playerId username userId isBanned banReason banExpiresAt role")
+      .lean();
+    res.json({ players });
   } catch (err) {
     console.error("admin users error:", err);
     res.status(500).json({ message: "Server error" });
@@ -51,9 +59,10 @@ router.get("/player/:userId", async (req, res) => {
 // GET /api/admin/messages
 router.get("/messages", async (req, res) => {
   try {
-    const limit = Math.min(100, parseInt(req.query.limit, 10) || 50);
+    const { limit, skip } = getPagination(req.query, 50);
     const messages = await Message.find()
       .sort({ createdAt: -1 })
+      .skip(skip)
       .limit(limit)
       .populate("from to", "username")
       .lean();
@@ -99,6 +108,11 @@ router.patch("/player/:userId/ban", async (req, res) => {
       { new: true }
     ).lean();
     if (!player) return res.status(404).json({ message: "Player not found" });
+    logAdminAction(req.user._id, "ban", {
+      target: req.params.userId,
+      reason: update.banReason,
+      expiresAt: update.banExpiresAt,
+    });
     res.json({ player });
   } catch (err) {
     console.error("admin ban error:", err);
@@ -115,6 +129,7 @@ router.patch("/player/:userId/unban", async (req, res) => {
       { new: true }
     ).lean();
     if (!player) return res.status(404).json({ message: "Player not found" });
+    logAdminAction(req.user._id, "unban", { target: req.params.userId });
     res.json({ player });
   } catch (err) {
     console.error("admin unban error:", err);
@@ -155,9 +170,10 @@ router.get("/pip/transactions/:userId", async (req, res) => {
 // GET /api/admin/pip/balances - list players by PIP balance
 router.get("/pip/balances", async (req, res) => {
   try {
-    const limit = Math.min(100, parseInt(req.query.limit, 10) || 50);
+    const { limit, skip } = getPagination(req.query, 50);
     const players = await Player.find()
       .sort({ pipBalance: -1 })
+      .skip(skip)
       .limit(limit)
       .select("playerId username pipBalance")
       .lean();
@@ -171,12 +187,13 @@ router.get("/pip/balances", async (req, res) => {
 // GET /api/admin/pip/withdrawals - list pending PIP withdrawals
 router.get("/pip/withdrawals", async (req, res) => {
   try {
-    const limit = Math.min(100, parseInt(req.query.limit, 10) || 50);
+    const { limit, skip } = getPagination(req.query, 50);
     const txs = await PipTransaction.find({
       type: "withdraw",
       status: "pending",
     })
       .sort({ createdAt: 1 })
+      .skip(skip)
       .limit(limit)
       .populate("userId", "username")
       .lean();
@@ -217,6 +234,10 @@ router.patch("/pip/withdrawals/:id", async (req, res) => {
         { $inc: { pipBalance: tx.amount } }
       );
     }
+    logAdminAction(req.user._id, "withdrawalUpdate", {
+      id: req.params.id,
+      status,
+    });
     res.json({ withdrawal: tx });
   } catch (err) {
     console.error("admin pip withdraw update error:", err);

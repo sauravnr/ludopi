@@ -7,17 +7,17 @@ export default function Users() {
 
   const fetcher = (url) => api.get(url).then((res) => res.data);
   const getKey = (pageIndex, prev) =>
-    prev && prev.users.length < LIMIT
+    prev && prev.players.length < LIMIT
       ? null
-      : `/users?page=${pageIndex + 1}&limit=${LIMIT}`;
+      : `/admin/users?page=${pageIndex + 1}&limit=${LIMIT}`;
 
-  const { data, error, size, setSize, isLoading } = useSWRInfinite(
+  const { data, error, size, setSize, isLoading, mutate } = useSWRInfinite(
     getKey,
     fetcher
   );
 
-  const users = data ? data.flatMap((p) => p.users) : [];
-  const hasMore = data ? data[data.length - 1].users.length === LIMIT : false;
+  const players = data ? data.flatMap((p) => p.players) : [];
+  const hasMore = data ? data[data.length - 1].players.length === LIMIT : false;
 
   if (error)
     return <p className="p-4 alert alert-error">Failed to load users.</p>;
@@ -26,12 +26,45 @@ export default function Users() {
     <div className="p-4">
       <h2 className="text-xl mb-4">Registered Users</h2>
       <ul className="space-y-2">
-        {users.map((u) => (
-          <li key={u._id} className="p-2 border rounded">
-            <strong>{u.username}</strong> ({u.email})
+        {players.map((p) => (
+          <li
+            key={p._id}
+            className="p-2 border rounded flex justify-between items-center"
+          >
+            <span>
+              <strong>{p.username}</strong> ({p.userId?.email})
+              {p.isBanned && (
+                <span className="ml-2 text-red-600">[banned]</span>
+              )}
+            </span>
+            <button
+              onClick={async () => {
+                const reason = !p.isBanned
+                  ? prompt("Reason for ban:") || ""
+                  : null;
+                const days = !p.isBanned
+                  ? parseInt(prompt("Ban days", "1"), 10) || 0
+                  : 0;
+                const expiresAt = days
+                  ? new Date(Date.now() + days * 86400000)
+                  : null;
+                if (!p.isBanned) {
+                  await api.patch(`/admin/player/${p.userId._id}/ban`, {
+                    reason,
+                    expiresAt,
+                  });
+                } else {
+                  await api.patch(`/admin/player/${p.userId._id}/unban`);
+                }
+                mutate();
+              }}
+              className="text-sm text-blue-600 hover:underline"
+            >
+              {p.isBanned ? "Unban" : "Ban"}
+            </button>
           </li>
         ))}
-        {!users.length &&
+        {!players.length &&
           (isLoading ? (
             <li className="text-gray-500">Loading users…</li>
           ) : (
