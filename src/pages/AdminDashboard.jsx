@@ -1,9 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, lazy, Suspense } from "react";
 import { useAuth } from "../context/AuthContext";
-import Users from "../components/Admin/Users";
-import RoomActivity from "../components/Admin/RoomActivity";
-import PipBalances from "../components/Admin/PipBalances";
-import PipWithdrawals from "../components/Admin/PipWithdrawals";
+import Loader from "../components/Loader";
+
+const Users = lazy(() => import("../components/Admin/Users"));
+const RoomActivity = lazy(() => import("../components/Admin/RoomActivity"));
+const PipBalances = lazy(() => import("../components/Admin/PipBalances"));
+const PipWithdrawals = lazy(() => import("../components/Admin/PipWithdrawals"));
+const Messages = lazy(() => import("../components/Admin/Messages"));
 
 export default function AdminDashboard() {
   const { player } = useAuth();
@@ -14,16 +17,25 @@ export default function AdminDashboard() {
   }
 
   const renderTab = () => {
-    switch (tab) {
-      case "rooms":
-        return <RoomActivity />;
-      case "balances":
-        return <PipBalances />;
-      case "withdrawals":
-        return <PipWithdrawals />;
-      default:
-        return <Users />;
-    }
+    const Component = (() => {
+      switch (tab) {
+        case "rooms":
+          return RoomActivity;
+        case "balances":
+          return PipBalances;
+        case "withdrawals":
+          return PipWithdrawals;
+        case "messages":
+          return Messages;
+        default:
+          return Users;
+      }
+    })();
+    return (
+      <Suspense fallback={<Loader />}>
+        <Component />
+      </Suspense>
+    );
   };
   return (
     <div className="p-4 space-y-4 overflow-y-auto">
@@ -51,6 +63,12 @@ export default function AdminDashboard() {
           onClick={() => setTab("withdrawals")}
         >
           Withdrawals
+        </button>
+        <button
+          className={tab === "messages" ? "font-semibold" : ""}
+          onClick={() => setTab("messages")}
+        >
+          Messages
         </button>
       </nav>
       {renderTab()}
