@@ -1,5 +1,6 @@
 // server/routes/pip.js
 const express = require("express");
+const rateLimit = require("express-rate-limit");
 const router = express.Router();
 const protect = require("../middleware/auth");
 const Player = require("../models/Player");
@@ -7,8 +8,27 @@ const PipTransaction = require("../models/PipTransaction");
 const verifyPipDeposit = require("../utils/verifyPipDeposit");
 const PROFILE_FIELDS = require("../utils/profileFields");
 
+// Apply simple rate limits on sensitive endpoints
+const depositLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  message: { error: "Too many deposit attempts" },
+});
+
+const earnLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  message: { error: "Too many reward requests" },
+});
+
+const withdrawLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  message: { error: "Too many withdrawal requests" },
+});
+
 // POST /api/pip/deposit
-router.post("/deposit", protect, async (req, res) => {
+router.post("/deposit", protect, depositLimiter, async (req, res) => {
   const { txHash } = req.body;
   if (!txHash || typeof txHash !== "string") {
     return res.status(400).json({ message: "Invalid transaction hash" });
@@ -45,7 +65,7 @@ router.post("/deposit", protect, async (req, res) => {
 });
 
 // POST /api/pip/earn - award tokens for tasks or ads
-router.post("/earn", protect, async (req, res) => {
+router.post("/earn", protect, earnLimiter, async (req, res) => {
   const { amount, description } = req.body;
   const value = parseFloat(amount);
   if (isNaN(value) || value <= 0) {
@@ -68,7 +88,7 @@ router.post("/earn", protect, async (req, res) => {
 });
 
 // POST /api/pip/withdraw - request a withdrawal
-router.post("/withdraw", protect, async (req, res) => {
+router.post("/withdraw", protect, withdrawLimiter, async (req, res) => {
   const { amount } = req.body;
   const value = parseFloat(amount);
   const limit = parseFloat(process.env.PIP_WITHDRAW_MAX || "100");
@@ -81,6 +101,14 @@ router.post("/withdraw", protect, async (req, res) => {
   }
   if (!playerDoc || playerDoc.pipBalance < value) {
     return res.status(400).json({ message: "Insufficient balance" });
+  }
+  const existing = await PipTransaction.findOne({
+    userId: req.user._id,
+    type: "withdraw",
+    status: "pending",
+  }).lean();
+  if (existing) {
+    return res.status(400).json({ message: "Existing pending withdrawal" });
   }
   const player = await Player.findOneAndUpdate(
     { userId: req.user._id, pipBalance: { $gte: value } },

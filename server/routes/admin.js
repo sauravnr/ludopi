@@ -137,6 +137,21 @@ router.get("/transactions/:userId", async (req, res) => {
   }
 });
 
+// GET /api/admin/pip/transactions/:userId - PIP transactions for a player
+router.get("/pip/transactions/:userId", async (req, res) => {
+  try {
+    const limit = Math.min(100, parseInt(req.query.limit, 10) || 20);
+    const txs = await PipTransaction.find({ userId: req.params.userId })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
+    res.json({ transactions: txs });
+  } catch (err) {
+    console.error("admin pip transactions error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 // GET /api/admin/pip/withdrawals - list pending PIP withdrawals
 router.get("/pip/withdrawals", async (req, res) => {
   try {
