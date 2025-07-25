@@ -1,6 +1,6 @@
 import React from "react";
 import useSWRInfinite from "swr/infinite";
-import api from "../utils/api";
+import api from "../../utils/api";
 
 export default function Users() {
   const LIMIT = 20;
