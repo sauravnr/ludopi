@@ -39,6 +39,7 @@ export default function Header({
       : "/frames/idle-128.png";
   };
   const coins = Number(player?.coins || 0).toLocaleString();
+  const pipCoins = Number(player?.pipBalance || 0).toLocaleString();
   return (
     <>
       <header className="relative z-10 flex items-center justify-between px-4 py-4 bg-header text-white header-3d">
@@ -92,7 +93,7 @@ export default function Header({
               className="absolute left-0 top-1/2 w-6 h-6
                  transform -translate-x-1/1 -translate-y-1/2"
             />
-            <span className="text-white font-semibold">0</span>
+            <span className="text-white font-semibold">{pipCoins}</span>
             <button
               className="absolute right-0 top-1/2
                  transform translate-x-1/1 -translate-y-1/2"
