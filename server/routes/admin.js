@@ -7,6 +7,7 @@ const User = require("../models/User");
 const Player = require("../models/Player");
 const Message = require("../models/Message");
 const CoinTransaction = require("../models/CoinTransaction");
+const PipTransaction = require("../models/PipTransaction");
 const rooms = require("../roomStore");
 const router = express.Router();
 
@@ -132,6 +133,62 @@ router.get("/transactions/:userId", async (req, res) => {
     res.json({ transactions: txs });
   } catch (err) {
     console.error("admin transactions error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// GET /api/admin/pip/withdrawals - list pending PIP withdrawals
+router.get("/pip/withdrawals", async (req, res) => {
+  try {
+    const limit = Math.min(100, parseInt(req.query.limit, 10) || 50);
+    const txs = await PipTransaction.find({
+      type: "withdraw",
+      status: "pending",
+    })
+      .sort({ createdAt: 1 })
+      .limit(limit)
+      .populate("userId", "username")
+      .lean();
+    res.json({ withdrawals: txs });
+  } catch (err) {
+    console.error("admin pip withdrawals error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// PATCH /api/admin/pip/withdrawals/:id - update withdrawal status
+router.patch("/pip/withdrawals/:id", async (req, res) => {
+  try {
+    const { status, txHash } = req.body;
+    if (!req.params.id.match(/^[a-fA-F0-9]{24}$/)) {
+      return res.status(400).json({ message: "Invalid id" });
+    }
+    if (!status || !["completed", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+    const tx = await PipTransaction.findOne({
+      _id: req.params.id,
+      type: "withdraw",
+    });
+    if (!tx) return res.status(404).json({ message: "Withdrawal not found" });
+    if (tx.status !== "pending") {
+      return res.status(400).json({ message: "Already processed" });
+    }
+    tx.status = status;
+    if (status === "completed" && txHash) {
+      tx.txHash = txHash;
+    }
+    await tx.save();
+    if (status === "rejected") {
+      // refund balance
+      await Player.updateOne(
+        { userId: tx.userId },
+        { $inc: { pipBalance: tx.amount } }
+      );
+    }
+    res.json({ withdrawal: tx });
+  } catch (err) {
+    console.error("admin pip withdraw update error:", err);
     res.status(500).json({ message: "Server error" });
   }
 });

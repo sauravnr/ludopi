@@ -12,6 +12,12 @@ const pipTransactionSchema = new Schema(
       required: true,
       enum: ["deposit", "earn", "withdraw"],
     },
+    // for withdrawals, the blockchain tx hash will be stored once processed
+    status: {
+      type: String,
+      enum: ["pending", "completed", "rejected"],
+      default: "completed",
+    },
     description: { type: String, default: "" },
   },
   { timestamps: true }
