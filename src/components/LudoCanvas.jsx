@@ -924,15 +924,30 @@ const LudoCanvas = ({
 
           const myArr = tokenStepsRef.current[playerColor] || [];
           const pathLen = PATHS[playerColor].length;
-          const canBringOut = value === 6 && myArr.some((pos) => pos === -1);
-          const canMove = myArr.some(
-            (pos) => pos >= 0 && pos + value <= pathLen - 1
-          );
 
-          if (!canBringOut && !canMove) {
+          const legal = [];
+          myArr.forEach((step, idx) => {
+            if (step === FINISHED) return;
+            if (step === -1) {
+              if (value === 6) legal.push(idx);
+            } else if (step + value <= pathLen - 1) {
+              legal.push(idx);
+            }
+          });
+
+          if (legal.length === 0) {
             socket.emit("dice-move-intent", {
               roomCode,
               color: playerColor,
+              value,
+            });
+            setPendingRoll(null);
+            setAutoPhase(null);
+          } else if (legal.length === 1) {
+            socket.emit("dice-move-intent", {
+              roomCode,
+              color: playerColor,
+              tokenIdx: legal[0],
               value,
             });
             setPendingRoll(null);
@@ -1030,6 +1045,7 @@ const LudoCanvas = ({
   // Board drawing
   const drawCanvas = useCallback(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
     const ctx = canvas.getContext("2d");
 
     // 1) Measure container minus padding

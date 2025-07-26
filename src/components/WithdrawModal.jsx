@@ -50,13 +50,7 @@ export default function WithdrawModal({ show, onClose, max, onSuccess }) {
   ];
 
   return (
-    <Modal
-      show={show}
-      title="Withdraw"
-      onClose={onClose}
-      footer={footer}
-      width="sm"
-    >
+    <Modal show={show} title="Withdraw" onClose={onClose} footer={footer}>
       <div className="space-y-4">
         <p className="text-center text-sm">Max {max} PIP per Withdraw</p>
         <input
