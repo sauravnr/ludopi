@@ -1,60 +1,37 @@
-import React, { useState } from "react";
-import { useAuth } from "../context/AuthContext";
-import api from "../utils/api";
+// src/pages/Store.jsx
+import React from "react";
+import ContentModal from "../components/ContentModal";
 
-const diceItems = [{ id: "pi", name: "Pi Dice", price: 500 }];
+const COIN_BUNDLES = [
+  { id: 1, amount: 100, price: "$0.99" },
+  { id: 2, amount: 550, price: "$4.99" },
+  { id: 3, amount: 1200, price: "$9.49" },
+  { id: 4, amount: 2500, price: "$18.99" },
+];
 
-const Store = () => {
-  const { player, setPlayer } = useAuth();
-  const [loading, setLoading] = useState(null);
-
-  const buy = async (item) => {
-    setLoading(item.id);
-    try {
-      const { data } = await api.post("/player/dice/purchase", {
-        designId: item.id,
-        cost: item.price,
-      });
-      setPlayer(data.player);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(null);
-    }
-  };
-
+export default function Store() {
   return (
-    <div className="p-4 space-y-4">
-      {diceItems.map((d) => (
-        <div
-          key={d.id}
-          className="flex items-center justify-between bg-white p-4 rounded shadow"
-        >
-          <div className="flex items-center">
-            <img
-              src={`/dice/${d.id}/idle-256.png`}
-              alt={d.name}
-              className="w-12 h-12"
-              onError={(e) => (e.currentTarget.style.display = "none")}
-            />
-            <div className="ml-4">
-              <div className="font-medium">{d.name}</div>
-              <div className="text-sm text-gray-500">{d.price} coins</div>
+    <div className="py-5 px-2 h-full flex flex-col items-center">
+      <ContentModal title="Buy Coins" width="lg">
+        <div className="grid grid-cols-3 gap-4">
+          {COIN_BUNDLES.map((bundle) => (
+            <div
+              key={bundle.id}
+              className="bg-[#fff8e6] border border-[#e0c08b] rounded-xl shadow-[0_2px_0_#c7994a,0_5px_2px_rgba(0,0,0,0.3)] flex flex-col items-center p-4"
+            >
+              <img
+                src="/icons/coin.png"
+                alt="Coins"
+                className="w-16 h-16 object-contain mb-2"
+              />
+              <div className="font-semibold text-lg mb-1">
+                {bundle.amount} Coins
+              </div>
+              <div className="text-sm text-gray-700">{bundle.price}</div>
             </div>
-          </div>
-          <button
-            disabled={
-              loading === d.id || player?.ownedDiceDesigns?.includes(d.id)
-            }
-            onClick={() => buy(d)}
-            className="bg-blue-500 text-white px-3 py-1 rounded"
-          >
-            {player?.ownedDiceDesigns?.includes(d.id) ? "Owned" : "Buy"}
-          </button>
+          ))}
         </div>
-      ))}
+      </ContentModal>
     </div>
   );
-};
-
-export default Store;
+}
