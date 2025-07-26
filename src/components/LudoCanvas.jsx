@@ -644,6 +644,7 @@ const LudoCanvas = ({
   const isBotActive = players.find((p) => p.color === playerColor)?.bot;
   // tracks whether countdown is waiting for a roll or a move
   const [autoPhase, setAutoPhase] = useState(null); // 'roll' | 'move'
+  const [turnAnimSeed, setTurnAnimSeed] = useState(0); // forces timer animation restart
   // track four tokens per color; -1 = still at home
   const [tokenSteps, setTokenSteps] = useState({
     red: [-1, -1, -1, -1],
@@ -752,6 +753,7 @@ const LudoCanvas = ({
     setPendingRoll(null);
     setTimer(12);
     setAutoPhase("roll");
+    setTurnAnimSeed((s) => s + 1); // restart turn timer animation
   }, [currentTurnColor]);
 
   // Countdown for auto actions (roll or move)
@@ -983,6 +985,8 @@ const LudoCanvas = ({
     if (!isLocalTurn || hasRolled) return;
     setHasRolled(true);
 
+    setTurnAnimSeed((s) => s + 1); // restart turn timer animation
+
     // 1) Locally start your own spinner immediately
     setRollingDice((r) => ({ ...r, [playerColor]: true }));
     setVisibleDice((v) => ({ ...v, [playerColor]: true }));
@@ -1162,7 +1166,7 @@ const LudoCanvas = ({
 
     // ── DRAW ACTIVE JUMPS ───────────────────────────────
     const now = performance.now();
-    const DURATION = 300; // ms per hop
+    const DURATION = 250; // ms per hop
     const running = [];
 
     jumpsRef.current.forEach((jump) => {
@@ -1518,9 +1522,12 @@ const LudoCanvas = ({
                   />
                   {curr && (
                     <div
-                      className="absolute inset-0 bg-pink-500 rounded-full"
+                      key={turnAnimSeed}
+                      className="absolute inset-0"
                       style={{
-                        animation: "countdownRing 12s linear forwards",
+                        background:
+                          "conic-gradient(transparent 0deg 30deg, rgb(59, 130, 246) 30deg)",
+                        animation: "countdownWedge 12s linear forwards",
                       }}
                     />
                   )}
@@ -1590,9 +1597,12 @@ const LudoCanvas = ({
                   />
                   {curr && (
                     <div
-                      className="absolute inset-0 bg-pink-500 rounded-full"
+                      key={turnAnimSeed}
+                      className="absolute inset-0"
                       style={{
-                        animation: "countdownRing 12s linear forwards",
+                        background:
+                          "conic-gradient(transparent 0deg 30deg, rgb(59, 130, 246) 30deg)",
+                        animation: "countdownWedge 12s linear forwards",
                       }}
                     />
                   )}
