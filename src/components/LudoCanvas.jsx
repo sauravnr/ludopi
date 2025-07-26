@@ -1523,10 +1523,8 @@ const LudoCanvas = ({
                   {curr && (
                     <div
                       key={turnAnimSeed}
-                      className="absolute inset-0"
+                      className="absolute inset-0 bg-blue-500"
                       style={{
-                        background:
-                          "conic-gradient(transparent 0deg 30deg, rgb(59, 130, 246) 30deg)",
                         animation: "countdownWedge 12s linear forwards",
                       }}
                     />
@@ -1598,10 +1596,8 @@ const LudoCanvas = ({
                   {curr && (
                     <div
                       key={turnAnimSeed}
-                      className="absolute inset-0"
+                      className="absolute inset-0 bg-blue-500"
                       style={{
-                        background:
-                          "conic-gradient(transparent 0deg 30deg, rgb(59, 130, 246) 30deg)",
                         animation: "countdownWedge 12s linear forwards",
                       }}
                     />

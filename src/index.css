@@ -223,11 +223,9 @@ select:focus {
 @keyframes countdownWedge {
   from {
     clip-path: inset(0% 0% 0% 0%);
-    transform: rotate(0deg);
   }
   to {
     clip-path: inset(0% 100% 0% 0%);
-    transform: rotate(360deg);
   }
 }
 @keyframes countdownStroke {
