@@ -4,6 +4,9 @@ const router = express.Router();
 const protect = require("../middleware/auth");
 const Player = require("../models/Player");
 const CoinTransaction = require("../models/CoinTransaction");
+const DICE_SKINS = require("../utils/diceSkins");
+const FRAME_SKINS = require("../utils/frameSkins");
+const TOKEN_SKINS = require("../utils/tokenSkins");
 const MAX_BIO_LEN = 30;
 
 // Fields needed by the front-end profile views
@@ -122,14 +125,15 @@ router.post("/purchase", protect, async (req, res) => {
 
 // POST /api/player/dice/purchase
 router.post("/dice/purchase", protect, async (req, res) => {
-  const { designId, cost } = req.body;
-  const price = parseInt(cost, 10);
+  const { designId } = req.body;
   if (!designId || typeof designId !== "string") {
     return res.status(400).json({ message: "Invalid design" });
   }
-  if (isNaN(price) || price <= 0) {
-    return res.status(400).json({ message: "Invalid cost" });
+  const design = DICE_SKINS.find((d) => d.id === designId);
+  if (!design) {
+    return res.status(400).json({ message: "Invalid design" });
   }
+  const price = design.price;
   const player = await Player.findOneAndUpdate(
     { userId: req.user._id, coins: { $gte: price } },
     {
@@ -157,14 +161,15 @@ router.post("/dice/purchase", protect, async (req, res) => {
 
 // POST /api/player/frame/purchase
 router.post("/frame/purchase", protect, async (req, res) => {
-  const { designId, cost } = req.body;
-  const price = parseInt(cost, 10);
+  const { designId } = req.body;
   if (!designId || typeof designId !== "string") {
     return res.status(400).json({ message: "Invalid design" });
   }
-  if (isNaN(price) || price <= 0) {
-    return res.status(400).json({ message: "Invalid cost" });
+  const design = FRAME_SKINS.find((d) => d.id === designId);
+  if (!design) {
+    return res.status(400).json({ message: "Invalid design" });
   }
+  const price = design.price;
   const player = await Player.findOneAndUpdate(
     { userId: req.user._id, coins: { $gte: price } },
     {
@@ -192,14 +197,15 @@ router.post("/frame/purchase", protect, async (req, res) => {
 
 // POST /api/player/token/purchase
 router.post("/token/purchase", protect, async (req, res) => {
-  const { designId, cost } = req.body;
-  const price = parseInt(cost, 10);
+  const { designId } = req.body;
   if (!designId || typeof designId !== "string") {
     return res.status(400).json({ message: "Invalid design" });
   }
-  if (isNaN(price) || price <= 0) {
-    return res.status(400).json({ message: "Invalid cost" });
+  const design = TOKEN_SKINS.find((d) => d.id === designId);
+  if (!design) {
+    return res.status(400).json({ message: "Invalid design" });
   }
+  const price = design.price;
   const player = await Player.findOneAndUpdate(
     { userId: req.user._id, coins: { $gte: price } },
     {
