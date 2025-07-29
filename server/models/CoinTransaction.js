@@ -9,7 +9,7 @@ const coinTransactionSchema = new Schema(
     type: {
       type: String,
       required: true,
-      enum: ["win", "purchase", "grant", "bet"],
+      enum: ["win", "purchase", "grant", "bet", "fee"],
     },
     description: { type: String, default: "" },
   },
