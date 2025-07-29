@@ -78,7 +78,10 @@ export default function Users() {
             className="p-2 border rounded flex justify-between items-center"
           >
             <span>
-              <strong>{p.username}</strong> ({p.userId?.email})
+              <strong>{p.username}</strong> ({p.userId?.email}) - Coins:{" "}
+              {p.coins}
+              {" – Locked: "}
+              {p.lockedBet}
               {p.isBanned && (
                 <span className="ml-2 text-red-600">[banned]</span>
               )}

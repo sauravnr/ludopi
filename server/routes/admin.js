@@ -35,7 +35,9 @@ router.get("/users", async (req, res) => {
       .skip(skip)
       .limit(limit)
       .populate("userId", "email")
-      .select("playerId username userId isBanned banReason banExpiresAt role")
+      .select(
+        "playerId username userId isBanned banReason banExpiresAt role coins lockedBet"
+      )
       .lean();
     res.json({ players });
   } catch (err) {

@@ -42,7 +42,7 @@ export default function AdminDashboard() {
   };
   return (
     <div className="p-4 space-y-4 overflow-y-auto">
-      <nav className="flex gap-4 border-b pb-2">
+      <nav className="flex gap-4 border-b pb-2 overflow-x-auto whitespace-nowrap">
         <button
           className={tab === "users" ? "font-semibold" : ""}
           onClick={() => setTab("users")}
