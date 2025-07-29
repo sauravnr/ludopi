@@ -11,6 +11,9 @@ const PipTransaction = require("../models/PipTransaction");
 const rooms = require("../roomStore");
 const getPagination = require("../utils/pagination");
 const logAdminAction = require("../utils/adminLogger");
+const fs = require("fs");
+const path = require("path");
+const logFile = path.join(__dirname, "..", "admin-actions.log");
 const router = express.Router();
 
 // All admin routes require authentication and admin role
@@ -241,6 +244,32 @@ router.patch("/pip/withdrawals/:id", async (req, res) => {
     res.json({ withdrawal: tx });
   } catch (err) {
     console.error("admin pip withdraw update error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// GET /api/admin/logs - recent admin log entries
+router.get("/logs", (req, res) => {
+  try {
+    const limit = Math.min(1000, parseInt(req.query.limit, 10) || 100);
+    fs.readFile(logFile, "utf8", (err, data) => {
+      if (err) {
+        if (err.code === "ENOENT") return res.json({ logs: [] });
+        console.error("admin logs error:", err);
+        return res.status(500).json({ message: "Server error" });
+      }
+      const lines = data.trim().split("\n").filter(Boolean);
+      const entries = lines.slice(-limit).map((line) => {
+        try {
+          return JSON.parse(line);
+        } catch {
+          return { raw: line };
+        }
+      });
+      res.json({ logs: entries.reverse() });
+    });
+  } catch (err) {
+    console.error("admin logs error:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
