@@ -55,7 +55,7 @@ export default function RoomActivity() {
           onChange={(e) => setSortKey(e.target.value)}
         >
           <option value="code">Code</option>
-          <option value="bet">Bet</option>
+          <option value="bet">Entry</option>
           <option value="players">Players</option>
           <option value="started">Started</option>
         </select>
@@ -72,7 +72,7 @@ export default function RoomActivity() {
           <tr className="text-left">
             <th className="p-1">Code</th>
             <th className="p-1">Mode</th>
-            <th className="p-1">Bet</th>
+            <th className="p-1">Entry</th>
             <th className="p-1">Players</th>
             <th className="p-1">Started</th>
           </tr>

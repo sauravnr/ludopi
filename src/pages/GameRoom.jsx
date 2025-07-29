@@ -215,7 +215,7 @@ const GameRoom = () => {
               </span>
             </div>
             <div className="flex items-baseline space-x-2 mb-2 sm:mb-0">
-              <span className="text-lg font-semibold">Bet:</span>
+              <span className="text-lg font-semibold">Entry:</span>
               <span className="text-xl font-mono text-green-600">{bet}</span>
             </div>
 
@@ -297,7 +297,7 @@ const GameRoom = () => {
           ]}
         >
           <p className="text-center">
-            Bet amount is {bet} coins. Do you accept?
+            Entry amount is {bet} coins. Do you accept?
           </p>
         </Modal>
       )}

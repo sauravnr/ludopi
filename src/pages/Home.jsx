@@ -44,7 +44,7 @@ const Home = () => {
     const bet = parseInt(amount, 10);
     const valid = BET_OPTIONS[betMode]?.some((o) => o.entry === bet);
     if (!valid) {
-      setBetError("Invalid bet amount");
+      setBetError("Invalid entry amount");
       return;
     }
     try {
@@ -184,6 +184,7 @@ const Home = () => {
           onConfirm={confirmCreateRoom}
           options={BET_OPTIONS[betMode] || []}
           error={betError}
+          mode={betMode}
         />
       )}
     </div>
