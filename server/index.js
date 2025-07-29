@@ -60,10 +60,22 @@ async function clearStaleRooms() {
 
 connectDB().then(clearStaleRooms);
 
-// Coins required for bets. Rewards come from the bet pot rather than
-// fixed win amounts.
-const MIN_BET = 10;
-const MAX_BET = 1000;
+// Allowed bet amounts and resulting win amounts after fee deduction.
+// Structure: { mode: { entry: winAmount } }
+const BET_OPTIONS = {
+  "2P": {
+    500: 950,
+    1000: 1900,
+    5000: 9500,
+    10000: 19000,
+  },
+  "4P": {
+    500: 1400,
+    1000: 2800,
+    5000: 14000,
+    10000: 28000,
+  },
+};
 
 const app = express();
 // trust proxy so req.secure & Secure cookies work behind proxies
@@ -152,7 +164,8 @@ app.post(
       return res.status(400).json({ error: "Invalid game mode" });
     }
     const betAmount = parseInt(bet, 10);
-    if (isNaN(betAmount) || betAmount < MIN_BET || betAmount > MAX_BET) {
+    const winAmount = BET_OPTIONS[mode]?.[betAmount];
+    if (isNaN(betAmount) || !winAmount) {
       return res.status(400).json({ error: "Invalid bet amount" });
     }
     const player = await Player.findOne({ userId: req.user._id })
@@ -186,6 +199,7 @@ app.post(
       players: [],
       capacity: mode === "4P" ? 4 : 2,
       bet: betAmount,
+      winAmount,
       pot: 0,
       shuffledColors: shuffleArray(
         PLAYER_COLORS_BY_MODE[mode] || ["red", "blue"]
@@ -1326,6 +1340,8 @@ io.on("connection", (socket) => {
             .emit("start-failed", { message: "A player lacks enough coins." });
         }
       }
+      const perPlayerFee =
+        room.bet - Math.round(room.winAmount / room.capacity);
       for (const id of ids) {
         await Player.findOneAndUpdate(
           { userId: id },
@@ -1333,12 +1349,18 @@ io.on("connection", (socket) => {
         );
         await CoinTransaction.create({
           userId: id,
-          amount: -room.bet,
+          amount: -(room.bet - perPlayerFee),
           type: "bet",
           description: "Game bet",
         });
+        await CoinTransaction.create({
+          userId: id,
+          amount: -perPlayerFee,
+          type: "fee",
+          description: "Bet fee",
+        });
       }
-      room.pot = room.bet * room.capacity;
+      room.pot = room.winAmount;
     } catch (err) {
       console.error("Failed to deduct bet coins:", err);
       return io

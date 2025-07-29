@@ -6,8 +6,20 @@ import BetModal from "../components/BetModal";
 import api from "../utils/api";
 import { useAlert } from "../context/AlertContext";
 
-const MIN_BET = 10;
-const MAX_BET = 1000;
+const BET_OPTIONS = {
+  "2P": [
+    { entry: 500, win: 950 },
+    { entry: 1000, win: 1900 },
+    { entry: 5000, win: 9500 },
+    { entry: 10000, win: 19000 },
+  ],
+  "4P": [
+    { entry: 500, win: 1400 },
+    { entry: 1000, win: 2800 },
+    { entry: 5000, win: 14000 },
+    { entry: 10000, win: 28000 },
+  ],
+};
 
 const Home = () => {
   const navigate = useNavigate();
@@ -30,8 +42,9 @@ const Home = () => {
 
   const confirmCreateRoom = async (amount) => {
     const bet = parseInt(amount, 10);
-    if (isNaN(bet) || bet < MIN_BET || bet > MAX_BET) {
-      setBetError(`Bet must be between ${MIN_BET} and ${MAX_BET}`);
+    const valid = BET_OPTIONS[betMode]?.some((o) => o.entry === bet);
+    if (!valid) {
+      setBetError("Invalid bet amount");
       return;
     }
     try {
@@ -169,8 +182,7 @@ const Home = () => {
           show={showBetModal}
           onClose={() => setShowBetModal(false)}
           onConfirm={confirmCreateRoom}
-          minBet={MIN_BET}
-          maxBet={MAX_BET}
+          options={BET_OPTIONS[betMode] || []}
           error={betError}
         />
       )}
