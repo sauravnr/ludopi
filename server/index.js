@@ -1147,8 +1147,12 @@ io.on("connection", (socket) => {
 
     const player = room.players[idx];
     const color = player.color;
+    const wasCurrent = idx === room.currentTurnIndex;
 
     room.players.splice(idx, 1);
+    if (idx < room.currentTurnIndex) {
+      room.currentTurnIndex -= 1;
+    }
     if (!room.forfeits) room.forfeits = [];
     room.forfeits.push(color);
     room.tokenSteps[color] = [FINISHED, FINISHED, FINISHED, FINISHED];
@@ -1171,7 +1175,11 @@ io.on("connection", (socket) => {
     if (room.players.length <= 1) {
       const remaining = room.players[0]?.color;
       await finalizeGame(roomCode, remaining);
-    } else {
+    } else if (wasCurrent) {
+      if (room.botTimeout) {
+        clearTimeout(room.botTimeout);
+        room.botTimeout = null;
+      }
       if (room.currentTurnIndex >= room.players.length) {
         room.currentTurnIndex = 0;
       }
