@@ -19,7 +19,7 @@ const Inventory = () => {
   const [activeTab, setActiveTab] = useState("dice");
 
   return (
-    <div className="py-5 px-2 h-full flex flex-col">
+    <div className="py-5 px-2 h-full flex flex-col page-fade">
       <div className="bg-[#fff8e6] border border-[#e0c08b] rounded-2xl shadow-[0_3px_0_#c7994a,0_8px_2px_rgba(0,0,0,0.5)] text-gray-900 py-6 px-3 flex flex-col flex-1 overflow-hidden">
         <div className="flex justify-around border-b mb-4">
           {tabs.map(({ key, label, icon }) => (

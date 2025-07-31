@@ -19,7 +19,7 @@ export default function Friends() {
   ];
 
   return (
-    <div className="p-4 h-full flex flex-col">
+    <div className="p-4 h-full flex flex-col page-fade">
       <div
         className="
           bg-[#fff8e6] border border-[#e0c08b] rounded-2xl
