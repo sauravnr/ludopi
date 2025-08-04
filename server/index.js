@@ -24,6 +24,7 @@ const Player = require("./models/Player");
 const Message = require("./models/Message");
 const CoinTransaction = require("./models/CoinTransaction");
 const mongoose = require("mongoose");
+const { checkAwards } = require("./utils/awards");
 
 async function clearStaleRooms() {
   try {
@@ -875,9 +876,12 @@ async function applyMove(roomCode, color, tokenIdx) {
       statInc.tokensHomed = (statInc.tokensHomed || 0) + 1;
     }
     if (Object.keys(statInc).length > 0) {
-      Player.updateOne({ userId: playerObj.userId }, { $inc: statInc }).catch(
-        (e) => console.error("Failed to update stats:", e)
-      );
+      try {
+        await Player.updateOne({ userId: playerObj.userId }, { $inc: statInc });
+        await checkAwards(playerObj.userId);
+      } catch (e) {
+        console.error("Failed to update stats:", e);
+      }
     }
   }
 
@@ -910,6 +914,7 @@ async function applyMove(roomCode, color, tokenIdx) {
             { userId: winnerId },
             { $inc: { totalWins: 1, wins2P: 1, coins: pot } }
           );
+          await checkAwards(winnerId);
           await CoinTransaction.create({
             userId: winnerId,
             amount: pot,
@@ -948,6 +953,7 @@ async function applyMove(roomCode, color, tokenIdx) {
             { userId: winnerId },
             { $inc: { totalWins: 1, wins4P: 1, coins: pot } }
           );
+          await checkAwards(winnerId);
           await CoinTransaction.create({
             userId: winnerId,
             amount: pot,

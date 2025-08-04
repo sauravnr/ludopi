@@ -3,10 +3,18 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose;
 const { nanoid } = require("nanoid");
 
-// Badge sub‐schema
-const badgeSchema = new Schema(
+// Award sub-schema
+const awardSchema = new Schema(
   {
+    code: {
+      type: String,
+      required: true,
+    },
     name: {
+      type: String,
+      required: true,
+    },
+    icon: {
       type: String,
       required: true,
     },
@@ -101,7 +109,7 @@ const playerSchema = new Schema(
       default: "Worldwide",
     },
     // Progression
-    badges: [badgeSchema],
+    awards: [awardSchema],
 
     // Economy / Inventory
     coins: {

@@ -228,7 +228,7 @@ export default function Profile() {
   const {
     avatarUrl,
     bio,
-    badges = [],
+    awards = [],
     totalGamesPlayed: totalGames = 0,
     wins2P: twoWins = 0,
     wins4P: fourWins = 0,
@@ -374,18 +374,18 @@ export default function Profile() {
           </div>
         )}
 
-        {/* Badges */}
+        {/* Awards */}
         <div>
-          <h3 className="text-lg font-semibold mb-2">Badges</h3>
+          <h3 className="text-lg font-semibold mb-2">Awards</h3>
           <div className="flex space-x-2">
-            {badges.length > 0
-              ? badges.map((b, i) => (
-                  <div
+            {awards.length > 0
+              ? awards.map((a, i) => (
+                  <img
                     key={i}
-                    className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center"
-                  >
-                    <span className="text-sm font-bold">{b.code || i + 1}</span>
-                  </div>
+                    src={a.icon}
+                    alt={a.name}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
                 ))
               : [0, 1, 2].map((_, i) => (
                   <div key={i} className="w-10 h-10 bg-gray-300 rounded-full" />
