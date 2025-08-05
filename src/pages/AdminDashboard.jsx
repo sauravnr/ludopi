@@ -8,6 +8,9 @@ const PipBalances = lazy(() => import("../components/Admin/PipBalances"));
 const PipWithdrawals = lazy(() => import("../components/Admin/PipWithdrawals"));
 const Messages = lazy(() => import("../components/Admin/Messages"));
 const AdminLogs = lazy(() => import("../components/Admin/Logs"));
+const AdminNotifications = lazy(() =>
+  import("../components/Admin/Notifications")
+);
 
 export default function AdminDashboard() {
   const { player } = useAuth();
@@ -28,6 +31,8 @@ export default function AdminDashboard() {
           return PipWithdrawals;
         case "messages":
           return Messages;
+        case "notifications":
+          return AdminNotifications;
         case "logs":
           return AdminLogs;
         default:
@@ -72,6 +77,12 @@ export default function AdminDashboard() {
           onClick={() => setTab("messages")}
         >
           Messages
+        </button>
+        <button
+          className={tab === "notifications" ? "font-semibold" : ""}
+          onClick={() => setTab("notifications")}
+        >
+          Notifications
         </button>
         <button
           className={tab === "logs" ? "font-semibold" : ""}
