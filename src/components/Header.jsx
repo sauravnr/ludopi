@@ -38,8 +38,16 @@ export default function Header({
       ? `/frames/${encodeURIComponent(safe)}/idle-128.png`
       : "/frames/idle-128.png";
   };
-  const coins = Number(player?.coins || 0).toLocaleString();
-  const pipCoins = Number(player?.pipBalance || 0).toLocaleString();
+  const formatAmount = (value) => {
+    const num = Number(value || 0);
+    const abs = Math.abs(num);
+    if (abs >= 1e9) return (num / 1e9).toFixed(1).replace(/\.0$/, "") + "B";
+    if (abs >= 1e6) return (num / 1e6).toFixed(1).replace(/\.0$/, "") + "M";
+    if (abs >= 1e3) return (num / 1e3).toFixed(1).replace(/\.0$/, "") + "K";
+    return num.toLocaleString();
+  };
+  const coins = formatAmount(player?.coins);
+  const pipCoins = formatAmount(player?.pipBalance);
   return (
     <>
       <header className="relative z-10 flex items-center justify-between px-4 py-4 bg-header text-white header-3d">
@@ -69,7 +77,7 @@ export default function Header({
         </div>
         <div className="flex items-center space-x-7">
           {/* Coins pill */}
-          <div className="relative bg-white/10 px-10 rounded-full flex justify-center items-center h-5">
+          <div className="relative bg-white/10 px-8 rounded-full flex justify-center items-center h-5">
             <img
               src="/icons/coin.png"
               alt="Coins"
@@ -86,7 +94,7 @@ export default function Header({
           </div>
 
           {/* PiPips pill */}
-          <div className="relative bg-white/10 px-10 rounded-full flex justify-center items-center h-5">
+          <div className="relative bg-white/10 px-8 rounded-full flex justify-center items-center h-5">
             <img
               src="/icons/pipips.png"
               alt="PiPips"

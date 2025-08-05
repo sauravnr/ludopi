@@ -4,7 +4,7 @@ import Modal from "./Modal";
 export default function NotificationsModal({ show, onClose, notifications }) {
   return (
     <Modal show={show} onClose={onClose} title="Notifications" footer={null}>
-      <ul className="space-y-2 max-h-60 overflow-y-auto">
+      <ul className="space-y-2 max-h-65 overflow-y-auto">
         {notifications.length === 0 && (
           <li className="text-center text-gray-500">No notifications</li>
         )}

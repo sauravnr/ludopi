@@ -44,16 +44,16 @@ export default function CoinsRanking() {
     );
   return (
     <div className="flex flex-col h-full">
-      <div className="flex border-b mb-2">
+      <div className="flex justify-center gap-5 mb-2">
         <button
           onClick={() => {
             setScope("world");
             setSize(1);
           }}
-          className={`flex-1 py-2 text-center font-medium transition-colors ${
+          className={`px-4 py-1 text-sm rounded-full font-medium transition-colors ${
             scope === "world"
-              ? "border-b-2 border-blue-500 text-blue-600"
-              : "text-gray-600 hover:text-gray-800"
+              ? "bg-header text-white"
+              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
           }`}
         >
           Worldwide
@@ -63,10 +63,10 @@ export default function CoinsRanking() {
             setScope("country");
             setSize(1);
           }}
-          className={`flex-1 py-2 text-center font-medium transition-colors ${
+          className={`px-4 py-1 text-sm rounded-full font-medium transition-colors ${
             scope === "country"
-              ? "border-b-2 border-blue-500 text-blue-600"
-              : "text-gray-600 hover:text-gray-800"
+              ? "bg-header text-white"
+              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
           }`}
         >
           {player?.country || "Country"}
