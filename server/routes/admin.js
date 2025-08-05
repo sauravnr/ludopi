@@ -8,7 +8,7 @@ const Player = require("../models/Player");
 const Message = require("../models/Message");
 const CoinTransaction = require("../models/CoinTransaction");
 const PipTransaction = require("../models/PipTransaction");
-const Notification = require("../models/Notification");
+const { createNotification } = require("../utils/notifications");
 const rooms = require("../roomStore");
 const getPagination = require("../utils/pagination");
 const logAdminAction = require("../utils/adminLogger");
@@ -261,7 +261,7 @@ router.post("/notifications", async (req, res) => {
       message,
       type: "admin",
     };
-    const notif = await Notification.create(data);
+    const notif = await createNotification(data);
     const io = req.app.get("io");
     if (io) {
       if (userId) io.to(userId.toString()).emit("notification", notif);

@@ -1,5 +1,5 @@
 const Player = require("../models/Player");
-const Notification = require("../models/Notification");
+const { createNotifications } = require("./notifications");
 
 const DEFAULT_ICON = "/awards/medal-first-win.png";
 
@@ -138,7 +138,7 @@ async function checkAwards(userId, io) {
   if (updated) {
     await player.save();
     if (newNotifs.length > 0) {
-      const created = await Notification.insertMany(newNotifs);
+      const created = await createNotifications(newNotifs);
       if (io) {
         created.forEach((n) =>
           io.to(userId.toString()).emit("notification", n)
