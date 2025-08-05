@@ -377,20 +377,20 @@ export default function Profile() {
         {/* Awards */}
         <div>
           <h3 className="text-lg font-semibold mb-2">Awards</h3>
-          <div className="flex space-x-2">
-            {awards.length > 0
-              ? awards.map((a, i) => (
-                  <img
-                    key={i}
-                    src={a.icon}
-                    alt={a.name}
-                    className="w-12 h-12 rounded-full object-cover"
-                  />
-                ))
-              : [0, 1, 2].map((_, i) => (
-                  <div key={i} className="w-12 h-12 bg-gray-300 rounded-full" />
-                ))}
-          </div>
+          {awards.length > 0 ? (
+            <div className="flex space-x-2">
+              {awards.map((a, i) => (
+                <img
+                  key={i}
+                  src={a.icon}
+                  alt={a.name}
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500">No awards yet</p>
+          )}
         </div>
 
         {/* Stats */}

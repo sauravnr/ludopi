@@ -5,6 +5,7 @@ const protect = require("../middleware/auth");
 const FriendRequest = require("../models/FriendRequest");
 const mongoose = require("mongoose");
 const Player = require("../models/Player");
+const { checkAwards } = require("../utils/awards");
 const rateLimit = require("express-rate-limit");
 const { body, param, validationResult } = require("express-validator");
 
@@ -254,6 +255,7 @@ router.post("/:id", protect, async (req, res) => {
             { $addToSet: { friends: meDoc._id } }
           ),
         ]);
+        await Promise.all([checkAwards(me), checkAwards(fr.from)]);
       }
     }
     return res.json({ request: fr });
