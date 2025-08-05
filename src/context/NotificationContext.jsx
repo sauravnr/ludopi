@@ -16,6 +16,8 @@ export function NotificationProvider({ children }) {
   const socket = useSocket();
   const [chatCount, setChatCount] = useState(0);
   const [requestCount, setRequestCount] = useState(0);
+  const [notifications, setNotifications] = useState([]);
+  const [notifCount, setNotifCount] = useState(0);
   const [chatTabOpen, setChatTabOpen] = useState(false);
   const [activeChatUser, setActiveChatUser] = useState(null);
 
@@ -34,6 +36,24 @@ export function NotificationProvider({ children }) {
     })();
   }, [user]);
 
+  // load recent notifications
+  useEffect(() => {
+    if (!user) {
+      setNotifications([]);
+      setNotifCount(0);
+      return;
+    }
+    (async () => {
+      try {
+        const { data } = await api.get("/notifications");
+        setNotifications(data.notifications || []);
+        setNotifCount(data.notifications?.length || 0);
+      } catch (err) {
+        console.error("Failed to load notifications", err);
+      }
+    })();
+  }, [user]);
+
   // handle incoming chat messages
   useEffect(() => {
     if (!socket) return;
@@ -46,6 +66,17 @@ export function NotificationProvider({ children }) {
     socket.on("private-message", handleMsg);
     return () => socket.off("private-message", handleMsg);
   }, [socket, user, chatTabOpen, activeChatUser]);
+
+  // incoming general notifications
+  useEffect(() => {
+    if (!socket) return;
+    const handleNotification = (n) => {
+      setNotifications((list) => [n, ...list].slice(0, 5));
+      setNotifCount((c) => Math.min(99, c + 1));
+    };
+    socket.on("notification", handleNotification);
+    return () => socket.off("notification", handleNotification);
+  }, [socket]);
 
   // listen for incoming friend requests
   const incrementRequest = useCallback(() => {
@@ -64,17 +95,21 @@ export function NotificationProvider({ children }) {
 
   const clearChat = useCallback(() => setChatCount(0), []);
   const clearRequests = useCallback(() => setRequestCount(0), []);
+  const clearNotifications = useCallback(() => setNotifCount(0), []);
 
-  const total = chatCount + requestCount;
+  const total = chatCount + requestCount + notifCount;
 
   return (
     <NotificationContext.Provider
       value={{
         chatCount,
         requestCount,
+        notifications,
+        notifCount,
         total,
         clearChat,
         clearRequests,
+        clearNotifications,
         setChatTabOpen,
         setActiveChatUser,
       }}

@@ -70,7 +70,7 @@ router.post("/pi-login", piLoginLimiter, async (req, res) => {
     ).catch((err) => console.error("Failed to update lastLogin:", err));
 
     // grant any overdue awards and fetch profile fields for response
-    await checkAwards(user._id);
+    await checkAwards(user._id, req.app.get("io"));
     // fetch profile fields for response
     const playerProfile = await Player.findOne({ userId: user._id })
       .select(PROFILE_FIELDS)
@@ -121,7 +121,7 @@ router.post("/register", async (req, res) => {
       avatarUrl: user.avatarUrl,
     });
 
-    await checkAwards(user._id);
+    await checkAwards(user._id, req.app.get("io"));
     const playerProfile = await Player.findOne({ userId: user._id })
       .select(PROFILE_FIELDS)
       .lean();
@@ -165,7 +165,7 @@ router.post("/login", async (req, res) => {
       { userId: user._id },
       { $set: { lastLogin: new Date() } }
     ).catch((err) => console.error("Failed to update lastLogin:", err));
-    await checkAwards(user._id);
+    await checkAwards(user._id, req.app.get("io"));
     const playerProfile = await Player.findOne({ userId: user._id })
       .select(PROFILE_FIELDS)
       .lean();
@@ -207,7 +207,7 @@ router.post("/logout", (req, res) => {
 
 // GET /api/auth/me
 router.get("/me", protect, async (req, res) => {
-  await checkAwards(req.user._id);
+  await checkAwards(req.user._id, req.app.get("io"));
   const player = await Player.findOne({ userId: req.user._id })
     .select(PROFILE_FIELDS)
     .lean();

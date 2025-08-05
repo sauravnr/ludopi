@@ -255,7 +255,8 @@ router.post("/:id", protect, async (req, res) => {
             { $addToSet: { friends: meDoc._id } }
           ),
         ]);
-        await Promise.all([checkAwards(me), checkAwards(fr.from)]);
+        const io = req.app.get("io");
+        await Promise.all([checkAwards(me, io), checkAwards(fr.from, io)]);
       }
     }
     return res.json({ request: fr });

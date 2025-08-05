@@ -1,4 +1,5 @@
 const Player = require("../models/Player");
+const Notification = require("../models/Notification");
 
 const DEFAULT_ICON = "/awards/medal-first-win.png";
 
@@ -113,9 +114,10 @@ const AWARDS = [
   },
 ];
 
-async function checkAwards(userId) {
+async function checkAwards(userId, io) {
   const player = await Player.findOne({ userId });
   if (!player) return;
+  const newNotifs = [];
   let updated = false;
   for (const award of AWARDS) {
     if (player.awards.some((a) => a.code === award.code)) continue;
@@ -125,11 +127,24 @@ async function checkAwards(userId) {
         name: award.name,
         icon: award.icon,
       });
+      newNotifs.push({
+        userId,
+        message: `Award earned: ${award.name}`,
+        type: "award",
+      });
       updated = true;
     }
   }
   if (updated) {
     await player.save();
+    if (newNotifs.length > 0) {
+      const created = await Notification.insertMany(newNotifs);
+      if (io) {
+        created.forEach((n) =>
+          io.to(userId.toString()).emit("notification", n)
+        );
+      }
+    }
   }
 }
 

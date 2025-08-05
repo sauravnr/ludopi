@@ -8,6 +8,7 @@ const Player = require("../models/Player");
 const Message = require("../models/Message");
 const CoinTransaction = require("../models/CoinTransaction");
 const PipTransaction = require("../models/PipTransaction");
+const Notification = require("../models/Notification");
 const rooms = require("../roomStore");
 const getPagination = require("../utils/pagination");
 const logAdminAction = require("../utils/adminLogger");
@@ -246,6 +247,29 @@ router.patch("/pip/withdrawals/:id", async (req, res) => {
     res.json({ withdrawal: tx });
   } catch (err) {
     console.error("admin pip withdraw update error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// POST /api/admin/notifications - send notification to a user or all
+router.post("/notifications", async (req, res) => {
+  try {
+    const { userId, message } = req.body;
+    if (!message) return res.status(400).json({ message: "Message required" });
+    const data = {
+      userId: userId || null,
+      message,
+      type: "admin",
+    };
+    const notif = await Notification.create(data);
+    const io = req.app.get("io");
+    if (io) {
+      if (userId) io.to(userId.toString()).emit("notification", notif);
+      else io.emit("notification", notif);
+    }
+    res.json({ notification: notif });
+  } catch (err) {
+    console.error("admin notification error:", err);
     res.status(500).json({ message: "Server error" });
   }
 });

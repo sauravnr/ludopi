@@ -121,6 +121,7 @@ const chatRoutes = require("./routes/chat");
 const rankingRoutes = require("./routes/ranking");
 const adminRoutes = require("./routes/admin");
 const pipRoutes = require("./routes/pip");
+const notificationRoutes = require("./routes/notifications");
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/player", playerRoutes);
@@ -130,6 +131,7 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/ranking", rankingRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/pip", pipRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // ─── IN-MEMORY ROOM STORE ────────────────────────────
 const rooms = require("./roomStore");
@@ -303,6 +305,8 @@ const io = new Server(server, {
     credentials: true,
   },
 });
+
+app.set("io", io);
 
 const msgLimiter = new RateLimiterMemory({
   points: 10, // 10 messages
@@ -878,7 +882,7 @@ async function applyMove(roomCode, color, tokenIdx) {
     if (Object.keys(statInc).length > 0) {
       try {
         await Player.updateOne({ userId: playerObj.userId }, { $inc: statInc });
-        await checkAwards(playerObj.userId);
+        await checkAwards(playerObj.userId, io);
       } catch (e) {
         console.error("Failed to update stats:", e);
       }
@@ -914,7 +918,7 @@ async function applyMove(roomCode, color, tokenIdx) {
             { userId: winnerId },
             { $inc: { totalWins: 1, wins2P: 1, coins: pot } }
           );
-          await checkAwards(winnerId);
+          await checkAwards(winnerId, io);
           await CoinTransaction.create({
             userId: winnerId,
             amount: pot,
@@ -953,7 +957,7 @@ async function applyMove(roomCode, color, tokenIdx) {
             { userId: winnerId },
             { $inc: { totalWins: 1, wins4P: 1, coins: pot } }
           );
-          await checkAwards(winnerId);
+          await checkAwards(winnerId, io);
           await CoinTransaction.create({
             userId: winnerId,
             amount: pot,

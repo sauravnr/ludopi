@@ -14,7 +14,7 @@ const PROFILE_FIELDS = require("../utils/profileFields");
 const { checkAwards } = require("../utils/awards");
 
 router.get("/me", protect, async (req, res) => {
-  await checkAwards(req.user._id);
+  await checkAwards(req.user._id, req.app.get("io"));
   const player = await Player.findOne({ userId: req.user._id })
     .select(PROFILE_FIELDS)
     .lean();
@@ -25,7 +25,7 @@ router.get("/me", protect, async (req, res) => {
 // fetch another user's profile by their userId
 router.get("/:userId", protect, async (req, res) => {
   try {
-    await checkAwards(req.params.userId);
+    await checkAwards(req.params.userId, req.app.get("io"));
     const player = await Player.findOne({ userId: req.params.userId })
       .select(PROFILE_FIELDS)
       .lean();
