@@ -2,9 +2,12 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import NavItem from "./NavItem";
+import { useNotifications } from "../context/NotificationContext";
 
 export default function Footer({ activePage }) {
   const navigate = useNavigate();
+  const { chatCount, requestCount } = useNotifications();
+  const friendDot = chatCount + requestCount > 0;
 
   return (
     <footer className="footer-nav">
@@ -35,6 +38,7 @@ export default function Footer({ activePage }) {
         label="Friends"
         onClick={() => navigate("/friends")}
         active={activePage === "Friends"}
+        showDot={friendDot}
       />
       <NavItem
         icon={

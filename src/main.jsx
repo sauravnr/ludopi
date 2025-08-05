@@ -5,6 +5,7 @@ import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext"; // adjust path if yours is different
 import AuthedSocket from "./components/AuthedSocket.jsx";
 import { AlertProvider } from "./context/AlertContext";
+import { NotificationProvider } from "./context/NotificationContext";
 import "./index.css";
 import App from "./App.jsx";
 
@@ -14,7 +15,9 @@ createRoot(document.getElementById("root")).render(
       <AlertProvider>
         <AuthProvider>
           <AuthedSocket>
-            <App />
+            <NotificationProvider>
+              <App />
+            </NotificationProvider>
           </AuthedSocket>
         </AuthProvider>
       </AlertProvider>

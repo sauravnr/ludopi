@@ -1,6 +1,7 @@
 // src/pages/Friends.jsx
-import React, { useState, lazy, Suspense } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import Loader from "../components/Loader";
+import { useNotifications } from "../context/NotificationContext";
 
 const FriendsList = lazy(() => import("../components/FriendList"));
 const ChatList = lazy(() => import("../components/ChatList"));
@@ -11,11 +12,40 @@ export default function Friends() {
   const [activeTab, setActiveTab] = useState("friends");
   // either `null` (show chat‐list) or a full `{ id, username, avatarUrl }`
   const [selectedUser, setSelectedUser] = useState(null);
+  const {
+    chatCount,
+    requestCount,
+    clearChat,
+    clearRequests,
+    setChatTabOpen,
+    setActiveChatUser,
+  } = useNotifications();
+
+  useEffect(() => {
+    if (activeTab === "chat") {
+      clearChat();
+      setChatTabOpen(true);
+    } else {
+      setChatTabOpen(false);
+    }
+    if (activeTab === "requests") clearRequests();
+  }, [activeTab, clearChat, clearRequests, setChatTabOpen]);
+
+  useEffect(() => {
+    setActiveChatUser(selectedUser?.id || selectedUser?._id || null);
+  }, [selectedUser, setActiveChatUser]);
+
+  useEffect(() => {
+    return () => {
+      setChatTabOpen(false);
+      setActiveChatUser(null);
+    };
+  }, [setChatTabOpen, setActiveChatUser]);
 
   const tabs = [
     { key: "friends", label: "Friends" },
-    { key: "chat", label: "Chat" },
-    { key: "requests", label: "Requests" },
+    { key: "chat", label: "Chat", count: chatCount },
+    { key: "requests", label: "Requests", count: requestCount },
   ];
 
   return (
@@ -29,7 +59,7 @@ export default function Friends() {
       >
         {/* Tab headers */}
         <div className="flex border-b mb-4">
-          {tabs.map(({ key, label }) => (
+          {tabs.map(({ key, label, count }) => (
             <button
               key={key}
               onClick={() => {
@@ -45,7 +75,14 @@ export default function Friends() {
                 }
               `}
             >
-              {label}
+              <span className="relative inline-flex items-center">
+                {label}
+                {count > 0 && (
+                  <span className="ml-2 px-2 py-0.5 rounded-full text-xs text-white bg-red-500">
+                    {count >= 99 ? "99+" : count}
+                  </span>
+                )}
+              </span>
             </button>
           ))}
         </div>

@@ -1,10 +1,12 @@
 // src/pages/Home.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { FaEnvelope } from "react-icons/fa";
 import Modal from "../components/Modal";
 import BetModal from "../components/BetModal";
 import api from "../utils/api";
 import { useAlert } from "../context/AlertContext";
+import { useNotifications } from "../context/NotificationContext";
 
 const BET_OPTIONS = {
   "2P": [
@@ -29,6 +31,7 @@ const Home = () => {
   const [showBetModal, setShowBetModal] = useState(false);
   const [betError, setBetError] = useState("");
   const [betMode, setBetMode] = useState(null);
+  const { total: notificationCount } = useNotifications();
 
   useEffect(() => {
     sessionStorage.removeItem("navigatingToRoom");
@@ -121,7 +124,23 @@ const Home = () => {
   ];
 
   return (
-    <div className="flex-1 flex items-center justify-center px-4">
+    <div className="flex-1 flex flex-col items-center px-4">
+      <div className="w-full flex justify-end mt-4 mb-6">
+        {/* Quick actions section (spinner, watch ads, etc.) */}
+        <button
+          onClick={() => console.log("Notifications clicked")}
+          className="relative p-2 bg-yellow-100 rounded-full shadow-md text-gray-700"
+          aria-label="Notifications"
+        >
+          <FaEnvelope size={20} />
+          {notificationCount > 0 && (
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+              {notificationCount >= 99 ? "99+" : notificationCount}
+            </span>
+          )}
+        </button>
+      </div>
+
       <div className="grid grid-cols-2 gap-8 p-8">
         {cards.map(
           ({
