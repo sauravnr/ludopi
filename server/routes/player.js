@@ -11,8 +11,10 @@ const MAX_BIO_LEN = 30;
 
 // Fields needed by the front-end profile views
 const PROFILE_FIELDS = require("../utils/profileFields");
+const { checkAwards } = require("../utils/awards");
 
 router.get("/me", protect, async (req, res) => {
+  await checkAwards(req.user._id);
   const player = await Player.findOne({ userId: req.user._id })
     .select(PROFILE_FIELDS)
     .lean();
@@ -23,6 +25,7 @@ router.get("/me", protect, async (req, res) => {
 // fetch another user's profile by their userId
 router.get("/:userId", protect, async (req, res) => {
   try {
+    await checkAwards(req.params.userId);
     const player = await Player.findOne({ userId: req.params.userId })
       .select(PROFILE_FIELDS)
       .lean();

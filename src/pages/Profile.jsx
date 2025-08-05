@@ -384,11 +384,11 @@ export default function Profile() {
                     key={i}
                     src={a.icon}
                     alt={a.name}
-                    className="w-10 h-10 rounded-full object-cover"
+                    className="w-12 h-12 rounded-full object-cover"
                   />
                 ))
               : [0, 1, 2].map((_, i) => (
-                  <div key={i} className="w-10 h-10 bg-gray-300 rounded-full" />
+                  <div key={i} className="w-12 h-12 bg-gray-300 rounded-full" />
                 ))}
           </div>
         </div>

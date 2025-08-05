@@ -114,7 +114,7 @@ const playerSchema = new Schema(
     // Economy / Inventory
     coins: {
       type: Number,
-      default: 100,
+      default: 10000,
     },
     pipBalance: {
       type: Number,
