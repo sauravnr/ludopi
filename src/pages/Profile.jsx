@@ -2,6 +2,7 @@
 import React, { useState, useEffect, lazy, Suspense } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../utils/api";
+import { getCache, setCache } from "../utils/cache";
 import { FaArrowLeft } from "react-icons/fa";
 import Modal from "../components/Modal";
 const WithdrawModal = lazy(() => import("../components/WithdrawModal"));
@@ -78,10 +79,19 @@ export default function Profile() {
   // 3. fetch ranking info for the displayed profile
   useEffect(() => {
     if (!profile) return;
+    const cacheKey = `ranking-${isOwn ? "me" : profile.userId}`;
+    const cached = getCache(cacheKey);
+    if (cached) {
+      setRanking(cached);
+      return;
+    }
     const endpoint = isOwn ? "/ranking/me" : `/ranking/${profile.userId}`;
     api
       .get(endpoint)
-      .then(({ data }) => setRanking(data))
+      .then(({ data }) => {
+        setRanking(data);
+        setCache(cacheKey, data, 60 * 60 * 1000);
+      })
       .catch(() => {});
   }, [isOwn, profile]);
 

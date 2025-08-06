@@ -24,7 +24,12 @@ export default function CoinsRanking() {
   const { data, size, setSize, isLoading, error, mutate } = useSWRInfinite(
     getKey,
     fetcher,
-    { revalidateOnMount: false }
+    {
+      revalidateOnMount: false,
+      dedupingInterval: 60 * 60 * 1000,
+      revalidateOnFocus: false,
+      revalidateIfStale: false,
+    }
   );
 
   useEffect(() => {

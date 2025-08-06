@@ -1,14 +1,11 @@
 import { Globe } from "lucide-react";
-import { COUNTRY_CODES } from "../utils/countries";
+import { getCountryCode } from "../utils/countries";
 
 export default function CountryFlag({ code, className = "" }) {
-  if (
-    !code ||
-    typeof code !== "string" ||
-    code.toLowerCase() === "worldwide" ||
-    !COUNTRY_CODES.includes(code.toUpperCase())
-  ) {
+  const countryCode = getCountryCode(code);
+
+  if (!countryCode) {
     return <Globe className={className} />;
   }
-  return <span className={`fi fi-${code.toLowerCase()} ${className}`} />;
+  return <span className={`fi fi-${countryCode.toLowerCase()} ${className}`} />;
 }

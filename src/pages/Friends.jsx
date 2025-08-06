@@ -54,7 +54,7 @@ export default function Friends() {
         className="
           bg-[#fff8e6] border border-[#e0c08b] rounded-2xl
           shadow-[0_3px_0_#c7994a,0_8px_2px_rgba(0,0,0,0.5)]
-          text-gray-900 p-6 flex flex-col flex-1 overflow-hidden
+          text-gray-900 p-4 flex flex-col flex-1 overflow-hidden
         "
       >
         {/* Tab headers */}

@@ -11,7 +11,7 @@ const COIN_BUNDLES = [
 export default function Store() {
   return (
     <div className="py-5 px-2 h-full flex flex-col page-fade">
-      <div className="bg-[#fff8e6] border border-[#e0c08b] rounded-2xl shadow-[0_3px_0_#c7994a,0_8px_2px_rgba(0,0,0,0.5)] text-gray-900 py-6 px-3 flex flex-col flex-1 overflow-hidden">
+      <div className="bg-[#fff8e6] border border-[#e0c08b] rounded-2xl shadow-[0_3px_0_#c7994a,0_8px_2px_rgba(0,0,0,0.5)] text-gray-900 py-4 px-3 flex flex-col flex-1 overflow-hidden">
         <h2 className="text-center text-xl font-bold mb-4">Store</h2>
         <div className="flex-1 overflow-auto">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
