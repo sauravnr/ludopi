@@ -120,7 +120,14 @@ export default function CoinsRanking() {
                   </div>
                 </td>
                 <td className="px-2 py-1 text-right">
-                  {p.coins.toLocaleString()}
+                  <div className="flex items-center justify-end gap-1">
+                    <img
+                      src="/icons/coin.png"
+                      alt="Coins"
+                      className="w-4 h-4"
+                    />
+                    {p.coins.toLocaleString()}
+                  </div>
                 </td>
               </tr>
             ))}

@@ -124,12 +124,12 @@ export default function TrophiesRanking() {
                 </td>
                 <td className="px-2 py-1 text-right">
                   <div className="flex items-center justify-end gap-1">
-                    {p.trophies.toLocaleString()}
                     <img
                       src="/icons/ranking.png"
                       alt="Ranking"
                       className="w-4 h-4"
                     />
+                    {p.trophies.toLocaleString()}
                   </div>
                 </td>
               </tr>
