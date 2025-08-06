@@ -54,7 +54,7 @@ export default function Header({
         <div className="flex items-center space-x-2">
           <Link
             to="/profile"
-            className="relative -mt-2 -mb-2 w-10 h-10 overflow-hidden"
+            className="relative -mt-1 -mb-1 w-8 h-8 overflow-hidden"
           >
             <img
               src={smallAvatar}
@@ -71,48 +71,48 @@ export default function Header({
               className="absolute inset-0 w-full h-full pointer-events-none"
             />
           </Link>
-          <Link to="/profile" className="font-semibold text-white">
+          <Link to="/profile" className="font-semibold text-white text-sm">
             {user?.username}
           </Link>
         </div>
-        <div className="flex items-center space-x-7">
+        <div className="flex items-center space-x-4">
           {/* Coins pill */}
-          <div className="relative bg-white/10 px-8 rounded-full flex justify-center items-center h-5">
+          <div className="relative bg-white/10 px-6 rounded-full flex justify-center items-center h-4">
             <img
               src="/icons/coin.png"
               alt="Coins"
-              className="absolute left-0 top-1/2 w-6 h-6
+              className="absolute left-0 top-1/2 w-5 h-5
                  transform -translate-x-1/1 -translate-y-1/2"
             />
-            <span className="text-white font-semibold">{coins}</span>
+            <span className="text-white font-semibold text-sm">{coins}</span>
             <button
               className="absolute right-0 top-1/2
                  transform translate-x-1/1 -translate-y-1/2"
             >
-              <img src="/icons/add.png" alt="Add Coins" className="w-5 h-5" />
+              <img src="/icons/add.png" alt="Add Coins" className="w-4 h-4" />
             </button>
           </div>
 
           {/* PiPips pill */}
-          <div className="relative bg-white/10 px-8 rounded-full flex justify-center items-center h-5">
+          <div className="relative bg-white/10 px-6 rounded-full flex justify-center items-center h-4">
             <img
               src="/icons/pipips.png"
               alt="PiPips"
-              className="absolute left-0 top-1/2 w-6 h-6
+              className="absolute left-0 top-1/2 w-5 h-5
                  transform -translate-x-1/1 -translate-y-1/2"
             />
-            <span className="text-white font-semibold">{pipCoins}</span>
+            <span className="text-white font-semibold text-sm">{pipCoins}</span>
             <button
               className="absolute right-0 top-1/2
                  transform translate-x-1/1 -translate-y-1/2"
             >
-              <img src="/icons/add.png" alt="Add PiPips" className="w-5 h-5" />
+              <img src="/icons/add.png" alt="Add PiPips" className="w-4 h-4" />
             </button>
           </div>
 
           {/* Settings button */}
           <button onClick={onSettingsClick}>
-            <img src="/icons/setting.png" alt="Settings" className="w-6 h-6" />
+            <img src="/icons/setting.png" alt="Settings" className="w-5 h-5" />
           </button>
         </div>
       </header>
