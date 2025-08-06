@@ -174,7 +174,7 @@ const Home = () => {
             >
               <div className="absolute inset-0 bg-white/5 rounded-2xl pointer-events-none z-0" />
               <div className="flex flex-col items-center text-white z-10">
-                <img src={iconSrc} alt={label} className="mb-1 w-16 h-16" />
+                <img src={iconSrc} alt={label} className="mb-2 w-16 h-16" />
                 <span className="text-xl font-bold">{label}</span>
               </div>
             </div>
