@@ -79,7 +79,7 @@ export default function TrophiesRanking() {
         <table className="min-w-full text-sm">
           <thead>
             <tr className="text-left text-gray-700">
-              <th className="px-2 py-1">#</th>
+              <th className="px-2 py-1 w-8 text-center">#</th>
               <th className="px-2 py-1">Player</th>
               <th className="px-2 py-1">Country</th>
               <th className="px-2 py-1 text-right">Trophies</th>
@@ -88,7 +88,19 @@ export default function TrophiesRanking() {
           <tbody>
             {players.map((p, idx) => (
               <tr key={p.playerId} className="border-t">
-                <td className="px-2 py-1 w-8">{idx + 1}</td>
+                <td className="px-2 py-1 w-8 text-center">
+                  {idx < 3 ? (
+                    <div
+                      className={`rank-coin ${
+                        idx === 0 ? "gold" : idx === 1 ? "silver" : "bronze"
+                      }`}
+                    >
+                      {idx + 1}
+                    </div>
+                  ) : (
+                    idx + 1
+                  )}
+                </td>
                 <td className="px-2 py-1">
                   <div className="flex items-center gap-2">
                     <img
@@ -105,7 +117,9 @@ export default function TrophiesRanking() {
                     <span>{p.country}</span>
                   </div>
                 </td>
-                <td className="px-2 py-1 text-right">{p.trophies}</td>
+                <td className="px-2 py-1 text-right">
+                  {p.trophies.toLocaleString()}
+                </td>
               </tr>
             ))}
           </tbody>

@@ -300,3 +300,22 @@ select:focus {
 .page-fade {
   animation: pageFadeIn 0.15s ease-out;
 }
+
+/* Ranking medal coins */
+.rank-coin {
+  @apply w-5 h-5 rounded-full flex items-center justify-center font-bold text-sm;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.6),
+    0 1px 0 rgba(0, 0, 0, 0.4);
+}
+
+.rank-coin.gold {
+  @apply bg-gradient-to-b from-yellow-300 to-yellow-500 text-yellow-900;
+}
+
+.rank-coin.silver {
+  @apply bg-gradient-to-b from-gray-200 to-gray-400 text-gray-900;
+}
+
+.rank-coin.bronze {
+  @apply bg-gradient-to-b from-amber-500 to-amber-700 text-amber-900;
+}
