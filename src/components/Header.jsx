@@ -43,11 +43,12 @@ export default function Header({
     const abs = Math.abs(num);
     if (abs >= 1e9) return (num / 1e9).toFixed(1).replace(/\.0$/, "") + "B";
     if (abs >= 1e6) return (num / 1e6).toFixed(1).replace(/\.0$/, "") + "M";
-    if (abs >= 1e3) return (num / 1e3).toFixed(1).replace(/\.0$/, "") + "K";
     return num.toLocaleString();
   };
   const coins = formatAmount(player?.coins);
   const pipCoins = formatAmount(player?.pipBalance);
+  const username = user?.username;
+  const showUsername = username && username.length <= 6;
   return (
     <>
       <header className="relative z-10 flex items-center justify-between px-4 py-4 bg-header text-white header-3d">
@@ -71,9 +72,14 @@ export default function Header({
               className="absolute inset-0 w-full h-full pointer-events-none"
             />
           </Link>
-          <Link to="/profile" className="font-semibold text-white text-sm">
-            {user?.username}
-          </Link>
+          {showUsername && (
+            <Link
+              to="/profile"
+              className="font-semibold text-white text-sm no-underline visited:text-white hover:text-white hover:no-underline focus:text-white focus:no-underline"
+            >
+              {username}
+            </Link>
+          )}
         </div>
         <div className="flex items-center space-x-4">
           {/* Coins pill */}
