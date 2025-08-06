@@ -260,7 +260,7 @@ export default function Profile() {
   const pipCoins = Number(pipBalance).toLocaleString();
 
   return (
-    <div className="min-h-screen p-2 overflow-y-auto bg-cosmic">
+    <div className="p-4 h-full flex flex-col page-fade">
       <button
         onClick={() => navigate(-1)}
         className="flex items-center text-white hover:text-yellow-300 mb-4"
@@ -269,158 +269,155 @@ export default function Profile() {
         <span className="font-medium">Back</span>
       </button>
 
-      <div className="bg-[#fff8e6] border border-[#e0c08b] rounded-2xl shadow-[0_3px_0_#c7994a,0_8px_2px_rgba(0,0,0,0.5)] text-gray-900 p-4 space-y-6 page-fade">
-        {/* Avatar & upload button */}
-        <div className="flex items-center bg-[#eeebe3] rounded-xl p-4 shadow">
-          <div className="relative">
-            <img
-              src={avatarUrl || "/default-avatar.png"}
-              alt="avatar"
-              className="w-24 h-24 rounded-full object-cover"
-              loading="lazy"
-              decoding="async"
-              onError={(e) => (e.currentTarget.src = "/default-avatar.png")}
-            />
-          </div>
+      <div className="bg-[#fff8e6] border border-[#e0c08b] rounded-2xl shadow-[0_3px_0_#c7994a,0_8px_2px_rgba(0,0,0,0.5)] text-gray-900 p-4 flex flex-col flex-1 overflow-hidden">
+        <div className="flex-1 overflow-y-auto scrollbar-hide space-y-6">
+          {/* Avatar & basic info */}
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 bg-white border border-[#e0c08b] rounded-2xl p-4 shadow-[0_2px_0_#c7994a,0_5px_3px_rgba(0,0,0,0.5)]">
+            <div className="relative">
+              <img
+                src={avatarUrl || "/default-avatar.png"}
+                alt="avatar"
+                className="w-24 h-24 rounded-full object-cover"
+                loading="lazy"
+                decoding="async"
+                onError={(e) => (e.currentTarget.src = "/default-avatar.png")}
+              />
+            </div>
 
-          {/* Username & bio editing */}
-          <div className="ml-4 flex-1">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <h2 className="text-2xl font-semibold">{username}</h2>
-                <div className="flex items-center space-x-2">
-                  <div className="flex items-center space-x-1 text-yellow-600">
-                    <img
-                      src="/icons/coin.png"
-                      alt="Coins"
-                      className="w-4 h-4"
-                    />
-                    <span>{coins}</span>
-                  </div>
-                  <div className="flex items-center space-x-1 text-purple-700">
-                    <img
-                      src="/icons/pipips.png"
-                      alt="PIP"
-                      className="w-4 h-4"
-                    />
-                    <span>{pipCoins}</span>
-                    {isOwn && (
-                      <button
-                        onClick={() => {
-                          setShowWithdraw(true);
-                        }}
-                        className="underline text-xs ml-1"
-                      >
-                        Withdraw
-                      </button>
-                    )}
+            {/* Username, country, coins */}
+            <div className="flex-1 w-full text-center sm:text-left">
+              <div className="flex items-center justify-between flex-wrap">
+                <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
+                  <h2 className="text-2xl font-semibold">{username}</h2>
+                  <div className="flex items-center gap-1 text-sm">
+                    <CountryFlag code={profile.country} className="w-5 h-5" />
+                    <span>{profile.country || "Worldwide"}</span>
                   </div>
                 </div>
+                {isOwn ? (
+                  <button
+                    onClick={() => setShowEditModal(true)}
+                    className="btn btn-primary text-sm px-2 py-1 mt-2 sm:mt-0"
+                  >
+                    Edit
+                  </button>
+                ) : (
+                  <>
+                    {relationship === "none" && (
+                      <button
+                        disabled={buttonLoading}
+                        onClick={sendRequest}
+                        className="btn btn-primary text-sm px-2 py-1 mt-2 sm:mt-0"
+                      >
+                        {buttonLoading ? "..." : "Add"}
+                      </button>
+                    )}
+                    {relationship === "sent" && (
+                      <button
+                        disabled={buttonLoading}
+                        onClick={cancelRequest}
+                        className="btn btn-yellow text-sm px-2 py-1 mt-2 sm:mt-0"
+                      >
+                        {buttonLoading ? "..." : "Sent"}
+                      </button>
+                    )}
+                    {relationship === "friends" && (
+                      <button
+                        disabled={buttonLoading}
+                        onClick={unfriend}
+                        className="btn btn-secondary text-sm px-2 py-1 mt-2 sm:mt-0"
+                      >
+                        {buttonLoading ? "..." : "Friends"}
+                      </button>
+                    )}
+                  </>
+                )}
               </div>
-              {isOwn ? (
-                <button
-                  onClick={() => setShowEditModal(true)}
-                  className="btn btn-primary text-sm px-2 py-1"
-                >
-                  Edit
-                </button>
-              ) : (
-                <>
-                  {relationship === "none" && (
+
+              <div className="flex items-center justify-center sm:justify-start space-x-4 mt-2">
+                <div className="flex items-center space-x-1 text-yellow-600">
+                  <img src="/icons/coin.png" alt="Coins" className="w-4 h-4" />
+                  <span>{coins}</span>
+                </div>
+                <div className="flex items-center space-x-1 text-purple-700">
+                  <img src="/icons/pipips.png" alt="PIP" className="w-4 h-4" />
+                  <span>{pipCoins}</span>
+                  {isOwn && (
                     <button
-                      disabled={buttonLoading}
-                      onClick={sendRequest}
-                      className="btn btn-primary text-sm px-2 py-1"
+                      onClick={() => {
+                        setShowWithdraw(true);
+                      }}
+                      className="underline text-xs ml-1"
                     >
-                      {buttonLoading ? "..." : "Add"}
+                      Withdraw
                     </button>
                   )}
-                  {relationship === "sent" && (
-                    <button
-                      disabled={buttonLoading}
-                      onClick={cancelRequest}
-                      className="btn btn-yellow text-sm px-2 py-1"
-                    >
-                      {buttonLoading ? "..." : "Sent"}
-                    </button>
-                  )}
-                  {relationship === "friends" && (
-                    <button
-                      disabled={buttonLoading}
-                      onClick={unfriend}
-                      className="btn btn-secondary text-sm px-2 py-1"
-                    >
-                      {buttonLoading ? "..." : "Friends"}
-                    </button>
-                  )}
-                </>
+                </div>
+              </div>
+
+              {bio && <p className="mt-2 text-center sm:text-left">{bio}</p>}
+              {isOwn && walletAddress && (
+                <p className="mt-1 break-all text-sm text-gray-700 text-center sm:text-left">
+                  Wallet: {walletAddress}
+                </p>
               )}
             </div>
-            {bio && <p className="mt-2">{bio}</p>}
-            {isOwn && (
-              <p className="mt-2">Country: {profile.country || "Worldwide"}</p>
-            )}
-            {isOwn && walletAddress && (
-              <p className="mt-1 break-all text-sm text-gray-700">
-                Wallet: {walletAddress}
+          </div>
+
+          {/* Ranking */}
+          {ranking && (
+            <div className="bg-white border border-[#e0c08b] rounded-2xl p-4 shadow-[0_2px_0_#c7994a,0_5px_3px_rgba(0,0,0,0.5)]">
+              <h3 className="text-lg font-semibold mb-3">Ranking</h3>
+              <p className="mb-1">🏆 {ranking.trophies}</p>
+              <p className="mb-1">
+                🌐 World rank: {Number(ranking.worldRank).toLocaleString()} out
+                of {Number(ranking.worldTotal).toLocaleString()}
               </p>
-            )}
-          </div>
-        </div>
-
-        {/* Ranking */}
-        {ranking && (
-          <div className="bg-white/50 p-4 rounded-lg shadow">
-            <h3 className="text-lg font-semibold mb-3">Ranking</h3>
-            <p className="mb-1">🏆 {ranking.trophies}</p>
-            <p className="mb-1">
-              🌐 World rank: {Number(ranking.worldRank).toLocaleString()} out of{" "}
-              {Number(ranking.worldTotal).toLocaleString()}
-            </p>
-            <p className="mb-1">
-              <CountryFlag code={ranking.country} /> Country rank:{" "}
-              {Number(ranking.countryRank).toLocaleString()} out of{" "}
-              {Number(ranking.countryTotal).toLocaleString()}
-            </p>
-          </div>
-        )}
-
-        {/* Awards */}
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Awards</h3>
-          {awards.length > 0 ? (
-            <div className="flex space-x-2">
-              {awards.map((a, i) => (
-                <img
-                  key={i}
-                  src={a.icon}
-                  alt={a.name}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-              ))}
+              <p className="mb-1">
+                <CountryFlag code={ranking.country} /> Country rank:{" "}
+                {Number(ranking.countryRank).toLocaleString()} out of{" "}
+                {Number(ranking.countryTotal).toLocaleString()}
+              </p>
             </div>
-          ) : (
-            <p className="text-sm text-gray-500">No awards yet</p>
           )}
-        </div>
 
-        {/* Stats */}
-        <div>
-          <h3 className="text-lg font-semibold mb-3">Stats</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <Stat title="Games Played" value={totalGames} />
-            <Stat title="2-Player Wins" value={twoWins} />
-            <Stat title="4-Player Wins" value={fourWins} />
-            <Stat title="Win Rate" value={`${winRate}%`} />
-            <Stat title="Tokens Captured" value={captures} />
-            <Stat title="Sixes Rolled" value={sixesRolled} />
-            <Stat title="Tokens Homed" value={tokensHomed} />
-            {joinedAt && (
-              <Stat
-                title="Joined"
-                value={new Date(joinedAt).toLocaleDateString()}
-              />
+          {/* Awards */}
+          <div className="bg-white border border-[#e0c08b] rounded-2xl p-4 shadow-[0_2px_0_#c7994a,0_5px_3px_rgba(0,0,0,0.5)]">
+            <h3 className="text-lg font-semibold mb-2">Awards</h3>
+            {awards.length > 0 ? (
+              <div className="flex space-x-2">
+                {awards.map((a, i) => (
+                  <img
+                    key={i}
+                    src={a.icon}
+                    alt={a.name}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">No awards yet</p>
             )}
+          </div>
+
+          {/* Stats */}
+          <div className="bg-white border border-[#e0c08b] rounded-2xl p-4 shadow-[0_2px_0_#c7994a,0_5px_3px_rgba(0,0,0,0.5)]">
+            <h3 className="text-lg font-semibold mb-3">Stats</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <Stat title="Games Played" value={totalGames} />
+              <Stat title="2-Player Wins" value={twoWins} />
+              <Stat title="4-Player Wins" value={fourWins} />
+              <Stat title="Win Rate" value={`${winRate}%`} />
+              <Stat title="Tokens Captured" value={captures} />
+              <Stat title="Sixes Rolled" value={sixesRolled} />
+              <Stat title="Tokens Homed" value={tokensHomed} />
+              {joinedAt && (
+                <Stat
+                  title="Joined"
+                  value={new Date(joinedAt).toLocaleDateString()}
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>
