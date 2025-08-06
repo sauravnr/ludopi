@@ -72,7 +72,7 @@ export default function CoinsRanking() {
           {player?.country || "Country"}
         </button>
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto scrollbar-hide">
         <table className="min-w-full text-sm">
           <thead>
             <tr className="text-left text-gray-700">

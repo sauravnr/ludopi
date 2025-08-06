@@ -75,7 +75,7 @@ export default function TrophiesRanking() {
           {player?.country || "Country"}
         </button>
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto scrollbar-hide">
         <table className="min-w-full text-sm">
           <thead>
             <tr className="text-left text-gray-700">
@@ -118,7 +118,14 @@ export default function TrophiesRanking() {
                   </div>
                 </td>
                 <td className="px-2 py-1 text-right">
-                  {p.trophies.toLocaleString()}
+                  <div className="flex items-center justify-end gap-1">
+                    {p.trophies.toLocaleString()}
+                    <img
+                      src="/icons/ranking.png"
+                      alt="Ranking"
+                      className="w-4 h-4"
+                    />
+                  </div>
                 </td>
               </tr>
             ))}

@@ -155,6 +155,15 @@ select:focus {
   outline: none !important;
   box-shadow: none !important;
 }
+/* Hide scrollbars but retain scroll functionality */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
 /* Header */
 .bg-header {
   background: #4060b7;
