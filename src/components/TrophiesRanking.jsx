@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import useSWRInfinite from "swr/infinite";
 import api from "../utils/api";
-import { getCountryFlag } from "../utils/countries";
+import CountryFlag from "./CountryFlag";
 import { useAuth } from "../context/AuthContext";
 
 export default function TrophiesRanking() {
@@ -113,7 +113,7 @@ export default function TrophiesRanking() {
                 </td>
                 <td className="px-2 py-1">
                   <div className="flex items-center gap-1">
-                    <span>{getCountryFlag(p.country)}</span>
+                    <CountryFlag code={p.country} />
                     <span>{p.country}</span>
                   </div>
                 </td>

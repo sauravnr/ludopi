@@ -7,7 +7,8 @@ import Modal from "../components/Modal";
 const WithdrawModal = lazy(() => import("../components/WithdrawModal"));
 import { useAuth } from "../context/AuthContext";
 import { useAlert } from "../context/AlertContext";
-import { COUNTRY_NAMES, getCountryFlag } from "../utils/countries";
+import { COUNTRY_NAMES } from "../utils/countries";
+import CountryFlag from "../components/CountryFlag";
 
 // Server enforces 2MB max avatar size
 const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
@@ -367,7 +368,7 @@ export default function Profile() {
               {Number(ranking.worldTotal).toLocaleString()}
             </p>
             <p className="mb-1">
-              {getCountryFlag(ranking.country)} Country rank:{" "}
+              <CountryFlag code={ranking.country} /> Country rank:{" "}
               {Number(ranking.countryRank).toLocaleString()} out of{" "}
               {Number(ranking.countryTotal).toLocaleString()}
             </p>
