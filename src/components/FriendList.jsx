@@ -1,5 +1,6 @@
 // src/components/FriendList.jsx
 import React, { useState } from "react";
+import Modal from "./Modal";
 import useSWRInfinite from "swr/infinite";
 import { useNavigate } from "react-router-dom";
 import { FaComment, FaEllipsisV } from "react-icons/fa";
@@ -27,12 +28,18 @@ export default function FriendsList({ onMessageClick }) {
   const friends = pages ? pages.flat() : [];
   const hasMore = pages?.[pages.length - 1]?.length === LIMIT;
 
+  const [unfriendTarget, setUnfriendTarget] = useState(null);
   const toggleMenu = (id) => setOpenMenuId((o) => (o === id ? null : id));
-  const handleUnfriend = async (userId) => {
-    if (!confirm("Unfriend this user?")) return;
-    await api.delete(`/friend-requests/friends/${userId}`);
+  const handleUnfriend = (friend) => {
+    setOpenMenuId(null);
+    setUnfriendTarget(friend);
+  };
+  const confirmUnfriend = async () => {
+    if (!unfriendTarget) return;
+    await api.delete(`/friend-requests/friends/${unfriendTarget.userId}`);
     await mutate();
     setOpenMenuId(null);
+    setUnfriendTarget(null);
   };
   const handleBlock = async (userId) => {
     if (!confirm("Block this user?")) return;
@@ -82,7 +89,7 @@ export default function FriendsList({ onMessageClick }) {
                   <div className="absolute right-0 top-full mt-2 w-32 bg-white border rounded shadow-lg z-10">
                     <button
                       className="w-full text-left px-4 py-2 hover:bg-gray-100"
-                      onClick={() => handleUnfriend(f.userId)}
+                      onClick={() => handleUnfriend(f)}
                     >
                       Unfriend
                     </button>
@@ -113,6 +120,23 @@ export default function FriendsList({ onMessageClick }) {
             {isLoading ? "Loading…" : "Load more"}
           </button>
         </div>
+      )}
+      {unfriendTarget && (
+        <Modal
+          show={!!unfriendTarget}
+          title={`Unfriend ${unfriendTarget.username}`}
+          onClose={() => setUnfriendTarget(null)}
+          footer={[
+            {
+              label: "Cancel",
+              variant: "secondary",
+              onClick: () => setUnfriendTarget(null),
+            },
+            { label: "Confirm", onClick: confirmUnfriend },
+          ]}
+        >
+          <p>Remove {unfriendTarget.username} from your friends?</p>
+        </Modal>
       )}
     </div>
   );

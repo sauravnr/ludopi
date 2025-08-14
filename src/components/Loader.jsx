@@ -1,7 +1,7 @@
 // src/components/Loader.jsx
 export default function Loader() {
   return (
-    <div className="flex items-center justify-center h-full">
+    <div className="flex items-center justify-center h-full w-full">
       <svg className="w-12 h-12 animate-spin" viewBox="0 0 24 24">
         <circle
           className="opacity-25"

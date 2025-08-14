@@ -35,6 +35,7 @@ export default function Profile() {
   const [avatarFile, setAvatarFile] = useState(null);
   const [walletInput, setWalletInput] = useState("");
   const [showWithdraw, setShowWithdraw] = useState(false);
+  const [showUnfriendModal, setShowUnfriendModal] = useState(false);
   const withdrawMax = parseFloat(
     import.meta.env.VITE_PIP_WITHDRAW_MAX || "100"
   );
@@ -129,8 +130,6 @@ export default function Profile() {
   };
 
   const unfriend = async () => {
-    if (!window.confirm(`Remove ${profile.username} from your friends?`))
-      return;
     setButtonLoading(true);
     try {
       await api.delete(`/friend-requests/friends/${profile.userId}`);
@@ -324,7 +323,7 @@ export default function Profile() {
                     {relationship === "friends" && (
                       <button
                         disabled={buttonLoading}
-                        onClick={unfriend}
+                        onClick={() => setShowUnfriendModal(true)}
                         className="btn btn-secondary text-sm px-2 py-1 mt-2 sm:mt-0"
                       >
                         {buttonLoading ? "..." : "Friends"}
@@ -391,7 +390,7 @@ export default function Profile() {
                     key={i}
                     src={a.icon}
                     alt={a.name}
-                    className="w-10 h-10 rounded-full object-cover"
+                    className="w-16 h-16 rounded-full object-cover"
                   />
                 ))}
               </div>
@@ -504,6 +503,29 @@ export default function Profile() {
             }}
           />
         </Suspense>
+      )}
+      {!isOwn && (
+        <Modal
+          show={showUnfriendModal}
+          title={`Unfriend ${profile?.username}`}
+          onClose={() => setShowUnfriendModal(false)}
+          footer={[
+            {
+              label: "Cancel",
+              variant: "secondary",
+              onClick: () => setShowUnfriendModal(false),
+            },
+            {
+              label: "Confirm",
+              onClick: () => {
+                setShowUnfriendModal(false);
+                unfriend();
+              },
+            },
+          ]}
+        >
+          <p>Remove {profile?.username} from your friends?</p>
+        </Modal>
       )}
     </div>
   );

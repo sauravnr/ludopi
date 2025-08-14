@@ -11,7 +11,13 @@ export default function NavItem({ icon, label, active, onClick, showDot }) {
           <span className="absolute -top-1 -right-3 w-3 h-3 bg-red-500 rounded-full" />
         )}
       </div>
-      <span className="block text-xs mt-1">{label}</span>
+      <span
+        className={`block text-xs mt-1 uppercase ${
+          active ? "font-bold" : "font-semibold"
+        }`}
+      >
+        {label}
+      </span>
     </button>
   );
 }
