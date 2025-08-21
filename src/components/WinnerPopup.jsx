@@ -29,6 +29,14 @@ export default function WinnerPopup({
   };
 
   const sorted = [...winners].sort((a, b) => a.place - b.place);
+  const champion = sorted[0];
+  const others = sorted.slice(1);
+
+  const getBadgeSize = (place) => {
+    if (place === 1) return "w-16 h-16";
+    if (place === 2) return mode === "2P" ? "w-10 h-10" : "w-12 h-12";
+    return "w-10 h-10";
+  };
 
   return (
     <Modal
@@ -44,13 +52,34 @@ export default function WinnerPopup({
           alt="Winner"
           className="absolute -top-32 left-1/2 -translate-x-1/2 w-60"
         />
-        <div className="flex flex-col gap-4">
-          {sorted.map((w) => (
+        {champion && (
+          <div className="flex items-center gap-4 mx-4 p-2 rounded-xl bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-500 shadow-[0_0_10px_rgba(255,215,0,0.7)]">
+            <img
+              src={getIcon(champion.place)}
+              alt=""
+              className={getBadgeSize(champion.place)}
+            />
+            <img
+              src={champion.avatarUrl || "/default-avatar.png"}
+              alt={champion.name}
+              className="w-16 h-16 rounded-lg object-cover border-2 border-white shadow"
+            />
+            <span className="text-2xl text-white font-bold">
+              {champion.name}
+            </span>
+          </div>
+        )}
+        <div className="flex flex-col gap-4 mt-4">
+          {others.map((w) => (
             <div
               key={w.playerId}
-              className="flex items-center gap-4 bg-white p-3 rounded-lg shadow-lg"
+              className="flex items-center gap-4 bg-white px-5 py-3 rounded-lg shadow-lg mx-4"
             >
-              <img src={getIcon(w.place)} alt="" className="w-12 h-12" />
+              <img
+                src={getIcon(w.place)}
+                alt=""
+                className={getBadgeSize(w.place)}
+              />
               <img
                 src={w.avatarUrl || "/default-avatar.png"}
                 alt={w.name}
