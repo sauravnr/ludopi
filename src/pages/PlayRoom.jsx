@@ -262,12 +262,16 @@ const PlayRoom = () => {
       }
     }
 
+    const getAvatar = (id) =>
+      id === me?.playerId ? me.avatarUrl : playerInfo[id]?.avatarUrl;
+
     if (mode === "2P") {
       // ───── 2P: as soon as someone finishes, the game ends ─────
       const firstObj = {
         playerId: justFinished.playerId,
         name: justFinished.name,
         place: 1,
+        avatarUrl: getAvatar(justFinished.playerId),
       };
 
       // The “other” (only other) is 2nd
@@ -286,6 +290,7 @@ const PlayRoom = () => {
             playerId: other.playerId,
             name: other.name,
             place: 2,
+            avatarUrl: getAvatar(other.playerId),
           }
         : null;
 
@@ -306,6 +311,7 @@ const PlayRoom = () => {
         playerId: justFinished.playerId,
         name: justFinished.name,
         place,
+        avatarUrl: getAvatar(justFinished.playerId),
       };
       // Show intermediate popup for place 1 or 2
       setCurrentFinish(finObj);
@@ -343,7 +349,7 @@ const PlayRoom = () => {
     return () => {
       socket.off("dice-rolled-broadcast", onDiceBroadcast);
     };
-  }, [mode, gameOver]);
+  }, [mode, gameOver, playerInfo, me]);
 
   // ─── 4P: auto-assign the 4th once we have three ─────────────────────────
   useEffect(() => {
@@ -364,12 +370,16 @@ const PlayRoom = () => {
         playerId: fourth.playerId,
         name: fourth.name,
         place: 4,
+        avatarUrl:
+          fourth.playerId === me?.playerId
+            ? me.avatarUrl
+            : playerInfo[fourth.playerId]?.avatarUrl,
       };
       setAllFinishers((prev) => [...prev, finObj]);
       setGameOver(true);
       setCurrentFinish(finObj);
     }
-  }, [allFinishers, mode, players]);
+  }, [allFinishers, mode, players, playerInfo, me]);
 
   // ─── RENDER ────────────────────────────────────────────────────────────
   return (
@@ -409,6 +419,7 @@ const PlayRoom = () => {
             winners={allFinishers}
             isFinal={true} // non-closeable
             onLobby={goLobby}
+            mode={mode}
           />
         )}
 
@@ -420,6 +431,7 @@ const PlayRoom = () => {
               isFinal={false} // still closable for intermediate 1st/2nd
               onClose={() => setCurrentFinish(null)}
               onLobby={goLobby}
+              mode={mode}
             />
           )}
 
@@ -430,6 +442,7 @@ const PlayRoom = () => {
             winners={allFinishers}
             isFinal={true} // non-closeable
             onLobby={goLobby}
+            mode={mode}
           />
         ) : null}
 

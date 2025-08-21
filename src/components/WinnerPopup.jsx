@@ -1,71 +1,66 @@
 // src/components/WinnerPopup.jsx
 
 import React from "react";
-import Modal from "./Modal"; // ← import the new Modal component
-import "../styles/modal.css"; // ← ensure Modal’s CSS is loaded
-
-// Utility to turn 1 → "1st", 2 → "2nd", etc.
-const ordinal = (n) => {
-  const s = ["th", "st", "nd", "rd"],
-    v = n % 100;
-  return n + (s[(v - 20) % 10] || s[v] || s[0]);
-};
+import Modal from "./Modal";
+import "../styles/modal.css";
 
 export default function WinnerPopup({
-  place,
-  name,
-  winners, // array of { playerId, name, place }
-  isFinal, // boolean: if true, this popup should NOT be closable
-  onClose, // invoked when user clicks “✕” (ignored if isFinal)
-  onLobby, // always invoked when user clicks “Lobby”
+  winners = [], // array of { playerId, name, place, avatarUrl }
+  isFinal,
+  onClose,
+  onLobby,
+  mode,
 }) {
-  // Determine title text
-  const titleText = isFinal ? "Final" : "Nice!";
-
-  // Build the array of lines we want to show:
-  // – if `winners` is passed, show all of them
-  // – otherwise show just one {name, place}
-  const renderContent = () => {
-    if (winners && winners.length > 0) {
-      return winners.map((w) => (
-        <p key={w.playerId} className="mt-2 text-xl text-gray-800 font-medium">
-          <strong>{w.name}</strong> finished <em>{ordinal(w.place)}</em>!
-        </p>
-      ));
-    } else {
-      return (
-        <>
-          <div className="text-6xl font-bold text-yellow-500">
-            {ordinal(place)}
-          </div>
-          <p className="mt-2 text-2xl text-blue-600 font-semibold">
-            <strong>{name}</strong> finished <em>{ordinal(place)}</em>!
-          </p>
-        </>
-      );
-    }
-  };
-
-  // Footer: always show a “Lobby” button; optionally show a “Close” button if not final.
-  // But since Modal already renders “✕” at top, we only need “Lobby” down below.
   const footerButtons = [
     {
       label: "Lobby",
       onClick: onLobby,
-      variant: "secondary", // or “primary” if you prefer
+      variant: "secondary",
     },
   ];
+
+  const getIcon = (place) => {
+    if (place === 1) return "/icons/first.png";
+    if (place === 2)
+      return mode === "2P" ? "/icons/second2p.png" : "/icons/second.png";
+    if (place === 3) return "/icons/third.png";
+    if (place === 4) return "/icons/fourth.png";
+    return "";
+  };
+
+  const sorted = [...winners].sort((a, b) => a.place - b.place);
 
   return (
     <Modal
       show={true}
-      title={titleText}
+      title=""
       closable={!isFinal}
       onClose={onClose}
       footer={footerButtons}
       width="sm"
     >
-      {renderContent()}
+      <div className="relative pt-24">
+        <img
+          src="/icons/winner.png"
+          alt="Winner"
+          className="absolute -top-20 left-1/2 -translate-x-1/2 w-40"
+        />
+        <div className="flex flex-col gap-4">
+          {sorted.map((w) => (
+            <div key={w.playerId} className="flex items-center gap-3">
+              <img src={getIcon(w.place)} alt="" className="w-8 h-8" />
+              <img
+                src={w.avatarUrl || "/default-avatar.png"}
+                alt={w.name}
+                className="w-8 h-8 rounded-full object-cover"
+              />
+              <span className="text-xl text-gray-800 font-medium">
+                {w.name}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
     </Modal>
   );
 }
