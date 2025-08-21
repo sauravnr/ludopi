@@ -3,6 +3,7 @@
 import React from "react";
 import Modal from "./Modal";
 import "../styles/modal.css";
+import "../styles/winner-popup.css";
 
 export default function WinnerPopup({
   winners = [], // array of { playerId, name, place, avatarUrl }
@@ -46,11 +47,11 @@ export default function WinnerPopup({
       footer={footerButtons}
       width="md"
     >
-      <div className="relative pt-10">
+      <div className="relative pt-10 winner-popup">
         <div
           className="
     absolute inset-x-0 top-[-57px] h-44 -z-10
-    bg-gradient-to-b from-purple-500 to-purple-600
+    bg-gradient-to-b from-purple-400 to-purple-800
     rounded-b-2xl
     border-x border-b border-[#d4af37]
     shadow-[0_3px_0_#d4af37,0_3px_4px_rgba(0,0,0,0.35)]
