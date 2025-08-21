@@ -83,7 +83,7 @@ export default function DiceList() {
   ) : (
     <>
       <div className="p-4">
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 xs:grid-cols-3 gap-4">
           {DICE_SKINS.map((d) => (
             <div
               key={d.id}

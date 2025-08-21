@@ -88,7 +88,7 @@ export default function TokenList() {
   ) : (
     <>
       <div className="p-4">
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 xs:grid-cols-3 gap-4">
           {TOKEN_SKINS.map((d) => (
             <div
               key={d.id}
