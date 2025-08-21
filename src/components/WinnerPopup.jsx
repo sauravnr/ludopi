@@ -33,7 +33,7 @@ export default function WinnerPopup({
   const others = sorted.slice(1);
 
   const getBadgeSize = (place) => {
-    if (place === 1) return "w-16 h-16";
+    if (place === 1) return "w-14 h-14";
     if (place === 2) return mode === "2P" ? "w-10 h-10" : "w-12 h-12";
     return "w-10 h-10";
   };
@@ -47,13 +47,14 @@ export default function WinnerPopup({
       width="md"
     >
       <div className="relative pt-10">
+        <div className="absolute inset-x-0 top-[-55px] h-40 bg-gradient-to-b from-yellow-300 via-yellow-400 to-transparent -z-10" />
         <img
           src="/icons/winner.png"
           alt="Winner"
           className="absolute -top-32 left-1/2 -translate-x-1/2 w-60"
         />
         {champion && (
-          <div className="flex items-center gap-4 mx-4 p-2 rounded-xl bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-500 shadow-[0_0_10px_rgba(255,215,0,0.7)]">
+          <div className="flex items-center gap-4 bg-white px-4 py-3 rounded-lg shadow-lg mx-4">
             <img
               src={getIcon(champion.place)}
               alt=""
@@ -62,9 +63,9 @@ export default function WinnerPopup({
             <img
               src={champion.avatarUrl || "/default-avatar.png"}
               alt={champion.name}
-              className="w-16 h-16 rounded-lg object-cover border-2 border-white shadow"
+              className="w-14 h-14 rounded-lg object-cover border-2 border-white shadow"
             />
-            <span className="text-2xl text-white font-bold">
+            <span className="text-xl text-gray-800 font-medium">
               {champion.name}
             </span>
           </div>
