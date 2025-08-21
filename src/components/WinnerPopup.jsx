@@ -47,14 +47,14 @@ export default function WinnerPopup({
       width="md"
     >
       <div className="relative pt-10">
-        <div className="absolute inset-x-0 top-[-57px] h-44 bg-purple-600 rounded-b-lg -z-10" />
+        <div className="absolute inset-x-0 top-[-57px] h-44 bg-gradient-to-b from-purple-500 to-purple-800 rounded-b-lg border-b border-[#e0c08b] shadow-[0_3px_0_#c7994a,0_8px_2px_rgba(0,0,0,0.5)] -z-10" />
         <img
           src="/icons/winner.png"
           alt="Winner"
           className="absolute -top-32 left-1/2 -translate-x-1/2 w-60"
         />
         {champion && (
-          <div className="-mt-4 flex items-center gap-4 bg-white px-4 py-2 rounded-lg shadow-lg mx-4">
+          <div className="-mt-4 flex items-center gap-4 bg-white px-4 py-2 rounded-3xl border border-[#e0c08b] shadow-[0_3px_0_#c7994a,0_8px_2px_rgba(0,0,0,0.5)] mx-4">
             <img
               src={getIcon(champion.place)}
               alt=""
@@ -70,11 +70,11 @@ export default function WinnerPopup({
             </span>
           </div>
         )}
-        <div className="flex flex-col gap-4 mt-7">
+        <div className="flex flex-col gap-4 mt-9">
           {others.map((w) => (
             <div
               key={w.playerId}
-              className="flex items-center gap-4 bg-white px-5 py-3 rounded-lg shadow-lg mx-4"
+              className="flex items-center gap-4 bg-white px-5 py-3 rounded-3xl border border-[#e0c08b] shadow-[0_3px_0_#c7994a,0_8px_2px_rgba(0,0,0,0.5)] mx-4"
             >
               <img
                 src={getIcon(w.place)}
