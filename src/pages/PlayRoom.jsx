@@ -114,6 +114,20 @@ const PlayRoom = () => {
     });
   }, [players, me]);
 
+  // Backfill avatar URLs for finishers when player info loads
+  useEffect(() => {
+    setAllFinishers((prev) =>
+      prev.map((f) => {
+        if (f.avatarUrl) return f;
+        const url =
+          f.playerId === me?.playerId
+            ? me.avatarUrl
+            : playerInfo[f.playerId]?.avatarUrl;
+        return url ? { ...f, avatarUrl: url } : f;
+      })
+    );
+  }, [playerInfo, me]);
+
   // Show loading spinner/text while AuthContext is loading
   if (loading) {
     return <Loader />;

@@ -33,17 +33,16 @@ export default function WinnerPopup({
   return (
     <Modal
       show={true}
-      title=""
       closable={!isFinal}
       onClose={onClose}
       footer={footerButtons}
-      width="sm"
+      width="md"
     >
-      <div className="relative pt-24">
+      <div className="relative pt-20">
         <img
           src="/icons/winner.png"
           alt="Winner"
-          className="absolute -top-20 left-1/2 -translate-x-1/2 w-40"
+          className="absolute -top-24 left-1/2 -translate-x-1/2 w-40"
         />
         <div className="flex flex-col gap-4">
           {sorted.map((w) => (

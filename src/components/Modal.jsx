@@ -52,10 +52,12 @@ export default function Modal({
         className={`modal-window ${sizeClass} ${closing ? "closing" : ""}`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Lifted title bar */}
-        <div className="modal-title-bar">
-          <span className="modal-title">{title}</span>
-        </div>
+        {/* Lifted title bar (render only when a title is provided) */}
+        {title && (
+          <div className="modal-title-bar">
+            <span className="modal-title">{title}</span>
+          </div>
+        )}
 
         {/* Close button (only when closable) */}
         {closable && (
