@@ -38,22 +38,25 @@ export default function WinnerPopup({
       footer={footerButtons}
       width="md"
     >
-      <div className="relative pt-20">
+      <div className="relative pt-10">
         <img
           src="/icons/winner.png"
           alt="Winner"
-          className="absolute -top-24 left-1/2 -translate-x-1/2 w-40"
+          className="absolute -top-32 left-1/2 -translate-x-1/2 w-60"
         />
         <div className="flex flex-col gap-4">
           {sorted.map((w) => (
-            <div key={w.playerId} className="flex items-center gap-3">
-              <img src={getIcon(w.place)} alt="" className="w-8 h-8" />
+            <div
+              key={w.playerId}
+              className="flex items-center gap-4 bg-white p-3 rounded-lg shadow-lg"
+            >
+              <img src={getIcon(w.place)} alt="" className="w-12 h-12" />
               <img
                 src={w.avatarUrl || "/default-avatar.png"}
                 alt={w.name}
-                className="w-8 h-8 rounded-full object-cover"
+                className="w-11 h-11 rounded-lg object-cover border-2 border-white shadow"
               />
-              <span className="text-xl text-gray-800 font-medium">
+              <span className="text-lg text-gray-800 font-medium">
                 {w.name}
               </span>
             </div>
