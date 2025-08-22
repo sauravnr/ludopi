@@ -5,9 +5,11 @@ import { FaEnvelope } from "react-icons/fa";
 import Modal from "../components/Modal";
 import BetModal from "../components/BetModal";
 import NotificationsModal from "../components/NotificationsModal";
+import WheelModal from "../components/WheelModal";
 import api from "../utils/api";
 import { useAlert } from "../context/AlertContext";
 import { useNotifications } from "../context/NotificationContext";
+import { useAuth } from "../context/AuthContext";
 
 const BET_OPTIONS = {
   "2P": [
@@ -38,6 +40,10 @@ const Home = () => {
     clearNotifications,
   } = useNotifications();
   const [showNotifModal, setShowNotifModal] = useState(false);
+  const [showWheelModal, setShowWheelModal] = useState(false);
+  const [showPrizeModal, setShowPrizeModal] = useState(false);
+  const [prize, setPrize] = useState(null);
+  const { setPlayer } = useAuth();
 
   useEffect(() => {
     sessionStorage.removeItem("navigatingToRoom");
@@ -131,8 +137,15 @@ const Home = () => {
 
   return (
     <div className="flex-1 flex flex-col items-center px-4">
-      <div className="w-full flex justify-end mt-4 mb-6">
-        {/* Quick actions section (spinner, watch ads, etc.) */}
+      <div className="w-full flex justify-between mt-4 mb-6">
+        <button
+          onClick={() => setShowWheelModal(true)}
+          className="p-2 bg-yellow-100 rounded-full shadow-md"
+          aria-label="Spin Wheel"
+        >
+          <img src="/icons/wheelicon.png" alt="Spin" className="w-5 h-5" />
+        </button>
+
         <button
           onClick={() => {
             clearNotifications();
@@ -222,6 +235,37 @@ const Home = () => {
           onClose={() => setShowNotifModal(false)}
           notifications={notifications}
         />
+      )}
+
+      {showWheelModal && (
+        <WheelModal
+          show={showWheelModal}
+          onClose={() => setShowWheelModal(false)}
+          onResult={(p, balance) => {
+            setShowWheelModal(false);
+            setPrize(p);
+            setShowPrizeModal(true);
+            setPlayer((prev) => ({ ...prev, coins: balance }));
+          }}
+        />
+      )}
+
+      {showPrizeModal && (
+        <Modal
+          show={showPrizeModal}
+          onClose={() => setShowPrizeModal(false)}
+          title={null}
+          footer={null}
+          width="sm"
+        >
+          <div className="text-center">
+            <p className="text-lg font-bold mb-2">You won {prize} coins!</p>
+            <div className="flex justify-center items-center gap-2">
+              <img src="/icons/coin.png" alt="coin" className="w-6 h-6" />
+              <span className="text-xl font-semibold">{prize}</span>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );

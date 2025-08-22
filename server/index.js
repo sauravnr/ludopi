@@ -122,6 +122,7 @@ const rankingRoutes = require("./routes/ranking");
 const adminRoutes = require("./routes/admin");
 const pipRoutes = require("./routes/pip");
 const notificationRoutes = require("./routes/notifications");
+const wheelRoutes = require("./routes/wheel");
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/player", playerRoutes);
@@ -132,6 +133,7 @@ app.use("/api/ranking", rankingRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/pip", pipRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/wheel", wheelRoutes);
 
 // ─── IN-MEMORY ROOM STORE ────────────────────────────
 const rooms = require("./roomStore");
