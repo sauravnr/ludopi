@@ -224,16 +224,6 @@ const PlayRoom = () => {
     };
   }, [user, location.state]);
 
-  // ─── “simulateFinishViaServer” helper (for console testing) ─────────
-  useEffect(() => {
-    window.simulateFinishViaServer = (color) => {
-      socket.emit("simulate-finish", { color });
-    };
-    return () => {
-      delete window.simulateFinishViaServer;
-    };
-  }, [socket]);
-
   // ─── Extracted helper to simulate “player color just finished all tokens” ──
   const handleFinish = (color) => {
     // If game is already over, do nothing

@@ -1066,14 +1066,6 @@ io.on("connection", (socket) => {
   // lets us target this user by their ID when sending PMs:
   socket.join(socket.user._id.toString());
 
-  socket.on("simulate-finish", ({ color }) => {
-    // Immediately re-broadcast to everyone in the room:
-    io.to(socket.data.roomCode).emit("dice-rolled-broadcast", {
-      color,
-      finished: true,
-    });
-  });
-
   // helper to remove a player (and tear down if host)
   async function handleDeparture(socket, roomCode) {
     const room = rooms[roomCode];
