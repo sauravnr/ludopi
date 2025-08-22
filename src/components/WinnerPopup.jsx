@@ -4,6 +4,7 @@ import React from "react";
 import Modal from "./Modal";
 import "../styles/modal.css";
 import "../styles/winner-popup.css";
+import { avatarSrcSet } from "../utils/avatar";
 
 export default function WinnerPopup({
   winners = [], // array of { playerId, name, place, avatarUrl }
@@ -72,11 +73,18 @@ export default function WinnerPopup({
               alt=""
               className={getBadgeSize(champion.place)}
             />
-            <img
-              src={champion.avatarUrl || "/default-avatar.png"}
-              alt={champion.name}
-              className="w-14 h-14 rounded-lg object-cover border-2 border-white shadow"
-            />
+            {(() => {
+              const { src, srcSet } = avatarSrcSet(champion.avatarUrl, 56);
+              return (
+                <img
+                  src={src}
+                  srcSet={srcSet}
+                  alt={champion.name}
+                  loading="lazy"
+                  className="w-14 h-14 rounded-lg object-cover border-2 border-white shadow"
+                />
+              );
+            })()}
             <span className="text-xl text-gray-800 font-medium">
               {champion.name}
             </span>
@@ -94,11 +102,18 @@ export default function WinnerPopup({
                 alt=""
                 className={getBadgeSize(w.place)}
               />
-              <img
-                src={w.avatarUrl || "/default-avatar.png"}
-                alt={w.name}
-                className="w-11 h-11 rounded-lg object-cover border-2 border-white shadow"
-              />
+              {(() => {
+                const { src, srcSet } = avatarSrcSet(w.avatarUrl, 44);
+                return (
+                  <img
+                    src={src}
+                    srcSet={srcSet}
+                    alt={w.name}
+                    loading="lazy"
+                    className="w-11 h-11 rounded-lg object-cover border-2 border-white shadow"
+                  />
+                );
+              })()}
               <span className="text-lg text-gray-800 font-medium">
                 {w.name}
               </span>

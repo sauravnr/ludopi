@@ -37,7 +37,8 @@ const PlayRoom = () => {
   (location.state?.players || []).forEach((p) => {
     const id = p.userId || p.playerId;
     const name = p.username || p.name;
-    initialAllPlayers[p.color] = { playerId: id, name };
+    const avatarUrl = p.avatarUrl || null;
+    initialAllPlayers[p.color] = { playerId: id, name, avatarUrl };
   });
   const allPlayersRef = useRef(initialAllPlayers);
 
@@ -109,6 +110,13 @@ const PlayRoom = () => {
             ...prev,
             [p.playerId]: { avatarUrl, frameDesign },
           }));
+          allPlayersRef.current[p.color] = {
+            ...(allPlayersRef.current[p.color] || {
+              playerId: p.playerId,
+              name: p.name,
+            }),
+            avatarUrl,
+          };
         })
         .catch(() => {});
     });
@@ -122,7 +130,10 @@ const PlayRoom = () => {
         const url =
           f.playerId === me?.playerId
             ? me.avatarUrl
-            : playerInfo[f.playerId]?.avatarUrl;
+            : playerInfo[f.playerId]?.avatarUrl ||
+              Object.values(allPlayersRef.current).find(
+                (ap) => ap.playerId === f.playerId
+              )?.avatarUrl;
         return url ? { ...f, avatarUrl: url } : f;
       })
     );
@@ -208,6 +219,10 @@ const PlayRoom = () => {
         allPlayersRef.current[p.color] = {
           playerId: p.playerId,
           name: p.name,
+          avatarUrl:
+            playerInfo[p.playerId]?.avatarUrl ||
+            allPlayersRef.current[p.color]?.avatarUrl ||
+            null,
         };
       });
 
@@ -276,8 +291,10 @@ const PlayRoom = () => {
       }
     }
 
-    const getAvatar = (id) =>
-      id === me?.playerId ? me.avatarUrl : playerInfo[id]?.avatarUrl;
+    const getAvatar = (id, col) =>
+      id === me?.playerId
+        ? me.avatarUrl
+        : playerInfo[id]?.avatarUrl || allPlayersRef.current[col]?.avatarUrl;
 
     if (mode === "2P") {
       // ───── 2P: as soon as someone finishes, the game ends ─────
@@ -285,7 +302,7 @@ const PlayRoom = () => {
         playerId: justFinished.playerId,
         name: justFinished.name,
         place: 1,
-        avatarUrl: getAvatar(justFinished.playerId),
+        avatarUrl: getAvatar(justFinished.playerId, color),
       };
 
       // The “other” (only other) is 2nd
@@ -295,8 +312,12 @@ const PlayRoom = () => {
           ([c]) => c !== color
         );
         if (entry) {
-          const [, data] = entry;
-          other = { playerId: data.playerId, name: data.name };
+          const [otherColor, data] = entry;
+          other = {
+            playerId: data.playerId,
+            name: data.name,
+            color: otherColor,
+          };
         }
       }
       const secondObj = other
@@ -304,7 +325,7 @@ const PlayRoom = () => {
             playerId: other.playerId,
             name: other.name,
             place: 2,
-            avatarUrl: getAvatar(other.playerId),
+            avatarUrl: getAvatar(other.playerId, other.color),
           }
         : null;
 
@@ -325,7 +346,7 @@ const PlayRoom = () => {
         playerId: justFinished.playerId,
         name: justFinished.name,
         place,
-        avatarUrl: getAvatar(justFinished.playerId),
+        avatarUrl: getAvatar(justFinished.playerId, color),
       };
       // Show intermediate popup for place 1 or 2
       setCurrentFinish(finObj);
@@ -371,12 +392,16 @@ const PlayRoom = () => {
       let fourth = playersRef.current.find(
         (p) => !allFinishers.some((f) => f.playerId === p.playerId)
       );
+      let fourthColor = fourth?.color;
       if (!fourth) {
-        const remaining = Object.values(allPlayersRef.current).find(
-          (ap) => !allFinishers.some((f) => f.playerId === ap.playerId)
+        const remainingEntry = Object.entries(allPlayersRef.current).find(
+          ([, ap]) => !allFinishers.some((f) => f.playerId === ap.playerId)
         );
-        if (remaining)
-          fourth = { playerId: remaining.playerId, name: remaining.name };
+        if (remainingEntry) {
+          const [colorKey, data] = remainingEntry;
+          fourth = { playerId: data.playerId, name: data.name };
+          fourthColor = colorKey;
+        }
       }
       if (!fourth) return;
 
@@ -387,7 +412,8 @@ const PlayRoom = () => {
         avatarUrl:
           fourth.playerId === me?.playerId
             ? me.avatarUrl
-            : playerInfo[fourth.playerId]?.avatarUrl,
+            : playerInfo[fourth.playerId]?.avatarUrl ||
+              allPlayersRef.current[fourthColor]?.avatarUrl,
       };
       setAllFinishers((prev) => [...prev, finObj]);
       setGameOver(true);
