@@ -1230,7 +1230,9 @@ io.on("connection", (socket) => {
     }
     // Check if user is already in another active room
     const playerDoc = await Player.findOne({ userId: user._id })
-      .select("coins activeRoomCode diceDesign tokenDesign")
+      .select(
+        "coins activeRoomCode diceDesign tokenDesign avatarUrl frameDesign"
+      )
       .lean();
     if (!playerDoc) return socket.emit("server-error");
     if (playerDoc.activeRoomCode && playerDoc.activeRoomCode !== roomCode) {
@@ -1282,6 +1284,8 @@ io.on("connection", (socket) => {
           color: chosen,
           diceDesign: playerDoc.diceDesign || null,
           tokenDesign: playerDoc.tokenDesign || null,
+          avatarUrl: playerDoc.avatarUrl || null,
+          frameDesign: playerDoc.frameDesign || null,
         };
         room.players.push(player);
       } else {
@@ -1304,6 +1308,8 @@ io.on("connection", (socket) => {
       player.offline = false;
       player.diceDesign = playerDoc.diceDesign || null;
       player.tokenDesign = playerDoc.tokenDesign || null;
+      player.avatarUrl = playerDoc.avatarUrl || null;
+      player.frameDesign = playerDoc.frameDesign || null;
     }
 
     socket.join(roomCode);

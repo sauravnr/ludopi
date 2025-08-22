@@ -4,7 +4,6 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useSocket } from "../context/SocketContext";
 import { useAuth } from "../context/AuthContext";
-import api from "../utils/api";
 import LudoCanvas from "../components/LudoCanvas";
 import WinnerPopup from "../components/WinnerPopup";
 import { ChatProvider } from "../components/Chat/ChatProvider";
@@ -38,7 +37,8 @@ const PlayRoom = () => {
     const id = p.userId || p.playerId;
     const name = p.username || p.name;
     const avatarUrl = p.avatarUrl || null;
-    initialAllPlayers[p.color] = { playerId: id, name, avatarUrl };
+    const frameDesign = p.frameDesign || null;
+    initialAllPlayers[p.color] = { playerId: id, name, avatarUrl, frameDesign };
   });
   const allPlayersRef = useRef(initialAllPlayers);
 
@@ -57,8 +57,6 @@ const PlayRoom = () => {
 
   const [rejoinMsg, setRejoinMsg] = useState(null);
   const [botEnabled, setBotEnabled] = useState(false);
-  // Store avatar and frame info for players by their ID
-  const [playerInfo, setPlayerInfo] = useState({});
 
   const toggleBot = () => {
     const next = !botEnabled;
@@ -97,47 +95,6 @@ const PlayRoom = () => {
   useEffect(() => {
     playersRef.current = players;
   }, [players]);
-
-  // Fetch avatar and frame info for all players
-  useEffect(() => {
-    players.forEach((p) => {
-      if (playerInfo[p.playerId] || p.playerId === me?.playerId) return;
-      api
-        .get(`/player/${p.playerId}`)
-        .then(({ data }) => {
-          const { avatarUrl, frameDesign } = data.player || {};
-          setPlayerInfo((prev) => ({
-            ...prev,
-            [p.playerId]: { avatarUrl, frameDesign },
-          }));
-          allPlayersRef.current[p.color] = {
-            ...(allPlayersRef.current[p.color] || {
-              playerId: p.playerId,
-              name: p.name,
-            }),
-            avatarUrl,
-          };
-        })
-        .catch(() => {});
-    });
-  }, [players, me]);
-
-  // Backfill avatar URLs for finishers when player info loads
-  useEffect(() => {
-    setAllFinishers((prev) =>
-      prev.map((f) => {
-        if (f.avatarUrl) return f;
-        const url =
-          f.playerId === me?.playerId
-            ? me.avatarUrl
-            : playerInfo[f.playerId]?.avatarUrl ||
-              Object.values(allPlayersRef.current).find(
-                (ap) => ap.playerId === f.playerId
-              )?.avatarUrl;
-        return url ? { ...f, avatarUrl: url } : f;
-      })
-    );
-  }, [playerInfo, me]);
 
   // Show loading spinner/text while AuthContext is loading
   if (loading) {
@@ -212,6 +169,8 @@ const PlayRoom = () => {
         bot: botActive ? botActive[p.color] : false,
         diceDesign: p.diceDesign || "default",
         tokenDesign: p.tokenDesign || "default",
+        avatarUrl: p.avatarUrl || null,
+        frameDesign: p.frameDesign || null,
       }));
       setPlayers(transformed);
       // keep track of everyone who has ever been in the room
@@ -220,8 +179,10 @@ const PlayRoom = () => {
           playerId: p.playerId,
           name: p.name,
           avatarUrl:
-            playerInfo[p.playerId]?.avatarUrl ||
-            allPlayersRef.current[p.color]?.avatarUrl ||
+            p.avatarUrl || allPlayersRef.current[p.color]?.avatarUrl || null,
+          frameDesign:
+            p.frameDesign ||
+            allPlayersRef.current[p.color]?.frameDesign ||
             null,
         };
       });
@@ -294,7 +255,8 @@ const PlayRoom = () => {
     const getAvatar = (id, col) =>
       id === me?.playerId
         ? me.avatarUrl
-        : playerInfo[id]?.avatarUrl || allPlayersRef.current[col]?.avatarUrl;
+        : playersRef.current.find((p) => p.playerId === id)?.avatarUrl ||
+          allPlayersRef.current[col]?.avatarUrl;
 
     if (mode === "2P") {
       // ───── 2P: as soon as someone finishes, the game ends ─────
@@ -384,7 +346,7 @@ const PlayRoom = () => {
     return () => {
       socket.off("dice-rolled-broadcast", onDiceBroadcast);
     };
-  }, [mode, gameOver, playerInfo, me]);
+  }, [mode, gameOver, me]);
 
   // ─── 4P: auto-assign the 4th once we have three ─────────────────────────
   useEffect(() => {
@@ -412,14 +374,14 @@ const PlayRoom = () => {
         avatarUrl:
           fourth.playerId === me?.playerId
             ? me.avatarUrl
-            : playerInfo[fourth.playerId]?.avatarUrl ||
-              allPlayersRef.current[fourthColor]?.avatarUrl,
+            : playersRef.current.find((p) => p.playerId === fourth.playerId)
+                ?.avatarUrl || allPlayersRef.current[fourthColor]?.avatarUrl,
       };
       setAllFinishers((prev) => [...prev, finObj]);
       setGameOver(true);
       setCurrentFinish(finObj);
     }
-  }, [allFinishers, mode, players, playerInfo, me]);
+  }, [allFinishers, mode, players, me]);
 
   // ─── RENDER ────────────────────────────────────────────────────────────
   return (
@@ -439,12 +401,7 @@ const PlayRoom = () => {
               roomCode={roomCode}
               playerId={user._id}
               playerColor={playerColor}
-              players={players.map((p) => ({
-                ...p,
-                ...(p.playerId === me?.playerId
-                  ? { avatarUrl: me.avatarUrl, frameDesign: me.frameDesign }
-                  : playerInfo[p.playerId] || {}),
-              }))}
+              players={players}
               currentTurnColor={currentTurnColor}
               gameOver={gameOver} // Block actions once gameOver is true
             />
