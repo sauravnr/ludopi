@@ -160,31 +160,16 @@ const PlayRoom = () => {
     };
   }, [loading, roomCode, mode, playerColor, navigate, showAlert]);
 
-  // Handle socket connection state
+  // Rejoin game after a reconnect
   useEffect(() => {
-    const onConnect = () => setStatus("connected");
-    const onDisconnect = () => setStatus("reconnecting");
-    const onAttempt = () => setStatus("reconnecting");
     const onReconnect = () => {
-      setStatus("connected");
       emitJoin(joinDataRef.current);
       setRejoinMsg("✅ Reconnected to your game.");
       setTimeout(() => setRejoinMsg(null), 3000);
     };
-    const onFailed = () => setStatus("failed");
-
-    socket.on("connect", onConnect);
-    socket.on("disconnect", onDisconnect);
-    socket.on("reconnect_attempt", onAttempt);
     socket.on("reconnect", onReconnect);
-    socket.on("reconnect_failed", onFailed);
-
     return () => {
-      socket.off("connect", onConnect);
-      socket.off("disconnect", onDisconnect);
-      socket.off("reconnect_attempt", onAttempt);
       socket.off("reconnect", onReconnect);
-      socket.off("reconnect_failed", onFailed);
     };
   }, [roomCode, mode]);
 
@@ -504,7 +489,9 @@ const PlayRoom = () => {
                 </button>
               </div>
             ) : (
-              <div className="bg-white p-4 rounded">Reconnecting…</div>
+              <div className="bg-white text-gray-900 p-4 rounded">
+                Reconnecting…
+              </div>
             )}
           </div>
         )}

@@ -26,6 +26,34 @@ export function SocketProvider({ children }) {
     }
   }, [user]);
 
+  // Global socket lifecycle listeners to keep status in sync
+  useEffect(() => {
+    const onConnect = () => setStatus("connected");
+    const onDisconnect = () => setStatus("reconnecting");
+    const onAttempt = () => setStatus("reconnecting");
+    const onReconnect = () => setStatus("connected");
+    const onFailed = () => setStatus("failed");
+
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+    socket.on("reconnect_attempt", onAttempt);
+    socket.on("reconnect", onReconnect);
+    socket.on("reconnect_failed", onFailed);
+
+    // ensure initial status matches current connection
+    if (socket.connected) {
+      setStatus("connected");
+    }
+
+    return () => {
+      socket.off("connect", onConnect);
+      socket.off("disconnect", onDisconnect);
+      socket.off("reconnect_attempt", onAttempt);
+      socket.off("reconnect", onReconnect);
+      socket.off("reconnect_failed", onFailed);
+    };
+  }, []);
+
   // Always disconnect when provider unmounts
   useEffect(() => {
     return () => {

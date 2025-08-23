@@ -173,31 +173,16 @@ const GameRoom = () => {
     };
   }, [roomCode, navigate, user._id]);
 
-  // Socket connection state handling
+  // Rejoin the room after a successful reconnect
   useEffect(() => {
-    const onConnect = () => setStatus("connected");
-    const onDisconnect = () => setStatus("reconnecting");
-    const onAttempt = () => setStatus("reconnecting");
     const onReconnect = () => {
-      setStatus("connected");
       if (joinDataRef.current) {
         socket.emit("join-room", joinDataRef.current);
       }
     };
-    const onFailed = () => setStatus("failed");
-
-    socket.on("connect", onConnect);
-    socket.on("disconnect", onDisconnect);
-    socket.on("reconnect_attempt", onAttempt);
     socket.on("reconnect", onReconnect);
-    socket.on("reconnect_failed", onFailed);
-
     return () => {
-      socket.off("connect", onConnect);
-      socket.off("disconnect", onDisconnect);
-      socket.off("reconnect_attempt", onAttempt);
       socket.off("reconnect", onReconnect);
-      socket.off("reconnect_failed", onFailed);
     };
   }, [roomCode, mode]);
 
@@ -332,7 +317,9 @@ const GameRoom = () => {
               </button>
             </div>
           ) : (
-            <div className="bg-white p-4 rounded">Reconnecting…</div>
+            <div className="bg-white text-gray-900 p-4 rounded">
+              Reconnecting…
+            </div>
           )}
         </div>
       )}
