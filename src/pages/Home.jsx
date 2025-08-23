@@ -1,7 +1,6 @@
 // src/pages/Home.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaEnvelope } from "react-icons/fa";
 import Modal from "../components/Modal";
 import BetModal from "../components/BetModal";
 import NotificationsModal from "../components/NotificationsModal";
@@ -166,10 +165,15 @@ const Home = () => {
         <div className="relative">
           <button
             onClick={() => setShowWheelModal(true)}
-            className="p-2 bg-yellow-100 rounded-full shadow-md"
+            className="relative w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-2xl flex items-center justify-center cursor-pointer shadow-[0_5px_0_#a16207] active:shadow-[0_2px_0_#a16207] active:translate-y-1 active:brightness-75 border-yellow-300/30 ring-1 ring-inset ring-white/10"
             aria-label="Spin Wheel"
           >
-            <img src="/icons/wheelicon.png" alt="Spin" className="w-5 h-5" />
+            <div className="absolute inset-0 bg-white/5 rounded-2xl pointer-events-none" />
+            <img
+              src="/icons/wheelicon.png"
+              alt="Spin"
+              className="w-8 h-8 z-10"
+            />
           </button>
           {wheelCooldown > 0 && (
             <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center bg-slate-800 rounded-full px-3 py-0.5">
@@ -190,10 +194,15 @@ const Home = () => {
             clearNotifications();
             setShowNotifModal(true);
           }}
-          className="relative p-2 bg-yellow-100 rounded-full shadow-md text-gray-700"
+          className="relative w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-2xl flex items-center justify-center cursor-pointer shadow-[0_5px_0_#a16207] active:shadow-[0_2px_0_#a16207] active:translate-y-1 active:brightness-75 border-yellow-300/30 ring-1 ring-inset ring-white/10"
           aria-label="Notifications"
         >
-          <FaEnvelope size={20} />
+          <div className="absolute inset-0 bg-white/5 rounded-2xl pointer-events-none" />
+          <img
+            src="/icons/notification.png"
+            alt="Notifications"
+            className="w-8 h-8 z-10"
+          />
           {notificationCount > 0 && (
             <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
               {notificationCount >= 99 ? "99+" : notificationCount}
