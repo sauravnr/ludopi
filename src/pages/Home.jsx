@@ -181,13 +181,9 @@ const Home = () => {
             />
           </button>
           {wheelCooldown > 0 && (
-            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex items-center bg-slate-800 rounded-full px-2 py-0.5">
-              <img
-                src="/icons/timer.png"
-                alt="Timer"
-                className="w-2.5 h-2.5 mr-1"
-              />
-              <span className="text-[7px] font-semibold">
+            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex items-center justify-center bg-gray-800 rounded-full px-2 py-0.5 gap-1 w-[50px]">
+              <img src="/icons/timer.png" alt="Timer" className="w-2.5 h-2.5" />
+              <span className="text-[7px] font-semibold font-mono tabular-nums">
                 {formatTime(wheelCooldown)}
               </span>
             </div>
@@ -209,7 +205,7 @@ const Home = () => {
             className="w-7 h-7 z-5"
           />
           {notificationCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+            <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
               {notificationCount >= 99 ? "99+" : notificationCount}
             </span>
           )}
