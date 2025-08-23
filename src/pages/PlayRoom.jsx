@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { useSocket } from "../context/SocketContext";
+import { useSocket, useSocketStatus } from "../context/SocketContext";
 import { useAuth } from "../context/AuthContext";
 import LudoCanvas from "../components/LudoCanvas";
 import WinnerPopup from "../components/WinnerPopup";
@@ -15,6 +15,7 @@ import { useAlert } from "../context/AlertContext";
 const PlayRoom = () => {
   const { user, player: me, loading, refreshAuth } = useAuth();
   const socket = useSocket();
+  const { status, setStatus } = useSocketStatus();
   const navigate = useNavigate();
   const { roomCode } = useParams();
   const location = useLocation();
@@ -58,6 +59,16 @@ const PlayRoom = () => {
   const [rejoinMsg, setRejoinMsg] = useState(null);
   const [botEnabled, setBotEnabled] = useState(false);
 
+  const joinDataRef = useRef({ roomCode, mode });
+  const emitJoin = (payload) => {
+    joinDataRef.current = payload;
+    socket.emit("join-room", payload);
+  };
+
+  useEffect(() => {
+    joinDataRef.current = { roomCode, mode };
+  }, [roomCode, mode]);
+
   const toggleBot = () => {
     const next = !botEnabled;
     setBotEnabled(next);
@@ -96,11 +107,6 @@ const PlayRoom = () => {
     playersRef.current = players;
   }, [players]);
 
-  // Show loading spinner/text while AuthContext is loading
-  if (loading) {
-    return <Loader />;
-  }
-
   // ─── On mount: connect + join-room ──────────────────────────────────────
   useEffect(() => {
     if (loading) return; // don’t connect until user is known
@@ -114,7 +120,7 @@ const PlayRoom = () => {
     };
 
     const sendJoin = () => {
-      socket.emit("join-room", { roomCode, mode });
+      emitJoin({ roomCode, mode });
     };
 
     const doJoin = async () => {
@@ -153,6 +159,34 @@ const PlayRoom = () => {
       socket.off("room-not-found", handleRoomNotFound);
     };
   }, [loading, roomCode, mode, playerColor, navigate, showAlert]);
+
+  // Handle socket connection state
+  useEffect(() => {
+    const onConnect = () => setStatus("connected");
+    const onDisconnect = () => setStatus("reconnecting");
+    const onAttempt = () => setStatus("reconnecting");
+    const onReconnect = () => {
+      setStatus("connected");
+      emitJoin(joinDataRef.current);
+      setRejoinMsg("✅ Reconnected to your game.");
+      setTimeout(() => setRejoinMsg(null), 3000);
+    };
+    const onFailed = () => setStatus("failed");
+
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+    socket.on("reconnect_attempt", onAttempt);
+    socket.on("reconnect", onReconnect);
+    socket.on("reconnect_failed", onFailed);
+
+    return () => {
+      socket.off("connect", onConnect);
+      socket.off("disconnect", onDisconnect);
+      socket.off("reconnect_attempt", onAttempt);
+      socket.off("reconnect", onReconnect);
+      socket.off("reconnect_failed", onFailed);
+    };
+  }, [roomCode, mode]);
 
   useEffect(() => {
     // Now the server emits { players: [...], mode: "2P"|"4P" }
@@ -373,6 +407,10 @@ const PlayRoom = () => {
     }
   }, [allFinishers, mode, players, me]);
 
+  if (loading) {
+    return <Loader />;
+  }
+
   // ─── RENDER ────────────────────────────────────────────────────────────
   return (
     <ChatProvider roomCode={roomCode}>
@@ -450,6 +488,26 @@ const PlayRoom = () => {
         )}
         <ChatButton />
         <ChatWindow />
+        {status !== "connected" && (
+          <div className="absolute inset-0 bg-black/50 z-50 flex items-center justify-center">
+            {status === "failed" ? (
+              <div className="bg-white p-4 rounded text-center space-y-2">
+                <p>Connection lost.</p>
+                <button
+                  onClick={() => {
+                    setStatus("reconnecting");
+                    socket.connect();
+                  }}
+                  className="btn btn-primary"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : (
+              <div className="bg-white p-4 rounded">Reconnecting…</div>
+            )}
+          </div>
+        )}
       </div>
     </ChatProvider>
   );

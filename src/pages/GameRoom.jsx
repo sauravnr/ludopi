@@ -1,7 +1,7 @@
 // src/pages/GameRoom.jsx
 import React, { useEffect, useRef, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
-import { useSocket } from "../context/SocketContext";
+import { useSocket, useSocketStatus } from "../context/SocketContext";
 import { useAuth } from "../context/AuthContext";
 import ContentModal from "../components/ContentModal";
 import Modal from "../components/Modal";
@@ -12,6 +12,7 @@ import { useAlert } from "../context/AlertContext";
 const GameRoom = () => {
   const { user } = useAuth();
   const socket = useSocket();
+  const { status, setStatus } = useSocketStatus();
   const { roomCode } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -24,15 +25,23 @@ const GameRoom = () => {
 
   const [players, setPlayers] = useState([]);
   const [bet, setBet] = useState(0);
-  const [betAgreed, setBetAgreed] = useState(false);
   const [showBetConfirm, setShowBetConfirm] = useState(false);
   const [pendingMode, setPendingMode] = useState(null);
   // ─── Keep a ref to the "latest" players array, so we can read it in start-game
   const playersRef = useRef(players);
+  const joinDataRef = useRef({ roomCode, mode: "2P" });
+  const emitJoin = (payload) => {
+    joinDataRef.current = payload;
+    socket.emit("join-room", payload);
+  };
   // ─── Whenever `players` state changes, update the ref so we always have “latest” ─────────────────────
   useEffect(() => {
     playersRef.current = players;
   }, [players]);
+
+  useEffect(() => {
+    joinDataRef.current = { roomCode, mode };
+  }, [roomCode, mode]);
 
   // ─── Cleanup on unload (leave room) ──────────────────────────────────────
   useEffect(() => {
@@ -133,13 +142,13 @@ const GameRoom = () => {
           setPendingMode(joinMode);
           setShowBetConfirm(true);
           return;
-        } catch (err) {
+        } catch {
           showAlert("Room not found", "error");
           navigate("/");
           return;
         }
       }
-      socket.emit("join-room", { roomCode, mode: joinMode });
+      emitJoin({ roomCode, mode: joinMode });
     };
 
     if (!socket.connected) {
@@ -164,10 +173,37 @@ const GameRoom = () => {
     };
   }, [roomCode, navigate, user._id]);
 
+  // Socket connection state handling
+  useEffect(() => {
+    const onConnect = () => setStatus("connected");
+    const onDisconnect = () => setStatus("reconnecting");
+    const onAttempt = () => setStatus("reconnecting");
+    const onReconnect = () => {
+      setStatus("connected");
+      if (joinDataRef.current) {
+        socket.emit("join-room", joinDataRef.current);
+      }
+    };
+    const onFailed = () => setStatus("failed");
+
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+    socket.on("reconnect_attempt", onAttempt);
+    socket.on("reconnect", onReconnect);
+    socket.on("reconnect_failed", onFailed);
+
+    return () => {
+      socket.off("connect", onConnect);
+      socket.off("disconnect", onDisconnect);
+      socket.off("reconnect_attempt", onAttempt);
+      socket.off("reconnect", onReconnect);
+      socket.off("reconnect_failed", onFailed);
+    };
+  }, [roomCode, mode]);
+
   const acceptBet = () => {
-    setBetAgreed(true);
     setShowBetConfirm(false);
-    socket.emit("join-room", { roomCode, mode: pendingMode || mode });
+    emitJoin({ roomCode, mode: pendingMode || mode });
   };
 
   const declineBet = () => {
@@ -177,29 +213,8 @@ const GameRoom = () => {
   const isHost =
     players[0]?.userId === user._id || location.state?.action === "create";
 
-  const handleStart = () => {
-    const currentPlayers = playersRef.current || [];
-    const me = currentPlayers.find((p) => p.userId === user._id);
-    const myColor = me ? me.color : currentPlayers[0]?.color;
-    console.log(
-      "handleStart → navigating with players:",
-      currentPlayers,
-      "myColor:",
-      myColor,
-      "mode:",
-      mode
-    );
-    sessionStorage.setItem("navigatingToRoom", "true");
-    navigate(`/play/${roomCode}`, {
-      state: {
-        players: currentPlayers,
-        mode, // ← this is now always “2P” or “4P” from the server
-      },
-    });
-  };
-
   return (
-    <div className="flex-1 p-4">
+    <div className="flex-1 p-4 relative">
       <ContentModal title="Game Room" width="lg">
         <div className="p-4 sm:p-6 space-y-6">
           {/* Room Code & Actions */}
@@ -300,6 +315,26 @@ const GameRoom = () => {
             Entry amount is {bet} coins. Do you accept?
           </p>
         </Modal>
+      )}
+      {status !== "connected" && (
+        <div className="absolute inset-0 bg-black/50 z-50 flex items-center justify-center">
+          {status === "failed" ? (
+            <div className="bg-white p-4 rounded text-center space-y-2">
+              <p>Connection lost.</p>
+              <button
+                onClick={() => {
+                  setStatus("reconnecting");
+                  socket.connect();
+                }}
+                className="btn btn-primary"
+              >
+                Retry
+              </button>
+            </div>
+          ) : (
+            <div className="bg-white p-4 rounded">Reconnecting…</div>
+          )}
+        </div>
       )}
     </div>
   );

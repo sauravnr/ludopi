@@ -1,12 +1,21 @@
 // src/context/SocketContex.jsx
-import React, { createContext, useContext, useEffect } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import socket from "../socket";
 import { useAuth } from "./AuthContext";
 
-const SocketContext = createContext(socket);
+// The context stores the shared socket instance plus a simple
+// connection status string ("connected", "reconnecting", "failed").
+const SocketContext = createContext({
+  socket,
+  status: "disconnected",
+  setStatus: () => {},
+});
 
 export function SocketProvider({ children }) {
   const { user } = useAuth();
+  const [status, setStatus] = useState(
+    socket.connected ? "connected" : "disconnected"
+  );
 
   // Connect when a user is present, disconnect when logged out
   useEffect(() => {
@@ -27,10 +36,19 @@ export function SocketProvider({ children }) {
   }, []);
 
   return (
-    <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>
+    <SocketContext.Provider value={{ socket, status, setStatus }}>
+      {children}
+    </SocketContext.Provider>
   );
 }
 
+// Hook to get the raw socket instance
 export function useSocket() {
-  return useContext(SocketContext);
+  return useContext(SocketContext).socket;
+}
+
+// Hook to access connection status and updater
+export function useSocketStatus() {
+  const { status, setStatus } = useContext(SocketContext);
+  return { status, setStatus };
 }
