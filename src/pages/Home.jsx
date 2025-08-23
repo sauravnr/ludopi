@@ -25,6 +25,11 @@ const BET_OPTIONS = {
   ],
 };
 
+const HEADER_ICON_BASE =
+  "relative w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-100 ease-out filter active:translate-y-1 active:brightness-75 ring-1 ring-inset ring-white/10 border";
+const HEADER_ICON_STYLE =
+  "bg-gradient-to-br from-teal-400 to-teal-600 border-teal-300/30";
+
 const Home = () => {
   const navigate = useNavigate();
   const showAlert = useAlert();
@@ -165,24 +170,24 @@ const Home = () => {
         <div className="relative">
           <button
             onClick={() => setShowWheelModal(true)}
-            className="relative w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-2xl flex items-center justify-center cursor-pointer shadow-[0_5px_0_#a16207] active:shadow-[0_2px_0_#a16207] active:translate-y-1 active:brightness-75 border-yellow-300/30 ring-1 ring-inset ring-white/10"
+            className={`${HEADER_ICON_BASE} ${HEADER_ICON_STYLE}`}
             aria-label="Spin Wheel"
           >
-            <div className="absolute inset-0 bg-white/5 rounded-2xl pointer-events-none" />
+            <div className="absolute inset-0 bg-white/5 rounded-xl pointer-events-none" />
             <img
               src="/icons/wheelicon.png"
               alt="Spin"
-              className="w-8 h-8 z-10"
+              className="w-7 h-7 z-5"
             />
           </button>
           {wheelCooldown > 0 && (
-            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center bg-slate-800 rounded-full px-3 py-0.5">
+            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex items-center bg-slate-800 rounded-full px-2 py-0.5">
               <img
                 src="/icons/timer.png"
                 alt="Timer"
-                className="w-3 h-3 mr-1"
+                className="w-2.5 h-2.5 mr-1"
               />
-              <span className="text-[10px] font-semibold">
+              <span className="text-[7px] font-semibold">
                 {formatTime(wheelCooldown)}
               </span>
             </div>
@@ -194,14 +199,14 @@ const Home = () => {
             clearNotifications();
             setShowNotifModal(true);
           }}
-          className="relative w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-2xl flex items-center justify-center cursor-pointer shadow-[0_5px_0_#a16207] active:shadow-[0_2px_0_#a16207] active:translate-y-1 active:brightness-75 border-yellow-300/30 ring-1 ring-inset ring-white/10"
+          className={`${HEADER_ICON_BASE} ${HEADER_ICON_STYLE}`}
           aria-label="Notifications"
         >
-          <div className="absolute inset-0 bg-white/5 rounded-2xl pointer-events-none" />
+          <div className="absolute inset-0 bg-white/5 rounded-xl pointer-events-none" />
           <img
             src="/icons/notification.png"
             alt="Notifications"
-            className="w-8 h-8 z-10"
+            className="w-7 h-7 z-5"
           />
           {notificationCount > 0 && (
             <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
