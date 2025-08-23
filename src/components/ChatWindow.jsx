@@ -34,6 +34,7 @@ export default function ChatWindow({ user: partner, onBack }) {
     size,
     setSize,
     mutate,
+    error,
   } = useSWRInfinite(getKey, fetcher, {
     // never revalidate page 1 automatically:
     revalidateOnFocus: false,
@@ -42,6 +43,17 @@ export default function ChatWindow({ user: partner, onBack }) {
     revalidateIfStale: false,
     dedupeInterval: 60_000, // still dedupe duplicates for 1m
   });
+
+  if (error)
+    return (
+      <div className="flex flex-col items-center justify-center p-4 gap-2">
+        <div>Failed to load messages.</div>
+        <button onClick={() => mutate()} className="btn btn-primary btn-sm">
+          Retry
+        </button>
+      </div>
+    );
+  if (!pages) return <div className="p-4 text-center">Loading messages…</div>;
 
   // 4) Flatten pages
   const remoteMessages = useMemo(

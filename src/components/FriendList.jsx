@@ -49,7 +49,14 @@ export default function FriendsList({ onMessageClick }) {
   };
 
   if (error)
-    return <div className="alert alert-error">Error loading friends.</div>;
+    return (
+      <div className="flex flex-col items-center justify-center p-4 gap-2">
+        <div className="alert alert-error">Failed to load friends.</div>
+        <button onClick={() => mutate()} className="btn btn-primary btn-sm">
+          Retry
+        </button>
+      </div>
+    );
   if (!pages) return <div>Loading friends…</div>;
 
   return (

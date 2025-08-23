@@ -40,7 +40,14 @@ export default function RequestsList() {
   };
 
   if (error)
-    return <div className="alert alert-error">Error loading requests.</div>;
+    return (
+      <div className="flex flex-col items-center justify-center p-4 gap-2">
+        <div className="alert alert-error">Failed to load requests.</div>
+        <button onClick={() => mutate()} className="btn btn-primary btn-sm">
+          Retry
+        </button>
+      </div>
+    );
   if (!pages) return <div>Loading requests…</div>;
 
   return (

@@ -1,5 +1,5 @@
 // src/pages/GameRoom.jsx
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useSocket, useSocketStatus } from "../context/SocketContext";
 import { useAuth } from "../context/AuthContext";
@@ -27,13 +27,17 @@ const GameRoom = () => {
   const [bet, setBet] = useState(0);
   const [showBetConfirm, setShowBetConfirm] = useState(false);
   const [pendingMode, setPendingMode] = useState(null);
+  const [fetchError, setFetchError] = useState(false);
   // ─── Keep a ref to the "latest" players array, so we can read it in start-game
   const playersRef = useRef(players);
   const joinDataRef = useRef({ roomCode, mode: "2P" });
-  const emitJoin = (payload) => {
-    joinDataRef.current = payload;
-    socket.emit("join-room", payload);
-  };
+  const emitJoin = useCallback(
+    (payload) => {
+      joinDataRef.current = payload;
+      socket.emit("join-room", payload);
+    },
+    [socket]
+  );
   // ─── Whenever `players` state changes, update the ref so we always have “latest” ─────────────────────
   useEffect(() => {
     playersRef.current = players;
@@ -42,6 +46,31 @@ const GameRoom = () => {
   useEffect(() => {
     joinDataRef.current = { roomCode, mode };
   }, [roomCode, mode]);
+
+  const fetchAndJoin = useCallback(async () => {
+    let joinMode = location.state?.mode || "2P";
+    if (location.state?.mode === "join") {
+      try {
+        const { data } = await api.get(`/rooms/${roomCode}`);
+        joinMode = data.mode.toUpperCase();
+        setMode(joinMode);
+        setBet(data.bet);
+        setPendingMode(joinMode);
+        setShowBetConfirm(true);
+        setFetchError(false);
+        return;
+      } catch (err) {
+        if (err.response && err.response.status === 404) {
+          showAlert("Room not found", "error");
+          navigate("/");
+        } else {
+          setFetchError(true);
+        }
+        return;
+      }
+    }
+    emitJoin({ roomCode, mode: joinMode });
+  }, [roomCode, location.state, emitJoin, navigate, showAlert]);
 
   // ─── Cleanup on unload (leave room) ──────────────────────────────────────
   useEffect(() => {
@@ -131,26 +160,6 @@ const GameRoom = () => {
       navigate("/"); // send them home (or to a login page)
     };
 
-    const fetchAndJoin = async () => {
-      let joinMode = location.state?.mode || "2P";
-      if (location.state?.mode === "join") {
-        try {
-          const { data } = await api.get(`/rooms/${roomCode}`);
-          joinMode = data.mode.toUpperCase();
-          setMode(joinMode);
-          setBet(data.bet);
-          setPendingMode(joinMode);
-          setShowBetConfirm(true);
-          return;
-        } catch {
-          showAlert("Room not found", "error");
-          navigate("/");
-          return;
-        }
-      }
-      emitJoin({ roomCode, mode: joinMode });
-    };
-
     if (!socket.connected) {
       socket.once("connect_error", onAuthFail);
       socket.once("connect", fetchAndJoin);
@@ -171,7 +180,7 @@ const GameRoom = () => {
       socket.off("turn-change", handleResume);
       socket.off("connect", fetchAndJoin);
     };
-  }, [roomCode, navigate, user._id]);
+  }, [roomCode, navigate, user._id, fetchAndJoin]);
 
   // Rejoin the room after a successful reconnect
   useEffect(() => {
@@ -300,6 +309,22 @@ const GameRoom = () => {
             Entry amount is {bet} coins. Do you accept?
           </p>
         </Modal>
+      )}
+      {fetchError && (
+        <div className="absolute inset-0 bg-black/50 z-50 flex items-center justify-center">
+          <div className="bg-white p-4 rounded text-center space-y-2">
+            <p>Failed to load room info.</p>
+            <button
+              onClick={() => {
+                setFetchError(false);
+                fetchAndJoin();
+              }}
+              className="btn btn-primary"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
       )}
       {status !== "connected" && (
         <div className="absolute inset-0 bg-black/50 z-50 flex items-center justify-center">
