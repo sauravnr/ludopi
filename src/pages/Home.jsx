@@ -44,10 +44,35 @@ const Home = () => {
   const [showPrizeModal, setShowPrizeModal] = useState(false);
   const [prize, setPrize] = useState(null);
   const { setPlayer } = useAuth();
+  const [wheelCooldown, setWheelCooldown] = useState(0);
 
   useEffect(() => {
     sessionStorage.removeItem("navigatingToRoom");
+    let interval;
+    const fetchStatus = async () => {
+      try {
+        const { data } = await api.get("/wheel/status");
+        setWheelCooldown(data.remaining);
+      } catch (err) {
+        console.error("Failed to get wheel status:", err);
+      }
+    };
+    fetchStatus();
+    interval = setInterval(() => {
+      setWheelCooldown((prev) => (prev > 1000 ? prev - 1000 : 0));
+    }, 1000);
+    return () => clearInterval(interval);
   }, []);
+
+  const formatTime = (ms) => {
+    const total = Math.floor(ms / 1000);
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    return `${h.toString().padStart(2, "0")}:${m
+      .toString()
+      .padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  };
 
   const handleCreateRoom = (mode) => {
     setBetMode(mode);
@@ -138,13 +163,21 @@ const Home = () => {
   return (
     <div className="flex-1 flex flex-col items-center px-4">
       <div className="w-full flex justify-between mt-4 mb-6">
-        <button
-          onClick={() => setShowWheelModal(true)}
-          className="p-2 bg-yellow-100 rounded-full shadow-md"
-          aria-label="Spin Wheel"
-        >
-          <img src="/icons/wheelicon.png" alt="Spin" className="w-5 h-5" />
-        </button>
+        {wheelCooldown > 0 ? (
+          <div className="p-2 bg-yellow-100 rounded-full shadow-md flex items-center justify-center w-12 h-12">
+            <span className="text-sm font-semibold">
+              {formatTime(wheelCooldown)}
+            </span>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowWheelModal(true)}
+            className="p-2 bg-yellow-100 rounded-full shadow-md"
+            aria-label="Spin Wheel"
+          >
+            <img src="/icons/wheelicon.png" alt="Spin" className="w-5 h-5" />
+          </button>
+        )}
 
         <button
           onClick={() => {
@@ -241,11 +274,14 @@ const Home = () => {
         <WheelModal
           show={showWheelModal}
           onClose={() => setShowWheelModal(false)}
-          onResult={(p, balance) => {
+          onResult={(p, balance, availableAt) => {
             setShowWheelModal(false);
             setPrize(p);
             setShowPrizeModal(true);
             setPlayer((prev) => ({ ...prev, coins: balance }));
+            if (availableAt) {
+              setWheelCooldown(availableAt - Date.now());
+            }
           }}
         />
       )}

@@ -8,29 +8,59 @@ const SLICE_ANGLE = 360 / slices.length;
 export default function WheelModal({ show, onClose, onResult }) {
   const [rotation, setRotation] = useState(0);
   const [spinning, setSpinning] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
 
   useEffect(() => {
-    if (!show) {
+    let interval;
+    const fetchStatus = async () => {
+      try {
+        const { data } = await api.get("/wheel/status");
+        setCooldown(data.remaining);
+      } catch (err) {
+        console.error("Failed to get wheel status:", err);
+      }
+    };
+    if (show) {
+      fetchStatus();
+      interval = setInterval(() => {
+        setCooldown((prev) => (prev > 1000 ? prev - 1000 : 0));
+      }, 1000);
+    } else {
       setRotation(0);
       setSpinning(false);
+      setCooldown(0);
     }
+    return () => clearInterval(interval);
   }, [show]);
 
+  const formatTime = (ms) => {
+    const total = Math.floor(ms / 1000);
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    return `${h.toString().padStart(2, "0")}:${m
+      .toString()
+      .padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  };
+
   const handleSpin = async () => {
-    if (spinning) return;
+    if (spinning || cooldown > 0) return;
     try {
       const { data } = await api.post("/wheel/spin");
-      const { index, prize, balance } = data;
+      const { index, prize, balance, availableAt } = data;
       const spins = 5;
       const stopAngle = index * SLICE_ANGLE + SLICE_ANGLE / 2;
       const totalRotation = spins * 360 + stopAngle;
       setSpinning(true);
       setRotation((prev) => prev - totalRotation);
+      setCooldown(availableAt - Date.now());
       setTimeout(() => {
         setSpinning(false);
-        onResult(prize, balance);
+        onResult(prize, balance, availableAt);
       }, 5000);
     } catch (err) {
+      const remaining = err?.response?.data?.remaining;
+      if (remaining) setCooldown(remaining);
       console.error("Spin failed:", err);
     }
   };
@@ -73,13 +103,19 @@ export default function WheelModal({ show, onClose, onResult }) {
           />
         </div>
 
-        <button
-          onClick={handleSpin}
-          disabled={spinning}
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
-        >
-          {spinning ? "Spinning…" : "Spin"}
-        </button>
+        {cooldown > 0 ? (
+          <div className="mt-4 text-lg font-semibold">
+            {formatTime(cooldown)}
+          </div>
+        ) : (
+          <button
+            onClick={handleSpin}
+            disabled={spinning}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
+          >
+            {spinning ? "Spinning..." : "Spin"}
+          </button>
+        )}
       </div>
     </Modal>
   );

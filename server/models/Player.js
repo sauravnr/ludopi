@@ -116,6 +116,10 @@ const playerSchema = new Schema(
       type: Number,
       default: 10000,
     },
+    lastWheelSpinAt: {
+      type: Date,
+      default: null,
+    },
     pipBalance: {
       type: Number,
       default: 0,
