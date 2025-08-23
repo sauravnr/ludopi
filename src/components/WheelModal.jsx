@@ -103,25 +103,21 @@ export default function WheelModal({ show, onClose, onResult }) {
           />
         </div>
 
-        <button
-          onClick={handleSpin}
-          disabled={spinning || cooldown > 0}
-          className="relative btn btn-primary mt-4"
-        >
-          {spinning ? "Spinning..." : "Spin"}
-          {cooldown > 0 && (
-            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center bg-yellow-100 rounded-full px-1 py-0.5 shadow">
-              <img
-                src="/icons/timer.png"
-                alt="Timer"
-                className="w-3 h-3 mr-1"
-              />
-              <span className="text-xs font-semibold">
-                {formatTime(cooldown)}
-              </span>
-            </div>
-          )}
-        </button>
+        {cooldown > 0 ? (
+          <div className="flex items-center mt-4 bg-slate-800 text-white rounded-full px-4 py-2 shadow">
+            <span className="font-bold text-sm">
+              Next {formatTime(cooldown)}
+            </span>
+          </div>
+        ) : (
+          <button
+            onClick={handleSpin}
+            disabled={spinning}
+            className="btn btn-primary mt-4"
+          >
+            {spinning ? "Spinning..." : "Spin"}
+          </button>
+        )}
       </div>
     </Modal>
   );

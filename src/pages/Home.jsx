@@ -172,13 +172,13 @@ const Home = () => {
             <img src="/icons/wheelicon.png" alt="Spin" className="w-5 h-5" />
           </button>
           {wheelCooldown > 0 && (
-            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center bg-slate-800 rounded-full px-4 py-0.5 shadow">
+            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center bg-slate-800 rounded-full px-3 py-0.5">
               <img
                 src="/icons/timer.png"
                 alt="Timer"
                 className="w-3 h-3 mr-1"
               />
-              <span className="text-xs font-semibold">
+              <span className="text-[10px] font-semibold">
                 {formatTime(wheelCooldown)}
               </span>
             </div>

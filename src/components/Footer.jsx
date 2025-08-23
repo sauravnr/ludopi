@@ -12,18 +12,18 @@ export default function Footer({ activePage }) {
   return (
     <footer className="footer-nav">
       <NavItem
-        icon={<img src="/icons/store.png" alt="Store" className="w-8 h-8" />}
-        label="Store"
-        onClick={() => navigate("/store")}
-        active={activePage === "Store"}
-      />
-      <NavItem
         icon={
           <img src="/icons/inventory.png" alt="Inventory" className="w-8 h-8" />
         }
         label="Inventory"
         onClick={() => navigate("/inventory")}
         active={activePage === "Inventory"}
+      />
+      <NavItem
+        icon={<img src="/icons/store.png" alt="Store" className="w-8 h-8" />}
+        label="Store"
+        onClick={() => navigate("/store")}
+        active={activePage === "Store"}
       />
       <NavItem
         icon={<img src="/icons/home.png" alt="Home" className="w-8 h-8" />}
