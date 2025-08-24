@@ -3,7 +3,7 @@ import Loader from "../components/Loader";
 
 const CoinsRanking = lazy(() => import("../components/CoinsRanking"));
 const TrophiesRanking = lazy(() => import("../components/TrophiesRanking"));
-const Leaderboard = lazy(() => import("../components/Leaderboard"));
+const LeaderBoard = lazy(() => import("../components/LeaderBoard"));
 
 export default function Ranking() {
   const [activeTab, setActiveTab] = useState("coins");
@@ -37,7 +37,7 @@ export default function Ranking() {
           <Suspense fallback={<Loader />}>
             {activeTab === "coins" && <CoinsRanking />}
             {activeTab === "trophies" && <TrophiesRanking />}
-            {activeTab === "leaderboard" && <Leaderboard />}
+            {activeTab === "leaderboard" && <LeaderBoard />}
           </Suspense>
         </div>
       </div>
