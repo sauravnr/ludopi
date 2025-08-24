@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function Leaderboard() {
+export default function LeaderBoard() {
   return (
     <div className="flex items-center justify-center h-full text-gray-600">
       Coming soon...
