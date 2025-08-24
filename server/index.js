@@ -26,9 +26,6 @@ const CoinTransaction = require("./models/CoinTransaction");
 const mongoose = require("mongoose");
 const { checkAwards } = require("./utils/awards");
 
-// Frontend origin for CORS and Socket.IO. Set CLIENT_ORIGIN in production.
-const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:5173";
-
 async function clearStaleRooms() {
   try {
     const stalePlayers = await Player.find({ activeRoomCode: { $ne: null } })
@@ -91,10 +88,12 @@ app.use(helmet());
 app.use(compression());
 
 // ─── TIGHTEN CORS ────────────────────────────────────────────────────────
-// Allow the frontend origin defined above (Netlify/Vercel URL in production)
 app.use(
   cors({
-    origin: CLIENT_ORIGIN,
+    origin:
+      process.env.NODE_ENV === "production"
+        ? "https://your-game-domain.com"
+        : "http://localhost:5173", // ← match your React dev server
     credentials: true,
   })
 );
@@ -298,10 +297,13 @@ if (process.env.NODE_ENV === "development") {
   server = http.createServer(app);
 }
 
-// Share the same server with socket.io, restricting to the same origin
+// Share the same server with socket.io, but only allow our front-end origin
 const io = new Server(server, {
   cors: {
-    origin: CLIENT_ORIGIN,
+    origin:
+      process.env.NODE_ENV === "production"
+        ? "https://your-game-domain.com"
+        : "http://localhost:5173",
     credentials: true,
   },
 });

@@ -1,9 +1,10 @@
 // src/socket.js
 import { io } from "socket.io-client";
 
-// Derive API and server URLs from Vite's env or fallback
-const API = import.meta.env.VITE_API_URL || "https://ludopi.onrender.com/api";
-const SERVER = API.replace("/api", "");
+// Derive your server URL from Vite’s env or fallback
+const SERVER = import.meta.env.VITE_API_URL
+  ? import.meta.env.VITE_API_URL.replace("/api", "")
+  : "http://localhost:4000";
 
 const socket = io(SERVER, {
   withCredentials: true,
