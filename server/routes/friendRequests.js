@@ -17,6 +17,14 @@ const sendLimiter = rateLimit({
   message: { message: "Too many friend requests; please wait a minute." },
 });
 
+// RATE LIMITER: max 30 "accept/decline/unfriend" calls per user per minute
+const actionLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 30,
+  keyGenerator: (req) => req.user._id.toString(),
+  message: { message: "Too many friend actions; please wait a minute." },
+});
+
 // 1. Send a friend request
 // POST /api/friend-requests   { toUserId }
 router.post(
@@ -83,6 +91,7 @@ router.delete(
 router.delete(
   "/friends/:other",
   protect,
+  actionLimiter,
   param("other").isMongoId().withMessage("Invalid user ID"),
   async (req, res) => {
     // validation errors?
@@ -221,7 +230,7 @@ router.get("/received", protect, async (req, res) => {
 
 // POST /api/friend-requests/:id
 // body: { accept: true|false }
-router.post("/:id", protect, async (req, res) => {
+router.post("/:id", protect, actionLimiter, async (req, res) => {
   const { accept } = req.body;
   const me = req.user._id.toString();
   const fr = await FriendRequest.findById(req.params.id);
