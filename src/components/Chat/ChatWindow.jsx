@@ -31,9 +31,15 @@ export default function ChatWindow() {
         {/* Message list */}
         <div className="flex-1 p-2 overflow-auto bg-gray-50">
           {messages.map((m, i) => (
-            <div key={i} className="mb-1">
+            <div key={m.id || i} className="mb-1 flex items-center">
               <span className="font-bold text-black">{m.name}</span>
               <span className="text-black">: {m.text}</span>
+              {m.status === "pending" && (
+                <span className="text-gray-500 text-xs ml-1">(sending…)</span>
+              )}
+              {m.status === "failed" && (
+                <span className="text-red-500 text-xs ml-1">(failed)</span>
+              )}
             </div>
           ))}
         </div>

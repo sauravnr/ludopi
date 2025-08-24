@@ -1492,7 +1492,7 @@ io.on("connection", (socket) => {
   });
 
   // Chat
-  socket.on("chat-message", async ({ roomCode, playerId, text }) => {
+  socket.on("chat-message", async ({ roomCode, playerId, text, id }, cb) => {
     const room = rooms[roomCode];
     if (!room) return;
     // Rate limit chat messages per user
@@ -1517,11 +1517,13 @@ io.on("connection", (socket) => {
       allowedAttributes: {},
     });
     io.to(roomCode).emit("chat-message", {
+      id,
       playerId: socket.user._id.toString(),
       name: player.username,
       text: cleanText,
       ts: Date.now(),
     });
+    if (typeof cb === "function") cb({ ok: true });
   });
 
   // ── 1) “private-message” with persistent deliveredAt & ACK ──

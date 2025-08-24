@@ -44,17 +44,6 @@ export default function ChatWindow({ user: partner, onBack }) {
     dedupeInterval: 60_000, // still dedupe duplicates for 1m
   });
 
-  if (error)
-    return (
-      <div className="flex flex-col items-center justify-center p-4 gap-2">
-        <div>Failed to load messages.</div>
-        <button onClick={() => mutate()} className="btn btn-primary btn-sm">
-          Retry
-        </button>
-      </div>
-    );
-  if (!pages) return <div className="p-4 text-center">Loading messages…</div>;
-
   // 4) Flatten pages
   const remoteMessages = useMemo(
     () => (pages ? pages.slice().reverse().flat() : []),
@@ -194,6 +183,16 @@ export default function ChatWindow({ user: partner, onBack }) {
       }
     });
   };
+  if (error)
+    return (
+      <div className="flex flex-col items-center justify-center p-4 gap-2">
+        <div>Failed to load messages.</div>
+        <button onClick={() => mutate()} className="btn btn-primary btn-sm">
+          Retry
+        </button>
+      </div>
+    );
+  if (!pages) return <div className="p-4 text-center">Loading messages…</div>;
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
