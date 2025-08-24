@@ -1,6 +1,7 @@
 // src/components/RequestsList.jsx
 import React from "react";
 import useSWRInfinite from "swr/infinite";
+import { useSWRConfig } from "swr";
 import { useNavigate } from "react-router-dom";
 import api from "../utils/api";
 import { useAlert } from "../context/AlertContext";
@@ -8,6 +9,7 @@ import { useAlert } from "../context/AlertContext";
 export default function RequestsList() {
   const navigate = useNavigate();
   const showAlert = useAlert();
+  const { mutate: globalMutate } = useSWRConfig();
   const LIMIT = 15;
 
   // SWR infinite setup
@@ -31,7 +33,17 @@ export default function RequestsList() {
   const respond = async (id, accept) => {
     try {
       await api.post(`/friend-requests/${id}`, { accept });
-      await mutate(); // refresh pages
+      await mutate(); // refresh requests list
+      if (accept) {
+        await globalMutate(
+          (key) =>
+            typeof key === "string" &&
+            (key.startsWith("/friend-requests/friends") ||
+              key.startsWith("/friend-requests/received")),
+          undefined,
+          { revalidate: true }
+        );
+      }
     } catch (err) {
       console.error("Failed to respond.");
       const msg = err?.response?.data?.message || "Failed to respond.";

@@ -8,12 +8,14 @@ import React, {
 import { useAuth } from "./AuthContext";
 import { useSocket } from "./SocketContext";
 import api from "../utils/api";
+import { useSWRConfig } from "swr";
 
 const NotificationContext = createContext(null);
 
 export function NotificationProvider({ children }) {
   const { user } = useAuth();
   const socket = useSocket();
+  const { mutate: globalMutate } = useSWRConfig();
   const [chatCount, setChatCount] = useState(0);
   const [requestCount, setRequestCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
@@ -112,6 +114,27 @@ export function NotificationProvider({ children }) {
     socket.on("friend-request", handleRequest);
     return () => socket.off("friend-request", handleRequest);
   }, [socket, user, incrementRequest]);
+
+  // update friends (and requests) when a request is accepted or a friend is removed
+  useEffect(() => {
+    if (!socket) return;
+    const updateFriends = () => {
+      globalMutate(
+        (key) =>
+          typeof key === "string" &&
+          (key.startsWith("/friend-requests/friends") ||
+            key.startsWith("/friend-requests/received")),
+        undefined,
+        { revalidate: true }
+      );
+    };
+    socket.on("friend-accepted", updateFriends);
+    socket.on("friend-removed", updateFriends);
+    return () => {
+      socket.off("friend-accepted", updateFriends);
+      socket.off("friend-removed", updateFriends);
+    };
+  }, [socket, globalMutate]);
 
   const clearChat = useCallback(() => setChatCount(0), []);
   const clearRequests = useCallback(() => setRequestCount(0), []);

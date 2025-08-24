@@ -45,7 +45,7 @@
 }
 .modal-window.modal-sm {
   width: 75%;
-  max-width: 21rem; /* adjust as needed */
+  max-width: 25rem; /* adjust as needed */
 }
 .modal-window.modal-lg {
   width: 95%;
@@ -129,7 +129,7 @@
 .modal-footer button.btn-warning {
   flex-basis: 100%;
 }
-@media (max-width: 400px) {
+@media (max-width: 359px) {
   .modal-footer button {
     flex-basis: 100%;
   }

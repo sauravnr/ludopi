@@ -91,7 +91,7 @@ router.delete(
       return res.status(400).json({ message: errors.array()[0].msg });
     }
 
-    const me = req.user._id;
+    const me = req.user._id.toString();
     const them = req.params.other;
     await FriendRequest.deleteMany({
       status: "accepted",
@@ -116,6 +116,9 @@ router.delete(
         ]);
       }
     }
+    const io = req.app.get("io");
+    io.to(me).emit("friend-removed");
+    io.to(them).emit("friend-removed");
     return res.json({ message: "Unfriended." });
   }
 );
@@ -237,6 +240,7 @@ router.post("/:id", protect, async (req, res) => {
     // accept: mark accepted
     fr.status = "accepted";
     await fr.save();
+    const io = req.app.get("io");
     // ── Add each other to Player.friends ──
     {
       // my Player doc
@@ -255,10 +259,11 @@ router.post("/:id", protect, async (req, res) => {
             { $addToSet: { friends: meDoc._id } }
           ),
         ]);
-        const io = req.app.get("io");
         await Promise.all([checkAwards(me, io), checkAwards(fr.from, io)]);
       }
     }
+    io.to(me).emit("friend-accepted");
+    io.to(fr.from.toString()).emit("friend-accepted");
     return res.json({ request: fr });
   } else {
     // decline: delete

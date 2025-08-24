@@ -23,7 +23,10 @@ export default function FriendsList({ onMessageClick }) {
     setSize,
     mutate,
     isLoading,
-  } = useSWRInfinite(getKey, fetcher, { revalidateFirstPage: false });
+  } = useSWRInfinite(getKey, fetcher, {
+    revalidateFirstPage: false,
+    revalidateOnMount: true,
+  });
 
   const friends = pages ? pages.flat() : [];
   const hasMore = pages?.[pages.length - 1]?.length === LIMIT;
