@@ -39,12 +39,12 @@
   border-radius: 1rem;
   box-shadow: 0 3px 0 #c7994a, 0 8px 2px rgba(0, 0, 0, 0.5);
   width: 90%;
-  max-width: 24rem;
+  max-width: 28rem;
   overflow: visible;
   padding-top: 1.5rem; /* give space for title bar */
 }
 .modal-window.modal-sm {
-  width: 60%;
+  width: 75%;
   max-width: 21rem; /* adjust as needed */
 }
 .modal-window.modal-lg {
@@ -54,11 +54,11 @@
 /* lifted title */
 .modal-title-bar {
   position: absolute;
-  top: -2rem; /* lift above the window */
+  top: -1.5rem; /* lift above the window */
   left: 50%;
   transform: translateX(-50%);
   background: #ffae33;
-  padding: 0.75rem 1.5rem;
+  padding: 0.6rem 1.5rem;
   border-radius: 0.75rem;
   box-shadow: 0 3px 0 #d18c00, 0 6px 2px rgba(0, 0, 0, 0.25);
   z-index: 10;
@@ -70,12 +70,20 @@
   font-size: 1.25rem;
   font-weight: bold;
   line-height: 1.2;
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 @media (max-width: 480px) {
   .modal-title-bar {
-    padding: 0.7rem 1.2rem;
+    padding: 0.5rem 1.2rem;
     top: -1.5rem; /* lift above the window */
+  }
+  .modal-window.modal-sm {
+    width: 80%;
+    max-width: 21rem; /* adjust as needed */
   }
 }
 
