@@ -1,7 +1,8 @@
 // src/utils/api.js
 import axios from "axios";
 
-const baseURL = import.meta.env.VITE_API_URL || "https://ludopi.onrender.com";
+const baseURL =
+  import.meta.env.VITE_API_URL || "https://ludopi.onrender.com/api";
 const api = axios.create({
   baseURL,
   withCredentials: true, // send & receive HttpOnly cookies
