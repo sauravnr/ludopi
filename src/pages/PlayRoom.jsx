@@ -252,6 +252,7 @@ const PlayRoom = () => {
 
     // Use playersRef.current so we always see the latest list
     let justFinished = playersRef.current.find((p) => p.color === color);
+    const forfeited = !justFinished;
     if (!justFinished) {
       const stored = allPlayersRef.current[color];
       if (stored) {
@@ -268,21 +269,41 @@ const PlayRoom = () => {
           allPlayersRef.current[col]?.avatarUrl;
 
     if (mode === "2P") {
-      // ───── 2P: as soon as someone finishes, the game ends ─────
-      const firstObj = {
-        playerId: justFinished.playerId,
-        name: justFinished.name,
-        place: 1,
-        avatarUrl: getAvatar(justFinished.playerId, color),
-      };
+      // ───── 2P: as soon as someone finishes or forfeits, the game ends ─────
+      const entry = Object.entries(allPlayersRef.current).find(
+        ([c]) => c !== color
+      );
 
-      // The “other” (only other) is 2nd
-      let other = playersRef.current.find((p) => p.color !== color);
-      if (!other) {
-        const entry = Object.entries(allPlayersRef.current).find(
-          ([c]) => c !== color
-        );
-        if (entry) {
+      let firstObj;
+      let secondObj;
+
+      if (forfeited && entry) {
+        // Color that triggered finish isn't in playersRef → they forfeited.
+        const [otherColor, data] = entry;
+        firstObj = {
+          playerId: data.playerId,
+          name: data.name,
+          place: 1,
+          avatarUrl: getAvatar(data.playerId, otherColor),
+        };
+        secondObj = {
+          playerId: justFinished.playerId,
+          name: justFinished.name,
+          place: 2,
+          avatarUrl: getAvatar(justFinished.playerId, color),
+        };
+      } else {
+        // Normal finish flow
+        firstObj = {
+          playerId: justFinished.playerId,
+          name: justFinished.name,
+          place: 1,
+          avatarUrl: getAvatar(justFinished.playerId, color),
+        };
+
+        // The “other” (only other) is 2nd
+        let other = playersRef.current.find((p) => p.color !== color);
+        if (!other && entry) {
           const [otherColor, data] = entry;
           other = {
             playerId: data.playerId,
@@ -290,15 +311,15 @@ const PlayRoom = () => {
             color: otherColor,
           };
         }
+        secondObj = other
+          ? {
+              playerId: other.playerId,
+              name: other.name,
+              place: 2,
+              avatarUrl: getAvatar(other.playerId, other.color),
+            }
+          : null;
       }
-      const secondObj = other
-        ? {
-            playerId: other.playerId,
-            name: other.name,
-            place: 2,
-            avatarUrl: getAvatar(other.playerId, other.color),
-          }
-        : null;
 
       const newFinishers = secondObj ? [firstObj, secondObj] : [firstObj];
       setAllFinishers(newFinishers);
