@@ -1220,25 +1220,6 @@ const LudoCanvas = ({
           players.find((pl) => pl.color === color)?.tokenDesign || "default";
         const img = getTokenImage(design, color, size, drawCanvas);
         if (img.complete) {
-          // draw a subtle shadow beneath the hopping token
-          ctx.save();
-          ctx.filter = `blur(${2 * window.devicePixelRatio}px)`; // tweak px
-          ctx.globalAlpha = 0.3 * (1 - e);
-          ctx.fillStyle = "black";
-          ctx.beginPath();
-          // x,y is the token center; adjust vertical offset for the board
-          ctx.ellipse(
-            x,
-            y + tileSize * 0.4,
-            tileSize * 0.2 * (1 - Math.sin(Math.PI * e) * 0.6),
-            tileSize * 0.1 * (1 - Math.sin(Math.PI * e) * 0.6),
-            0,
-            0,
-            Math.PI * 2
-          );
-          ctx.fill();
-          ctx.restore();
-
           ctx.save();
           ctx.translate(x, y - diam * 0.2);
           ctx.drawImage(img, -diam / 2, -diam / 2, diam, diam);

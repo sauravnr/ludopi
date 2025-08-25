@@ -249,13 +249,9 @@ const Home = () => {
           show={showJoinModal}
           title="Join Room"
           onClose={() => setShowJoinModal(false)}
+          width="sm"
           footer={[
             { label: "Join Game", variant: "primary", onClick: handleJoinRoom },
-            {
-              label: "Cancel",
-              variant: "secondary",
-              onClick: () => setShowJoinModal(false),
-            },
           ]}
         >
           <input
