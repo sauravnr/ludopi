@@ -696,12 +696,28 @@ async function finalizeGame(roomCode, remainingColor) {
   const room = rooms[roomCode];
   if (!room) return;
 
-  const finalOrder = room.finishOrder.slice();
-  if (remainingColor) finalOrder.push(remainingColor);
   const forfeits = room.forfeits ? [...room.forfeits].reverse() : [];
+
+  // Start with players who finished in order
+  const finalOrder = room.finishOrder.slice();
+
+  // Place any explicitly remaining color next
+  if (remainingColor && !finalOrder.includes(remainingColor)) {
+    finalOrder.push(remainingColor);
+  }
+
+  // Append any other non-forfeiting participants
+  for (const { color } of room.participants) {
+    if (!finalOrder.includes(color) && !forfeits.includes(color)) {
+      finalOrder.push(color);
+    }
+  }
+
+  // Finally append forfeited colors
   for (const c of forfeits) {
     if (!finalOrder.includes(c)) finalOrder.push(c);
   }
+
   room.finishOrder = finalOrder;
 
   const winnerColor = finalOrder[0];
@@ -1176,9 +1192,14 @@ io.on("connection", (socket) => {
       botActive: room.botActive,
     });
 
-    if (room.players.length <= 1) {
-      const remaining = room.players[0]?.color;
-      await finalizeGame(roomCode, remaining);
+    const remainingColors = room.participants
+      .map((p) => p.color)
+      .filter(
+        (c) => !room.finishOrder.includes(c) && !room.forfeits.includes(c)
+      );
+
+    if (remainingColors.length <= 1) {
+      await finalizeGame(roomCode, remainingColors[0]);
     } else if (wasCurrent) {
       if (room.botTimeout) {
         clearTimeout(room.botTimeout);
