@@ -211,7 +211,8 @@ app.post(
       ),
       finishOrder: [],
       forfeits: [],
-      currentTurnIndex: 0,
+      // Turn order isn't set until the game actually starts
+      currentTurnIndex: null,
       mode,
       // track whether win/loss stats have been recorded for this game
       statsRecorded: false,
