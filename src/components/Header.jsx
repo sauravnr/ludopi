@@ -23,11 +23,11 @@ export default function Header({
   // build src/srcSet only for CDN images
   const isCdn = Boolean(user?.avatarUrl);
   const smallAvatar = isCdn
-    ? `${user.avatarUrl}?format=auto&width=32&quality=60`
+    ? `${user.avatarUrl}?format=auto&width=40&quality=60`
     : "/default-avatar.png";
   const srcSet = isCdn
-    ? `${user.avatarUrl}?format=auto&width=32&quality=60 32w,
-       ${user.avatarUrl}?format=auto&width=64&quality=60 64w`
+    ? `${user.avatarUrl}?format=auto&width=40&quality=60 40w,
+       ${user.avatarUrl}?format=auto&width=80&quality=60 80w`
     : "";
   const getFrameSrc = (design) => {
     const safe =
@@ -51,16 +51,16 @@ export default function Header({
   const showUsername = username && username.length <= 6;
   return (
     <>
-      <header className="relative z-10 flex items-center justify-between px-4 py-4 bg-header text-white header-3d">
+      <header className="relative z-10 flex items-center justify-between px-4 py-3 bg-header text-white header-3d">
         <div className="flex items-center space-x-2">
           <Link
             to="/profile"
-            className="relative -mt-1 -mb-1 w-8 h-8 overflow-hidden"
+            className="relative -mt-1 -mb-1 w-10 h-10 overflow-hidden"
           >
             <img
               src={smallAvatar}
               srcSet={srcSet}
-              sizes="32px"
+              sizes="40px"
               alt="Avatar"
               className="w-full h-full object-cover"
               decoding="async"
