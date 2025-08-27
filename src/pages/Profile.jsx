@@ -44,6 +44,11 @@ export default function Profile() {
 
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
+    if (!profile?.isVip) {
+      showAlert("VIP membership required", "error");
+      e.target.value = "";
+      return;
+    }
     if (file && file.size > MAX_AVATAR_SIZE) {
       showAlert("Avatar must be 2MB or less", "error");
       e.target.value = "";
@@ -198,36 +203,51 @@ export default function Profile() {
   };
 
   const saveProfileChanges = async () => {
-    if (!profile.isVip) {
-      showAlert("VIP membership required.", "error");
-      return;
-    }
     try {
-      if (avatarFile) {
-        const compressed = await compressImage(avatarFile, 300, 300, 0.7);
-        const formData = new FormData();
-        formData.append("avatar", compressed);
-        const res = await api.post("/avatar/upload", formData);
-        if (!res.data?.avatarUrl) {
-          showAlert("Upload failed.", "error");
-        } else {
-          const url = `${res.data.avatarUrl}?t=${Date.now()}`;
-          setPlayer((p) => ({ ...p, avatarUrl: url }));
-          setProfile((p) => ({ ...p, avatarUrl: url }));
-          showAlert("Avatar updated!");
+      if (profile.isVip) {
+        if (avatarFile) {
+          const compressed = await compressImage(avatarFile, 300, 300, 0.7);
+          const formData = new FormData();
+          formData.append("avatar", compressed);
+          const res = await api.post("/avatar/upload", formData);
+          if (!res.data?.avatarUrl) {
+            showAlert("Upload failed.", "error");
+          } else {
+            const url = `${res.data.avatarUrl}?t=${Date.now()}`;
+            setPlayer((p) => ({ ...p, avatarUrl: url }));
+            setProfile((p) => ({ ...p, avatarUrl: url }));
+            showAlert("Avatar updated!");
+          }
+        }
+        if (bioInput !== profile.bio) {
+          await saveBio();
+        }
+        if (countryInput !== profile.country) {
+          await saveCountry();
+        }
+        if (walletInput !== (profile.walletAddress || "")) {
+          await saveWallet();
+        }
+        setShowEditModal(false);
+        setAvatarFile(null);
+      } else {
+        if (avatarFile || bioInput !== profile.bio) {
+          showAlert("VIP membership required", "error");
+        }
+        let updated = false;
+        if (countryInput !== profile.country) {
+          await saveCountry();
+          updated = true;
+        }
+        if (walletInput !== (profile.walletAddress || "")) {
+          await saveWallet();
+          updated = true;
+        }
+        if (updated) {
+          setShowEditModal(false);
+          setAvatarFile(null);
         }
       }
-      if (bioInput !== profile.bio) {
-        await saveBio();
-      }
-      if (countryInput !== profile.country) {
-        await saveCountry();
-      }
-      if (walletInput !== (profile.walletAddress || "")) {
-        await saveWallet();
-      }
-      setShowEditModal(false);
-      setAvatarFile(null);
     } catch (err) {
       console.error(err);
       showAlert("Failed to save changes.", "error");
