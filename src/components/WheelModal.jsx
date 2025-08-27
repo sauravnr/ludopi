@@ -43,7 +43,7 @@ export default function WheelModal({ show, onClose, onResult }) {
       setResetAt(reset);
       setTimeout(() => {
         setSpinning(false);
-        onResult(prize, balance, rem);
+        onResult(prize, balance, rem, reset);
       }, 5000);
     } catch (err) {
       const rem = err?.response?.data?.remaining;

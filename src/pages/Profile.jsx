@@ -153,10 +153,6 @@ export default function Profile() {
 
   // Save updated bio (only affects your own)
   const saveBio = async () => {
-    if (!profile.isVip) {
-      showAlert("VIP membership required.", "error");
-      return;
-    }
     try {
       const { data } = await api.patch("/player/me/bio", { bio: bioInput });
       setPlayer(data.player);
@@ -302,23 +298,12 @@ export default function Profile() {
                   </div>
                 </div>
                 {isOwn ? (
-                  profile.isVip ? (
-                    <button
-                      onClick={() => setShowEditModal(true)}
-                      className="btn btn-primary text-sm px-2 py-1 mt-2 sm:mt-0"
-                    >
-                      Edit
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() =>
-                        showAlert("Upgrade to VIP to edit profile.")
-                      }
-                      className="btn btn-secondary text-sm px-2 py-1 mt-2 sm:mt-0"
-                    >
-                      Go VIP
-                    </button>
-                  )
+                  <button
+                    onClick={() => setShowEditModal(true)}
+                    className="btn btn-primary text-sm px-2 py-1 mt-2 sm:mt-0"
+                  >
+                    Edit
+                  </button>
                 ) : (
                   <>
                     {relationship === "none" && (

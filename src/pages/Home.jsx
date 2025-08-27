@@ -49,6 +49,8 @@ const Home = () => {
   const [prize, setPrize] = useState(null);
   const { setPlayer } = useAuth();
   const [wheelSpinsLeft, setWheelSpinsLeft] = useState(0);
+  const [wheelResetAt, setWheelResetAt] = useState(null);
+  const [timeUntilSpin, setTimeUntilSpin] = useState("");
 
   useEffect(() => {
     sessionStorage.removeItem("navigatingToRoom");
@@ -56,12 +58,37 @@ const Home = () => {
       try {
         const { data } = await api.get("/wheel/status");
         setWheelSpinsLeft(data.remaining);
+        setWheelResetAt(data.resetAt);
       } catch (err) {
         console.error("Failed to get wheel status:", err);
       }
     };
     fetchStatus();
   }, []);
+
+  useEffect(() => {
+    const updateTime = () => {
+      if (!wheelResetAt) {
+        setTimeUntilSpin("");
+        return;
+      }
+      const diff = new Date(wheelResetAt).getTime() - Date.now();
+      if (diff <= 0) {
+        setTimeUntilSpin("0:00");
+        return;
+      }
+      const hours = Math.floor(diff / 3600000);
+      const minutes = Math.floor((diff % 3600000) / 60000);
+      const seconds = Math.floor((diff % 60000) / 1000);
+      const hStr = hours > 0 ? `${hours}:` : "";
+      const mStr = String(minutes).padStart(2, "0");
+      const sStr = String(seconds).padStart(2, "0");
+      setTimeUntilSpin(`${hStr}${mStr}:${sStr}`);
+    };
+    updateTime();
+    const timer = setInterval(updateTime, 1000);
+    return () => clearInterval(timer);
+  }, [wheelResetAt]);
 
   const handleCreateRoom = (mode) => {
     setBetMode(mode);
@@ -154,18 +181,11 @@ const Home = () => {
       <div className="w-full flex justify-between mt-4 mb-6">
         <div className="relative">
           <button
-            onClick={() => {
-              if (wheelSpinsLeft > 0) {
-                setShowWheelModal(true);
-              } else {
-                showAlert("No spins remaining. Try again later.", "error");
-              }
-            }}
+            onClick={() => setShowWheelModal(true)}
             className={`${HEADER_ICON_BASE} ${HEADER_ICON_STYLE} ${
-              wheelSpinsLeft <= 0 ? "opacity-50 cursor-not-allowed" : ""
+              wheelSpinsLeft <= 0 ? "opacity-50" : ""
             }`}
             aria-label="Spin Wheel"
-            disabled={wheelSpinsLeft <= 0}
           >
             <div className="absolute inset-0 bg-white/5 rounded-xl pointer-events-none" />
             <img
@@ -174,10 +194,10 @@ const Home = () => {
               className="w-7 h-7 z-5"
             />
           </button>
-          {wheelSpinsLeft > 0 && (
-            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex items-center justify-center bg-gray-800 rounded-full px-2 py-0.5 gap-1 w-[50px]">
+          {timeUntilSpin && (
+            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex items-center justify-center bg-gray-800 rounded-full px-2 py-0.5 gap-1 w-[60px]">
               <span className="text-[7px] font-semibold font-mono tabular-nums">
-                {wheelSpinsLeft} left
+                {timeUntilSpin}
               </span>
             </div>
           )}
@@ -279,12 +299,13 @@ const Home = () => {
         <WheelModal
           show={showWheelModal}
           onClose={() => setShowWheelModal(false)}
-          onResult={(p, balance, remaining) => {
+          onResult={(p, balance, remaining, reset) => {
             setShowWheelModal(false);
             setPrize(p);
             setShowPrizeModal(true);
             setPlayer((prev) => ({ ...prev, coins: balance }));
             setWheelSpinsLeft(remaining);
+            if (reset) setWheelResetAt(reset);
           }}
         />
       )}
