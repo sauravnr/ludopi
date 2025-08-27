@@ -47,9 +47,11 @@ const Home = () => {
   const [showWheelModal, setShowWheelModal] = useState(false);
   const [showPrizeModal, setShowPrizeModal] = useState(false);
   const [prize, setPrize] = useState(null);
-  const { setPlayer } = useAuth();
+  const { player, setPlayer } = useAuth();
   const [wheelResetAt, setWheelResetAt] = useState(null);
   const [timeUntilSpin, setTimeUntilSpin] = useState("");
+  const [showVipModal, setShowVipModal] = useState(false);
+  const [vipLoading, setVipLoading] = useState(false);
 
   useEffect(() => {
     sessionStorage.removeItem("navigatingToRoom");
@@ -135,6 +137,23 @@ const Home = () => {
 
   const handleOnline = () => console.log("Online matchmaking clicked");
 
+  const handlePurchaseVip = async () => {
+    if (vipLoading || player?.isVip) return;
+    try {
+      setVipLoading(true);
+      await api.post("/vip/purchase");
+      setPlayer((prev) => ({ ...prev, isVip: true }));
+      showAlert("VIP membership activated!", "success");
+      setShowVipModal(false);
+    } catch (err) {
+      const msg =
+        err?.response?.data?.message || "Unable to purchase VIP right now.";
+      showAlert(msg, "error");
+    } finally {
+      setVipLoading(false);
+    }
+  };
+
   const cards = [
     {
       label: "2 Players",
@@ -177,26 +196,43 @@ const Home = () => {
   return (
     <div className="flex-1 flex flex-col items-center px-4">
       <div className="w-full flex justify-between mt-4 mb-6">
-        <div className="relative">
+        <div className="flex flex-col items-center gap-3">
+          <div className="relative">
+            <button
+              onClick={() => setShowWheelModal(true)}
+              className={`${HEADER_ICON_BASE} ${HEADER_ICON_STYLE}`}
+              aria-label="Spin Wheel"
+            >
+              <div className="absolute inset-0 bg-white/5 rounded-xl pointer-events-none" />
+              <img
+                src="/icons/wheelicon.png"
+                alt="Spin"
+                className="w-7 h-7 z-5"
+              />
+            </button>
+            {timeUntilSpin && (
+              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex items-center justify-center bg-gray-800 rounded-full px-2 py-0.5 gap-1 w-[60px]">
+                <span className="text-[7px] font-semibold font-mono tabular-nums">
+                  {timeUntilSpin}
+                </span>
+              </div>
+            )}
+          </div>
           <button
-            onClick={() => setShowWheelModal(true)}
+            onClick={() => setShowVipModal(true)}
             className={`${HEADER_ICON_BASE} ${HEADER_ICON_STYLE}`}
-            aria-label="Spin Wheel"
+            aria-label="VIP"
           >
             <div className="absolute inset-0 bg-white/5 rounded-xl pointer-events-none" />
-            <img
-              src="/icons/wheelicon.png"
-              alt="Spin"
-              className="w-7 h-7 z-5"
-            />
+            <img src="/icons/vip.png" alt="VIP" className="w-7 h-7 z-5" />
           </button>
-          {timeUntilSpin && (
-            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex items-center justify-center bg-gray-800 rounded-full px-2 py-0.5 gap-1 w-[60px]">
-              <span className="text-[7px] font-semibold font-mono tabular-nums">
-                {timeUntilSpin}
-              </span>
-            </div>
-          )}
+          <span
+            className={`text-[10px] font-semibold ${
+              player?.isVip ? "text-yellow-300" : "text-gray-300"
+            }`}
+          >
+            {player?.isVip ? "Active" : "Get VIP"}
+          </span>
         </div>
 
         <button
@@ -289,6 +325,34 @@ const Home = () => {
           onClose={() => setShowNotifModal(false)}
           notifications={notifications}
         />
+      )}
+
+      {showVipModal && (
+        <Modal
+          show={showVipModal}
+          onClose={() => setShowVipModal(false)}
+          title="VIP Membership"
+          width="sm"
+          footer={
+            player?.isVip
+              ? null
+              : [
+                  {
+                    label: vipLoading ? "Processing..." : "Purchase",
+                    variant: "primary",
+                    onClick: handlePurchaseVip,
+                  },
+                ]
+          }
+        >
+          {player?.isVip ? (
+            <p className="text-center">You are already a VIP member.</p>
+          ) : (
+            <p className="text-center">
+              Unlock exclusive features with a VIP membership.
+            </p>
+          )}
+        </Modal>
       )}
 
       {showWheelModal && (

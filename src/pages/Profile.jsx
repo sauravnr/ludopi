@@ -305,6 +305,13 @@ export default function Profile() {
                 decoding="async"
                 onError={(e) => (e.currentTarget.src = "/default-avatar.png")}
               />
+              {profile.isVip && (
+                <img
+                  src="/icons/vip.png"
+                  alt="VIP"
+                  className="w-6 h-6 absolute -bottom-1 -right-1"
+                />
+              )}
             </div>
 
             {/* Username, country, coins */}
