@@ -48,7 +48,6 @@ const Home = () => {
   const [showPrizeModal, setShowPrizeModal] = useState(false);
   const [prize, setPrize] = useState(null);
   const { setPlayer } = useAuth();
-  const [wheelSpinsLeft, setWheelSpinsLeft] = useState(0);
   const [wheelResetAt, setWheelResetAt] = useState(null);
   const [timeUntilSpin, setTimeUntilSpin] = useState("");
 
@@ -57,7 +56,6 @@ const Home = () => {
     const fetchStatus = async () => {
       try {
         const { data } = await api.get("/wheel/status");
-        setWheelSpinsLeft(data.remaining);
         setWheelResetAt(data.resetAt);
       } catch (err) {
         console.error("Failed to get wheel status:", err);
@@ -182,9 +180,7 @@ const Home = () => {
         <div className="relative">
           <button
             onClick={() => setShowWheelModal(true)}
-            className={`${HEADER_ICON_BASE} ${HEADER_ICON_STYLE} ${
-              wheelSpinsLeft <= 0 ? "opacity-50" : ""
-            }`}
+            className={`${HEADER_ICON_BASE} ${HEADER_ICON_STYLE}`}
             aria-label="Spin Wheel"
           >
             <div className="absolute inset-0 bg-white/5 rounded-xl pointer-events-none" />
@@ -304,7 +300,6 @@ const Home = () => {
             setPrize(p);
             setShowPrizeModal(true);
             setPlayer((prev) => ({ ...prev, coins: balance }));
-            setWheelSpinsLeft(remaining);
             if (reset) setWheelResetAt(reset);
           }}
         />

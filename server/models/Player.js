@@ -129,11 +129,11 @@ const playerSchema = new Schema(
       type: Date,
       default: null,
     },
-    wheelSpinsToday: {
+    wheelSpinsUsed: {
       type: Number,
       default: 0,
     },
-    lastWheelSpinDate: {
+    wheelSpinResetAt: {
       type: Date,
       default: null,
     },
