@@ -21,19 +21,19 @@ function pickIndex() {
 router.get("/status", protect, async (req, res) => {
   try {
     const player = await Player.findOne({ userId: req.user._id }).select(
-      "isVip wheelSpinsUsed wheelSpinResetAt"
+      "isVip lastWheelSpinAt wheelSpinsUsed"
     );
     const now = Date.now();
-    let save = false;
-    if (!player.wheelSpinResetAt || now >= player.wheelSpinResetAt.getTime()) {
-      player.wheelSpinsUsed = 0;
-      player.wheelSpinResetAt = new Date(now + WINDOW_MS);
-      save = true;
+    const limit = player.isVip ? 2 : 1;
+    if (
+      !player.lastWheelSpinAt ||
+      now - player.lastWheelSpinAt.getTime() >= WINDOW_MS
+    ) {
+      return res.json({ remaining: limit, resetAt: null });
     }
-    if (save) await player.save();
-    const maxSpins = player.isVip ? 2 : 1;
-    const remaining = Math.max(0, maxSpins - player.wheelSpinsUsed);
-    res.json({ remaining, resetAt: player.wheelSpinResetAt });
+    const remaining = Math.max(0, limit - (player.wheelSpinsUsed || 0));
+    const resetAt = new Date(player.lastWheelSpinAt.getTime() + WINDOW_MS);
+    res.json({ remaining, resetAt });
   } catch (err) {
     console.error("Wheel status failed:", err);
     res.status(500).json({ message: "Failed to get wheel status" });
@@ -43,36 +43,36 @@ router.get("/status", protect, async (req, res) => {
 router.post("/spin", protect, async (req, res) => {
   try {
     const player = await Player.findOne({ userId: req.user._id }).select(
-      "isVip wheelSpinsUsed wheelSpinResetAt coins"
+      "coins isVip lastWheelSpinAt wheelSpinsUsed"
     );
     const now = Date.now();
-    if (!player.wheelSpinResetAt || now >= player.wheelSpinResetAt.getTime()) {
+    const limit = player.isVip ? 2 : 1;
+    if (
+      !player.lastWheelSpinAt ||
+      now - player.lastWheelSpinAt.getTime() >= WINDOW_MS
+    ) {
+      player.lastWheelSpinAt = new Date(now);
       player.wheelSpinsUsed = 0;
-      player.wheelSpinResetAt = new Date(now + WINDOW_MS);
     }
-    const maxSpins = player.isVip ? 2 : 1;
-    if (player.wheelSpinsUsed >= maxSpins) {
-      return res
-        .status(429)
-        .json({
-          message: "No spins remaining",
-          remaining: 0,
-          resetAt: player.wheelSpinResetAt,
-        });
+    const resetAt = new Date(player.lastWheelSpinAt.getTime() + WINDOW_MS);
+    if (player.wheelSpinsUsed >= limit) {
+      return res.status(429).json({
+        message: "No spins remaining",
+        remaining: 0,
+        resetAt,
+      });
     }
     const index = pickIndex();
     const prize = slices[index];
     player.coins += prize;
     player.wheelSpinsUsed += 1;
-    player.lastWheelSpinAt = new Date(now);
     await player.save();
-    const remaining = maxSpins - player.wheelSpinsUsed;
     res.json({
       index,
       prize,
       balance: player.coins,
-      remaining,
-      resetAt: player.wheelSpinResetAt,
+      remaining: limit - player.wheelSpinsUsed,
+      resetAt,
     });
   } catch (err) {
     console.error("Wheel spin failed:", err);

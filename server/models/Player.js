@@ -132,10 +132,7 @@ const playerSchema = new Schema(
     wheelSpinsUsed: {
       type: Number,
       default: 0,
-    },
-    wheelSpinResetAt: {
-      type: Date,
-      default: null,
+      min: 0,
     },
     pipBalance: {
       type: Number,
