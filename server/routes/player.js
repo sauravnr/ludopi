@@ -47,12 +47,15 @@ router.patch("/me/bio", protect, async (req, res) => {
       .json({ message: `Bio must be at most ${MAX_BIO_LEN} characters.` });
   }
   const player = await Player.findOneAndUpdate(
-    { userId: req.user._id },
+    { userId: req.user._id, isVip: true },
     { bio },
     { new: true }
   )
     .select(PROFILE_FIELDS)
     .lean();
+  if (!player) {
+    return res.status(403).json({ message: "VIP membership required" });
+  }
   return res.json({ player });
 });
 

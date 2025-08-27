@@ -6,7 +6,7 @@ const Player = require("../models/Player");
 const slices = [500, 300, 500, 100, 1000, 500, 300, 300, 500, 300];
 const weights = [3, 5, 3, 2, 1, 3, 5, 5, 3, 5]; // lower weight makes prize rarer
 const totalWeight = weights.reduce((a, b) => a + b, 0);
-const COOLDOWN_MS = 3 * 60 * 60 * 1000; // 3 hours
+const WINDOW_MS = 6 * 60 * 60 * 1000; // 6 hours
 
 function pickIndex() {
   const r = Math.random() * totalWeight;
@@ -21,13 +21,19 @@ function pickIndex() {
 router.get("/status", protect, async (req, res) => {
   try {
     const player = await Player.findOne({ userId: req.user._id }).select(
-      "lastWheelSpinAt"
+      "isVip wheelSpinsUsed wheelSpinResetAt"
     );
     const now = Date.now();
-    const last = player?.lastWheelSpinAt?.getTime() || 0;
-    const availableAt = last + COOLDOWN_MS;
-    const remaining = Math.max(0, availableAt - now);
-    res.json({ remaining, availableAt });
+    let save = false;
+    if (!player.wheelSpinResetAt || now >= player.wheelSpinResetAt.getTime()) {
+      player.wheelSpinsUsed = 0;
+      player.wheelSpinResetAt = new Date(now + WINDOW_MS);
+      save = true;
+    }
+    if (save) await player.save();
+    const maxSpins = player.isVip ? 2 : 1;
+    const remaining = Math.max(0, maxSpins - player.wheelSpinsUsed);
+    res.json({ remaining, resetAt: player.wheelSpinResetAt });
   } catch (err) {
     console.error("Wheel status failed:", err);
     res.status(500).json({ message: "Failed to get wheel status" });
@@ -37,35 +43,36 @@ router.get("/status", protect, async (req, res) => {
 router.post("/spin", protect, async (req, res) => {
   try {
     const player = await Player.findOne({ userId: req.user._id }).select(
-      "lastWheelSpinAt"
+      "isVip wheelSpinsUsed wheelSpinResetAt coins"
     );
     const now = Date.now();
-    const last = player?.lastWheelSpinAt?.getTime() || 0;
-    const availableAt = last + COOLDOWN_MS;
-    if (now < availableAt) {
-      return res.status(429).json({
-        message: "Wheel on cooldown",
-        remaining: availableAt - now,
-        availableAt,
-      });
+    if (!player.wheelSpinResetAt || now >= player.wheelSpinResetAt.getTime()) {
+      player.wheelSpinsUsed = 0;
+      player.wheelSpinResetAt = new Date(now + WINDOW_MS);
     }
-
+    const maxSpins = player.isVip ? 2 : 1;
+    if (player.wheelSpinsUsed >= maxSpins) {
+      return res
+        .status(429)
+        .json({
+          message: "No spins remaining",
+          remaining: 0,
+          resetAt: player.wheelSpinResetAt,
+        });
+    }
     const index = pickIndex();
     const prize = slices[index];
-    const updatedPlayer = await Player.findOneAndUpdate(
-      { userId: req.user._id },
-      {
-        $inc: { coins: prize },
-        $set: { lastWheelSpinAt: new Date(now) },
-      },
-      { new: true }
-    ).select("coins lastWheelSpinAt");
-    const nextAvailable = updatedPlayer.lastWheelSpinAt.getTime() + COOLDOWN_MS;
+    player.coins += prize;
+    player.wheelSpinsUsed += 1;
+    player.lastWheelSpinAt = new Date(now);
+    await player.save();
+    const remaining = maxSpins - player.wheelSpinsUsed;
     res.json({
       index,
       prize,
-      balance: updatedPlayer.coins,
-      availableAt: nextAvailable,
+      balance: player.coins,
+      remaining,
+      resetAt: player.wheelSpinResetAt,
     });
   } catch (err) {
     console.error("Wheel spin failed:", err);

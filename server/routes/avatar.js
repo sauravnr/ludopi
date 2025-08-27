@@ -33,6 +33,13 @@ const s3 = new AWS.S3({
 
 router.post("/upload", protect, upload.single("avatar"), async (req, res) => {
   try {
+    const player = await Player.findOne({ userId: req.user._id }).select(
+      "isVip"
+    );
+    if (!player?.isVip) {
+      return res.status(403).json({ message: "VIP membership required" });
+    }
+
     const userId = req.user._id.toString();
     const filename = `avatars/${userId}.jpg`;
 

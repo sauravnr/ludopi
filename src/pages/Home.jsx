@@ -48,35 +48,20 @@ const Home = () => {
   const [showPrizeModal, setShowPrizeModal] = useState(false);
   const [prize, setPrize] = useState(null);
   const { setPlayer } = useAuth();
-  const [wheelCooldown, setWheelCooldown] = useState(0);
+  const [wheelSpinsLeft, setWheelSpinsLeft] = useState(0);
 
   useEffect(() => {
     sessionStorage.removeItem("navigatingToRoom");
-    let interval;
     const fetchStatus = async () => {
       try {
         const { data } = await api.get("/wheel/status");
-        setWheelCooldown(data.remaining);
+        setWheelSpinsLeft(data.remaining);
       } catch (err) {
         console.error("Failed to get wheel status:", err);
       }
     };
     fetchStatus();
-    interval = setInterval(() => {
-      setWheelCooldown((prev) => (prev > 1000 ? prev - 1000 : 0));
-    }, 1000);
-    return () => clearInterval(interval);
   }, []);
-
-  const formatTime = (ms) => {
-    const total = Math.floor(ms / 1000);
-    const h = Math.floor(total / 3600);
-    const m = Math.floor((total % 3600) / 60);
-    const s = total % 60;
-    return `${h.toString().padStart(2, "0")}:${m
-      .toString()
-      .padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-  };
 
   const handleCreateRoom = (mode) => {
     setBetMode(mode);
@@ -169,9 +154,18 @@ const Home = () => {
       <div className="w-full flex justify-between mt-4 mb-6">
         <div className="relative">
           <button
-            onClick={() => setShowWheelModal(true)}
-            className={`${HEADER_ICON_BASE} ${HEADER_ICON_STYLE}`}
+            onClick={() => {
+              if (wheelSpinsLeft > 0) {
+                setShowWheelModal(true);
+              } else {
+                showAlert("No spins remaining. Try again later.", "error");
+              }
+            }}
+            className={`${HEADER_ICON_BASE} ${HEADER_ICON_STYLE} ${
+              wheelSpinsLeft <= 0 ? "opacity-50 cursor-not-allowed" : ""
+            }`}
             aria-label="Spin Wheel"
+            disabled={wheelSpinsLeft <= 0}
           >
             <div className="absolute inset-0 bg-white/5 rounded-xl pointer-events-none" />
             <img
@@ -180,11 +174,10 @@ const Home = () => {
               className="w-7 h-7 z-5"
             />
           </button>
-          {wheelCooldown > 0 && (
+          {wheelSpinsLeft > 0 && (
             <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex items-center justify-center bg-gray-800 rounded-full px-2 py-0.5 gap-1 w-[50px]">
-              <img src="/icons/timer.png" alt="Timer" className="w-2.5 h-2.5" />
               <span className="text-[7px] font-semibold font-mono tabular-nums">
-                {formatTime(wheelCooldown)}
+                {wheelSpinsLeft} left
               </span>
             </div>
           )}
@@ -286,14 +279,12 @@ const Home = () => {
         <WheelModal
           show={showWheelModal}
           onClose={() => setShowWheelModal(false)}
-          onResult={(p, balance, availableAt) => {
+          onResult={(p, balance, remaining) => {
             setShowWheelModal(false);
             setPrize(p);
             setShowPrizeModal(true);
             setPlayer((prev) => ({ ...prev, coins: balance }));
-            if (availableAt) {
-              setWheelCooldown(availableAt - Date.now());
-            }
+            setWheelSpinsLeft(remaining);
           }}
         />
       )}
