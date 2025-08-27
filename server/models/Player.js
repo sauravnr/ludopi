@@ -116,7 +116,24 @@ const playerSchema = new Schema(
       type: Number,
       default: 10000,
     },
+    // VIP membership
+    isVip: {
+      type: Boolean,
+      default: false,
+    },
+    vipExpiresAt: {
+      type: Date,
+      default: null,
+    },
     lastWheelSpinAt: {
+      type: Date,
+      default: null,
+    },
+    wheelSpinsToday: {
+      type: Number,
+      default: 0,
+    },
+    lastWheelSpinDate: {
       type: Date,
       default: null,
     },
