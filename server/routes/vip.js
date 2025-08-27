@@ -7,14 +7,19 @@ const mongoose = require("mongoose");
 const PROFILE_FIELDS = require("../utils/profileFields");
 
 const VIP_COST = 100;
+const VIP_DURATION_DAYS = 30;
 
 router.post("/purchase", protect, async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
+    const vipExpiresAt = new Date(Date.now() + VIP_DURATION_DAYS * 86400000);
     const player = await Player.findOneAndUpdate(
       { userId: req.user._id, coins: { $gte: VIP_COST }, isVip: { $ne: true } },
-      { $inc: { coins: -VIP_COST }, $set: { isVip: true } },
+      {
+        $inc: { coins: -VIP_COST },
+        $set: { isVip: true, vipExpiresAt },
+      },
       { new: true, session }
     ).select(PROFILE_FIELDS);
 

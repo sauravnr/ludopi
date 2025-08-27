@@ -141,8 +141,8 @@ const Home = () => {
     if (vipLoading || player?.isVip) return;
     try {
       setVipLoading(true);
-      await api.post("/vip/purchase");
-      setPlayer((prev) => ({ ...prev, isVip: true }));
+      const { data } = await api.post("/vip/purchase");
+      setPlayer(data.player);
       showAlert("VIP membership activated!", "success");
       setShowVipModal(false);
     } catch (err) {
@@ -196,8 +196,8 @@ const Home = () => {
   return (
     <div className="flex-1 flex flex-col items-center px-4">
       <div className="w-full flex justify-between mt-4 mb-6">
-        <div className="flex flex-col items-center gap-3">
-          <div className="relative">
+        <div className="flex flex-col items-center gap-2">
+          <div className="relative mb-6">
             <button
               onClick={() => setShowWheelModal(true)}
               className={`${HEADER_ICON_BASE} ${HEADER_ICON_STYLE}`}
@@ -226,13 +226,6 @@ const Home = () => {
             <div className="absolute inset-0 bg-white/5 rounded-xl pointer-events-none" />
             <img src="/icons/vip.png" alt="VIP" className="w-7 h-7 z-5" />
           </button>
-          <span
-            className={`text-[10px] font-semibold ${
-              player?.isVip ? "text-yellow-300" : "text-gray-300"
-            }`}
-          >
-            {player?.isVip ? "Active" : "Get VIP"}
-          </span>
         </div>
 
         <button

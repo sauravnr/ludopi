@@ -7,6 +7,7 @@ const protect = require("../middleware/auth");
 const User = require("../models/User");
 const Player = require("../models/Player");
 const { checkAwards } = require("../utils/awards");
+const { refreshVipStatus } = require("../utils/vip");
 const router = express.Router();
 
 // limit PI-login to 5 attempts/IP per minute
@@ -69,8 +70,9 @@ router.post("/pi-login", piLoginLimiter, async (req, res) => {
       { $set: { lastLogin: new Date() } }
     ).catch((err) => console.error("Failed to update lastLogin:", err));
 
-    // grant any overdue awards and fetch profile fields for response
+    // grant any overdue awards and ensure VIP status
     await checkAwards(user._id, req.app.get("io"));
+    await refreshVipStatus(user._id);
     // fetch profile fields for response
     const playerProfile = await Player.findOne({ userId: user._id })
       .select(PROFILE_FIELDS)
@@ -122,6 +124,7 @@ router.post("/register", async (req, res) => {
     });
 
     await checkAwards(user._id, req.app.get("io"));
+    await refreshVipStatus(user._id);
     const playerProfile = await Player.findOne({ userId: user._id })
       .select(PROFILE_FIELDS)
       .lean();
@@ -166,6 +169,7 @@ router.post("/login", async (req, res) => {
       { $set: { lastLogin: new Date() } }
     ).catch((err) => console.error("Failed to update lastLogin:", err));
     await checkAwards(user._id, req.app.get("io"));
+    await refreshVipStatus(user._id);
     const playerProfile = await Player.findOne({ userId: user._id })
       .select(PROFILE_FIELDS)
       .lean();
