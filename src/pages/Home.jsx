@@ -228,26 +228,43 @@ const Home = () => {
           </button>
         </div>
 
-        <button
-          onClick={() => {
-            clearNotifications();
-            setShowNotifModal(true);
-          }}
-          className={`${HEADER_ICON_BASE} ${HEADER_ICON_STYLE}`}
-          aria-label="Notifications"
-        >
-          <div className="absolute inset-0 bg-white/5 rounded-xl pointer-events-none" />
-          <img
-            src="/icons/notification.png"
-            alt="Notifications"
-            className="w-7 h-7 z-5"
-          />
-          {notificationCount > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-              {notificationCount >= 99 ? "99+" : notificationCount}
-            </span>
-          )}
-        </button>
+        <div className="flex flex-col items-center gap-2">
+          <div className="mb-6">
+            <button
+              onClick={() => {
+                clearNotifications();
+                setShowNotifModal(true);
+              }}
+              className={`${HEADER_ICON_BASE} ${HEADER_ICON_STYLE}`}
+              aria-label="Notifications"
+            >
+              <div className="absolute inset-0 bg-white/5 rounded-xl pointer-events-none" />
+              <img
+                src="/icons/notification.png"
+                alt="Notifications"
+                className="w-7 h-7 z-5"
+              />
+              {notificationCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                  {notificationCount >= 99 ? "99+" : notificationCount}
+                </span>
+              )}
+            </button>
+          </div>
+
+          <button
+            onClick={() => console.log("1000 ads clicked")}
+            className={`${HEADER_ICON_BASE} ${HEADER_ICON_STYLE}`}
+            aria-label="1000 Ads"
+          >
+            <div className="absolute inset-0 bg-white/5 rounded-xl pointer-events-none" />
+            <img
+              src="/icons/1000ads.png"
+              alt="1000 Ads"
+              className="w-7 h-7 z-5"
+            />
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-8 p-8">
