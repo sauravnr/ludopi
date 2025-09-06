@@ -13,6 +13,8 @@ const messageSchema = new mongoose.Schema(
       trim: true,
     },
 
+    feeDeducted: { type: Boolean, default: false },
+
     deliveredAt: { type: Date, default: null },
     readAt: { type: Date, default: null },
   },

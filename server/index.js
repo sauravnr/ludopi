@@ -1590,6 +1590,7 @@ io.on("connection", (socket) => {
 
     let msg;
     let balance;
+    let feeDeducted = false;
 
     // Helper to run logic without transactions (standalone MongoDB)
     async function saveWithoutTransaction() {
@@ -1620,6 +1621,7 @@ io.on("connection", (socket) => {
 
       balance = player.coins;
       if (cost > 0) {
+        feeDeducted = true;
         const updated = await Player.findOneAndUpdate(
           { userId: senderId, coins: { $gte: cost } },
           { $inc: { coins: -cost } },
@@ -1644,6 +1646,7 @@ io.on("connection", (socket) => {
           to,
           text: cleanText,
           deliveredAt: now,
+          feeDeducted,
         });
       } catch (err) {
         // Refund coins if message creation fails
@@ -1695,6 +1698,7 @@ io.on("connection", (socket) => {
 
           balance = player.coins;
           if (cost > 0) {
+            feeDeducted = true;
             const updated = await Player.findOneAndUpdate(
               { userId: senderId, coins: { $gte: cost } },
               { $inc: { coins: -cost } },
@@ -1725,6 +1729,7 @@ io.on("connection", (socket) => {
                 to,
                 text: cleanText,
                 deliveredAt: now,
+                feeDeducted,
               },
             ],
             { session }
@@ -1778,6 +1783,7 @@ io.on("connection", (socket) => {
       id: msg._id.toString(),
       deliveredAt: msg.deliveredAt,
       balance,
+      feeDeducted,
     });
 
     // B) Emit full payload (readAt is null initially)
@@ -1789,6 +1795,7 @@ io.on("connection", (socket) => {
       createdAt: msg.createdAt,
       deliveredAt: msg.deliveredAt,
       readAt: msg.readAt,
+      feeDeducted,
     });
   });
 
