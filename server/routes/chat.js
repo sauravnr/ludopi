@@ -20,22 +20,26 @@ const getLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Apply GET rate limiter to all chat routes
+router.use(getLimiter);
+
 // Helper: check if two users are friends via Player model
 async function ensureFriends(meUserId, otherUserId) {
-  // 1) Load the Player doc for the current user
-  const mePlayer = await Player.findOne({ userId: meUserId })
-    .select("friends")
-    .lean();
-  if (!mePlayer) return false;
+  // Fetch both Player documents
+  const [mePlayer, otherPlayer] = await Promise.all([
+    Player.findOne({ userId: meUserId }).select("friends").lean(),
+    Player.findOne({ userId: otherUserId }).select("friends").lean(),
+  ]);
+  if (!mePlayer || !otherPlayer) return false;
 
-  // 2) Load the Player doc for the other user
-  const otherPlayer = await Player.findOne({ userId: otherUserId })
-    .select("_id")
-    .lean();
-  if (!otherPlayer) return false;
-
-  // 3) Check membership by comparing ObjectId
-  return mePlayer.friends.some((pid) => pid.equals(otherPlayer._id));
+  // Confirm each lists the other as a friend
+  const meHasOther = mePlayer.friends.some((pid) =>
+    pid.equals(otherPlayer._id)
+  );
+  const otherHasMe = otherPlayer.friends.some((pid) =>
+    pid.equals(mePlayer._id)
+  );
+  return meHasOther && otherHasMe;
 }
 
 // 1) List conversations (paginated threads, 10 per page)
@@ -168,5 +172,8 @@ router.get(
     }
   }
 );
+
+// Expose ensureFriends so socket handlers can reuse it
+router.ensureFriends = ensureFriends;
 
 module.exports = router;

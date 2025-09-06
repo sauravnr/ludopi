@@ -118,6 +118,7 @@ const playerRoutes = require("./routes/player");
 const avatarRoutes = require("./routes/avatar");
 const friendRequests = require("./routes/friendRequests");
 const chatRoutes = require("./routes/chat");
+const { ensureFriends } = chatRoutes;
 const rankingRoutes = require("./routes/ranking");
 const adminRoutes = require("./routes/admin");
 const pipRoutes = require("./routes/pip");
@@ -1568,20 +1569,39 @@ io.on("connection", (socket) => {
       allowedAttributes: {},
     });
 
+    // Validate recipient
+    if (!mongoose.Types.ObjectId.isValid(to)) {
+      return callback({ status: "error", message: "Invalid recipient" });
+    }
+
+    // Ensure both users are friends
+    if (!(await ensureFriends(socket.user._id, to))) {
+      return callback({
+        status: "error",
+        message: "You can only message your friends",
+      });
+    }
+
     // 3) Deduct coins if needed, then persist & broadcast
-    try {
-      const senderId = socket.user._id;
+    const senderId = socket.user._id;
+    const client = mongoose.connection.getClient();
+    const topologyType = client?.topology?.description?.type;
+    const supportsTransactions = topologyType && topologyType !== "Single";
+
+    let msg;
+    let balance;
+
+    // Helper to run logic without transactions (standalone MongoDB)
+    async function saveWithoutTransaction() {
+      const player = await Player.findOne({ userId: senderId }).select(
+        "coins isVip"
+      );
+      if (!player) {
+        return { error: "player-not-found" };
+      }
 
       // Determine if this message should cost coins
       let cost = 0;
-      const player = await Player.findOne({ userId: senderId })
-        .select("coins isVip")
-        .lean();
-
-      if (!player) {
-        return callback({ status: "error", message: "Player not found" });
-      }
-
       if (!player.isVip) {
         const lastMsg = await Message.findOne({
           $or: [
@@ -1598,20 +1618,17 @@ io.on("connection", (socket) => {
         }
       }
 
-      let balance = player.coins;
+      balance = player.coins;
       if (cost > 0) {
         const updated = await Player.findOneAndUpdate(
           { userId: senderId, coins: { $gte: cost } },
           { $inc: { coins: -cost } },
           { new: true }
         );
-
         if (!updated) {
-          return callback({ status: "error", message: "Not enough coins" });
+          return { error: "insufficient-coins" };
         }
-
         balance = updated.coins;
-
         await CoinTransaction.create({
           userId: senderId,
           amount: -cost,
@@ -1621,35 +1638,158 @@ io.on("connection", (socket) => {
       }
 
       const now = new Date();
-      const msg = await Message.create({
-        from: senderId,
-        to,
-        text: cleanText,
-        deliveredAt: now,
-      });
-
-      // A) ACK back to sender
-      callback({
-        status: "ok",
-        id: msg._id.toString(),
-        deliveredAt: msg.deliveredAt,
-        balance,
-      });
-
-      // B) Emit full payload (readAt is null initially)
-      io.to(to.toString()).to(senderId.toString()).emit("private-message", {
-        _id: msg._id.toString(),
-        from: msg.from.toString(),
-        to: msg.to.toString(),
-        text: msg.text,
-        createdAt: msg.createdAt,
-        deliveredAt: msg.deliveredAt,
-        readAt: msg.readAt,
-      });
-    } catch (err) {
-      console.error("Socket private-message save error:", err);
-      callback({ status: "error", message: "Server error" });
+      try {
+        msg = await Message.create({
+          from: senderId,
+          to,
+          text: cleanText,
+          deliveredAt: now,
+        });
+      } catch (err) {
+        // Refund coins if message creation fails
+        if (cost > 0) {
+          await Player.updateOne(
+            { userId: senderId },
+            { $inc: { coins: cost } }
+          ).catch(() => {});
+          await CoinTransaction.create({
+            userId: senderId,
+            amount: cost,
+            type: "reversal",
+            description: "Chat refund",
+          }).catch(() => {});
+        }
+        throw err;
+      }
     }
+
+    if (supportsTransactions) {
+      const session = await mongoose.startSession();
+      try {
+        await session.withTransaction(async () => {
+          const player = await Player.findOne({ userId: senderId })
+            .select("coins isVip")
+            .session(session);
+          if (!player) {
+            throw new Error("player-not-found");
+          }
+
+          // Determine if this message should cost coins
+          let cost = 0;
+          if (!player.isVip) {
+            const lastMsg = await Message.findOne({
+              $or: [
+                { from: senderId, to },
+                { from: to, to: senderId },
+              ],
+            })
+              .sort({ createdAt: -1 })
+              .select("from")
+              .session(session)
+              .lean();
+
+            if (!lastMsg || lastMsg.from.toString() !== senderId.toString()) {
+              cost = 10;
+            }
+          }
+
+          balance = player.coins;
+          if (cost > 0) {
+            const updated = await Player.findOneAndUpdate(
+              { userId: senderId, coins: { $gte: cost } },
+              { $inc: { coins: -cost } },
+              { new: true, session }
+            );
+            if (!updated) {
+              throw new Error("insufficient-coins");
+            }
+            balance = updated.coins;
+            await CoinTransaction.create(
+              [
+                {
+                  userId: senderId,
+                  amount: -cost,
+                  type: "fee",
+                  description: "Chat message",
+                },
+              ],
+              { session }
+            );
+          }
+
+          const now = new Date();
+          [msg] = await Message.create(
+            [
+              {
+                from: senderId,
+                to,
+                text: cleanText,
+                deliveredAt: now,
+              },
+            ],
+            { session }
+          );
+        });
+      } catch (err) {
+        if (err.code === 20) {
+          try {
+            const result = await saveWithoutTransaction();
+            if (result?.error === "player-not-found") {
+              return callback({ status: "error", message: "Player not found" });
+            }
+            if (result?.error === "insufficient-coins") {
+              return callback({ status: "error", message: "Not enough coins" });
+            }
+          } catch (e) {
+            console.error("Socket private-message save error:", e);
+            return callback({ status: "error", message: "Server error" });
+          }
+        } else {
+          if (err.message === "player-not-found") {
+            return callback({ status: "error", message: "Player not found" });
+          }
+          if (err.message === "insufficient-coins") {
+            return callback({ status: "error", message: "Not enough coins" });
+          }
+          console.error("Socket private-message save error:", err);
+          return callback({ status: "error", message: "Server error" });
+        }
+      } finally {
+        session.endSession();
+      }
+    } else {
+      try {
+        const result = await saveWithoutTransaction();
+        if (result?.error === "player-not-found") {
+          return callback({ status: "error", message: "Player not found" });
+        }
+        if (result?.error === "insufficient-coins") {
+          return callback({ status: "error", message: "Not enough coins" });
+        }
+      } catch (err) {
+        console.error("Socket private-message save error:", err);
+        return callback({ status: "error", message: "Server error" });
+      }
+    }
+
+    // A) ACK back to sender
+    callback({
+      status: "ok",
+      id: msg._id.toString(),
+      deliveredAt: msg.deliveredAt,
+      balance,
+    });
+
+    // B) Emit full payload (readAt is null initially)
+    io.to(to.toString()).to(senderId.toString()).emit("private-message", {
+      _id: msg._id.toString(),
+      from: msg.from.toString(),
+      to: msg.to.toString(),
+      text: msg.text,
+      createdAt: msg.createdAt,
+      deliveredAt: msg.deliveredAt,
+      readAt: msg.readAt,
+    });
   });
 
   // ── 2) “message-seen” read-receipt persistence & broadcast ──
