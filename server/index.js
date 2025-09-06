@@ -1598,15 +1598,19 @@ io.on("connection", (socket) => {
         }
       }
 
+      let balance = player.coins;
       if (cost > 0) {
         const updated = await Player.findOneAndUpdate(
           { userId: senderId, coins: { $gte: cost } },
-          { $inc: { coins: -cost } }
+          { $inc: { coins: -cost } },
+          { new: true }
         );
 
         if (!updated) {
           return callback({ status: "error", message: "Not enough coins" });
         }
+
+        balance = updated.coins;
 
         await CoinTransaction.create({
           userId: senderId,
@@ -1629,6 +1633,7 @@ io.on("connection", (socket) => {
         status: "ok",
         id: msg._id.toString(),
         deliveredAt: msg.deliveredAt,
+        balance,
       });
 
       // B) Emit full payload (readAt is null initially)

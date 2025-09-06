@@ -9,7 +9,7 @@ import { useAlert } from "../context/AlertContext";
 
 export default function ChatWindow({ user: partner, onBack }) {
   const LIMIT = 10;
-  const { user: me } = useAuth();
+  const { user: me, setPlayer } = useAuth();
   const socket = useSocket();
   const showAlert = useAlert();
   const myId = me._id || me.id;
@@ -177,6 +177,9 @@ export default function ChatWindow({ user: partner, onBack }) {
           );
           return newPages;
         }, false);
+        if (typeof ack.balance === "number") {
+          setPlayer((prev) => (prev ? { ...prev, coins: ack.balance } : prev));
+        }
       } else {
         // error – you could mark temp as “failed” here
         showAlert("Message failed to send", "error");
