@@ -102,8 +102,14 @@ export default function ChatWindow({ user: partner, onBack }) {
         mutate((old) => {
           if (!old) return old;
           const newPages = [...old];
-          // pageIndex=0 always holds the newest messages
-          newPages[0] = [...(newPages[0] || []), msg];
+          const page = newPages[0] || [];
+          const idx = page.findIndex((m) => m._id === msg._id);
+          if (idx >= 0) {
+            page[idx] = { ...page[idx], ...msg };
+            newPages[0] = page;
+          } else {
+            newPages[0] = [...page, msg];
+          }
           return newPages;
         }, false);
       }
@@ -169,12 +175,13 @@ export default function ChatWindow({ user: partner, onBack }) {
         mutate((old) => {
           if (!old) return old;
           const newPages = [...old];
-          // patch only page 0 (the newest chunk)
-          newPages[0] = newPages[0].map((m) =>
-            m._id === tempId
-              ? { ...m, _id: ack.id, deliveredAt: ack.deliveredAt }
-              : m
-          );
+          const realMsg = {
+            ...tempMsg,
+            _id: ack.id,
+            deliveredAt: ack.deliveredAt,
+            feeDeducted: ack.feeDeducted,
+          };
+          newPages[0] = [...(newPages[0] || []), realMsg];
           return newPages;
         }, false);
         if (typeof ack.balance === "number") {
@@ -229,30 +236,50 @@ export default function ChatWindow({ user: partner, onBack }) {
           </div>
         )}
 
-        {uniqueMessages.map((m) => (
-          <div
-            key={m._id}
-            className={`flex ${
-              m.from === activeUserId ? "justify-start" : "justify-end"
-            }`}
-          >
+        {uniqueMessages.map((m, i) => {
+          const prev = uniqueMessages[i - 1];
+          const senderIsVip = m.from === myId ? me?.isVip : partner?.isVip;
+          const showBadge =
+            m.feeDeducted && (!prev || prev.from !== m.from) && !senderIsVip;
+
+          const badge = (
+            <div className="flex items-center text-xs text-red-500 mx-1">
+              -10
+              <img
+                src="/icons/coin.png"
+                alt="coin"
+                className="w-3 h-3 ml-0.5"
+              />
+            </div>
+          );
+
+          return (
             <div
-              className={`px-3 py-2 rounded-lg max-w-[60%] ${
-                m.from === activeUserId
-                  ? "bg-gray-200 text-gray-800"
-                  : "bg-blue-500 text-white"
+              key={m._id}
+              className={`flex items-center ${
+                m.from === activeUserId ? "justify-start" : "justify-end"
               }`}
             >
-              <div>{m.text}</div>
-              <div className="mt-1 text-xs text-gray-400 text-right">
-                {new Date(m.createdAt).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+              {m.from === activeUserId && showBadge && badge}
+              <div
+                className={`px-3 py-2 rounded-lg max-w-[60%] ${
+                  m.from === activeUserId
+                    ? "bg-gray-200 text-gray-800"
+                    : "bg-blue-500 text-white"
+                }`}
+              >
+                <div>{m.text}</div>
+                <div className="mt-1 text-xs text-gray-400 text-right">
+                  {new Date(m.createdAt).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </div>
               </div>
+              {m.from !== activeUserId && showBadge && badge}
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {/* Status on last outgoing */}
         {messages.length > 0 && messages[messages.length - 1].from === myId && (
