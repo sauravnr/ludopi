@@ -1568,11 +1568,57 @@ io.on("connection", (socket) => {
       allowedAttributes: {},
     });
 
-    // 3) Persist & broadcast
+    // 3) Deduct coins if needed, then persist & broadcast
     try {
+      const senderId = socket.user._id;
+
+      // Determine if this message should cost coins
+      let cost = 0;
+      const player = await Player.findOne({ userId: senderId })
+        .select("coins isVip")
+        .lean();
+
+      if (!player) {
+        return callback({ status: "error", message: "Player not found" });
+      }
+
+      if (!player.isVip) {
+        const lastMsg = await Message.findOne({
+          $or: [
+            { from: senderId, to },
+            { from: to, to: senderId },
+          ],
+        })
+          .sort({ createdAt: -1 })
+          .select("from")
+          .lean();
+
+        if (!lastMsg || lastMsg.from.toString() !== senderId.toString()) {
+          cost = 10;
+        }
+      }
+
+      if (cost > 0) {
+        const updated = await Player.findOneAndUpdate(
+          { userId: senderId, coins: { $gte: cost } },
+          { $inc: { coins: -cost } }
+        );
+
+        if (!updated) {
+          return callback({ status: "error", message: "Not enough coins" });
+        }
+
+        await CoinTransaction.create({
+          userId: senderId,
+          amount: -cost,
+          type: "fee",
+          description: "Chat message",
+        });
+      }
+
       const now = new Date();
       const msg = await Message.create({
-        from: socket.user._id,
+        from: senderId,
         to,
         text: cleanText,
         deliveredAt: now,
@@ -1586,17 +1632,15 @@ io.on("connection", (socket) => {
       });
 
       // B) Emit full payload (readAt is null initially)
-      io.to(to.toString())
-        .to(socket.user._id.toString())
-        .emit("private-message", {
-          _id: msg._id.toString(),
-          from: msg.from.toString(),
-          to: msg.to.toString(),
-          text: msg.text,
-          createdAt: msg.createdAt,
-          deliveredAt: msg.deliveredAt,
-          readAt: msg.readAt,
-        });
+      io.to(to.toString()).to(senderId.toString()).emit("private-message", {
+        _id: msg._id.toString(),
+        from: msg.from.toString(),
+        to: msg.to.toString(),
+        text: msg.text,
+        createdAt: msg.createdAt,
+        deliveredAt: msg.deliveredAt,
+        readAt: msg.readAt,
+      });
     } catch (err) {
       console.error("Socket private-message save error:", err);
       callback({ status: "error", message: "Server error" });
