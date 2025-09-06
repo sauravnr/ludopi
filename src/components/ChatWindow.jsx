@@ -240,7 +240,10 @@ export default function ChatWindow({ user: partner, onBack }) {
           const prev = uniqueMessages[i - 1];
           const senderIsVip = m.from === myId ? me?.isVip : partner?.isVip;
           const showBadge =
-            m.feeDeducted && (!prev || prev.from !== m.from) && !senderIsVip;
+            m.from === myId &&
+            m.feeDeducted &&
+            (!prev || prev.from !== m.from) &&
+            !senderIsVip;
 
           const badge = (
             <div className="flex items-center text-xs text-red-500 mx-1">
@@ -260,7 +263,7 @@ export default function ChatWindow({ user: partner, onBack }) {
                 m.from === activeUserId ? "justify-start" : "justify-end"
               }`}
             >
-              {m.from === activeUserId && showBadge && badge}
+              {m.from === myId && showBadge && badge}
               <div
                 className={`px-3 py-2 rounded-lg max-w-[60%] ${
                   m.from === activeUserId
@@ -276,7 +279,6 @@ export default function ChatWindow({ user: partner, onBack }) {
                   })}
                 </div>
               </div>
-              {m.from !== activeUserId && showBadge && badge}
             </div>
           );
         })}
