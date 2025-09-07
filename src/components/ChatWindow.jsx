@@ -6,6 +6,7 @@ import { useSocket } from "../context/SocketContext";
 import { FaArrowLeft } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 import { useAlert } from "../context/AlertContext";
+import { formatChatTimestamp } from "../utils/formatChatTimestamp";
 
 export default function ChatWindow({ user: partner, onBack }) {
   const LIMIT = 10;
@@ -273,10 +274,7 @@ export default function ChatWindow({ user: partner, onBack }) {
               >
                 <div>{m.text}</div>
                 <div className="mt-1 text-xs text-gray-400 text-right">
-                  {new Date(m.createdAt).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  {formatChatTimestamp(m.createdAt)}
                 </div>
               </div>
             </div>

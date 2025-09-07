@@ -3,6 +3,7 @@ import useSWRInfinite from "swr/infinite";
 import api from "../utils/api";
 import { useSocket } from "../context/SocketContext";
 import { useAuth } from "../context/AuthContext";
+import { formatChatTimestamp } from "../utils/formatChatTimestamp";
 
 // Helper: split flat array into pages
 function chunk(arr, size) {
@@ -139,10 +140,7 @@ export default function ChatList({ onSelect }) {
                         isUnread ? "font-bold" : ""
                       }`}
                     >
-                      {new Date(c.updatedAt).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {formatChatTimestamp(c.updatedAt)}
                     </span>
                   </div>
                 </div>
