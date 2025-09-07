@@ -25,6 +25,14 @@ const BET_OPTIONS = {
   ],
 };
 
+const VIP_BENEFITS = [
+  "Two wheel spins every 6 hours",
+  "Upload a custom avatar",
+  "Edit your profile bio",
+  "VIP icon on profile",
+  "Free private chat",
+];
+
 const HEADER_ICON_BASE =
   "relative w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-100 ease-out filter active:translate-y-1 active:brightness-75 ring-1 ring-inset ring-white/10 border";
 const HEADER_ICON_STYLE =
@@ -52,6 +60,7 @@ const Home = () => {
   const [timeUntilSpin, setTimeUntilSpin] = useState("");
   const [showVipModal, setShowVipModal] = useState(false);
   const [vipLoading, setVipLoading] = useState(false);
+  const [showVipConfirm, setShowVipConfirm] = useState(false);
 
   useEffect(() => {
     sessionStorage.removeItem("navigatingToRoom");
@@ -145,6 +154,7 @@ const Home = () => {
       setPlayer(data.player);
       showAlert("VIP membership activated!", "success");
       setShowVipModal(false);
+      setShowVipConfirm(false);
     } catch (err) {
       const msg =
         err?.response?.data?.message || "Unable to purchase VIP right now.";
@@ -348,9 +358,9 @@ const Home = () => {
               ? null
               : [
                   {
-                    label: vipLoading ? "Processing..." : "Purchase",
+                    label: "Purchase",
                     variant: "primary",
-                    onClick: handlePurchaseVip,
+                    onClick: () => setShowVipConfirm(true),
                   },
                 ]
           }
@@ -358,10 +368,40 @@ const Home = () => {
           {player?.isVip ? (
             <p className="text-center">You are already a VIP member.</p>
           ) : (
-            <p className="text-center">
-              Unlock exclusive features with a VIP membership.
-            </p>
+            <div className="text-center">
+              <p className="mb-2">
+                Unlock exclusive features with a VIP membership:
+              </p>
+              <ul className="text-left list-disc pl-5 space-y-1">
+                {VIP_BENEFITS.map((benefit) => (
+                  <li key={benefit}>{benefit}</li>
+                ))}
+              </ul>
+            </div>
           )}
+        </Modal>
+      )}
+
+      {showVipConfirm && (
+        <Modal
+          show={showVipConfirm}
+          onClose={() => !vipLoading && setShowVipConfirm(false)}
+          title="Confirm Purchase"
+          width="sm"
+          footer={[
+            {
+              label: "Cancel",
+              variant: "secondary",
+              onClick: () => setShowVipConfirm(false),
+            },
+            {
+              label: vipLoading ? "Processing..." : "Confirm",
+              variant: "primary",
+              onClick: handlePurchaseVip,
+            },
+          ]}
+        >
+          <p className="text-center">Purchase VIP for 100 coins?</p>
         </Modal>
       )}
 
