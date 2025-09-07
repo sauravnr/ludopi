@@ -4,9 +4,23 @@ const protect = require("../middleware/auth");
 const Player = require("../models/Player");
 const CoinTransaction = require("../models/CoinTransaction");
 const PROFILE_FIELDS = require("../utils/profileFields");
+const { refreshVipStatus } = require("../utils/vip");
 
 const VIP_COST = 100;
 const VIP_DURATION_DAYS = 30;
+
+router.get("/status", protect, async (req, res) => {
+  try {
+    await refreshVipStatus(req.user._id);
+    const player = await Player.findOne({ userId: req.user._id })
+      .select("isVip vipExpiresAt")
+      .lean();
+    res.json({ isVip: player?.isVip, vipExpiresAt: player?.vipExpiresAt });
+  } catch (err) {
+    console.error("Failed to fetch VIP status:", err);
+    res.status(500).json({ message: "Failed to fetch VIP status" });
+  }
+});
 
 router.post("/purchase", protect, async (req, res) => {
   try {

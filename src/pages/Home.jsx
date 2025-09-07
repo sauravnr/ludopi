@@ -99,6 +99,19 @@ const Home = () => {
     return () => clearInterval(timer);
   }, [wheelResetAt]);
 
+  useEffect(() => {
+    if (!showVipModal) return;
+    const fetchVip = async () => {
+      try {
+        const { data } = await api.get("/vip/status");
+        setPlayer((prev) => ({ ...prev, ...data }));
+      } catch (err) {
+        console.error("Failed to fetch VIP status:", err);
+      }
+    };
+    fetchVip();
+  }, [showVipModal, setPlayer]);
+
   const handleCreateRoom = (mode) => {
     setBetMode(mode);
     setBetError("");
@@ -366,7 +379,13 @@ const Home = () => {
           }
         >
           {player?.isVip ? (
-            <p className="text-center">You are already a VIP member.</p>
+            <p className="text-center">
+              Your VIP membership expires on{" "}
+              {player.vipExpiresAt
+                ? new Date(player.vipExpiresAt).toLocaleDateString()
+                : "unknown"}
+              .
+            </p>
           ) : (
             <div className="text-center">
               <p className="mb-2">
