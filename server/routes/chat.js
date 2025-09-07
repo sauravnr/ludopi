@@ -91,6 +91,8 @@ router.get(
             _id: "$other",
             lastMessage: { $first: "$text" },
             updatedAt: { $first: "$createdAt" },
+            lastFrom: { $first: "$from" },
+            lastReadAt: { $first: "$readAt" },
           },
         },
         {
@@ -109,6 +111,8 @@ router.get(
             avatarUrl: "$user.avatarUrl",
             lastMessage: 1,
             updatedAt: 1,
+            lastFrom: 1,
+            lastReadAt: 1,
           },
         },
         { $sort: { updatedAt: -1 } },

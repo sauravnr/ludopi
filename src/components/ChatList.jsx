@@ -70,6 +70,8 @@ export default function ChatList({ onSelect }) {
           avatarUrl: existing.avatarUrl || "",
           lastMessage: msg.text,
           updatedAt: msg.createdAt,
+          lastFrom: msg.from,
+          lastReadAt: msg.readAt,
         });
 
         return chunk(flat, LIMIT);
@@ -78,46 +80,78 @@ export default function ChatList({ onSelect }) {
 
     socket.on("private-message", handler);
     return () => socket.off("private-message", handler);
-  }, [myId, mutate]);
+  }, [myId, mutate, socket]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto">
         <ul className="divide-y">
-          {convs.map((c) => (
-            <li
-              key={c.userId}
-              onClick={() =>
-                onSelect({
-                  id: c.userId,
-                  username: c.username,
-                  avatarUrl: c.avatarUrl,
-                })
-              }
-              className="p-3 cursor-pointer flex items-center gap-3 hover:bg-gray-100"
-            >
-              <img
-                src={c.avatarUrl || "/default-avatar.png"}
-                className="w-10 h-10 rounded-full"
-              />
-              <div className="flex-1">
-                <div className="font-medium">{c.username}</div>
-                <div className="flex items-center text-sm text-gray-600">
-                  <span className="truncate max-w-[150px]">
-                    {c.lastMessage.length > 15
-                      ? `${c.lastMessage.slice(0, 15)}…`
-                      : c.lastMessage}
-                  </span>
-                  <span className="ml-2 text-xs text-gray-400">
-                    {new Date(c.updatedAt).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
+          {convs.map((c) => {
+            const isUnread = c.lastFrom !== myId && !c.lastReadAt;
+            return (
+              <li
+                key={c.userId}
+                onClick={() => {
+                  onSelect({
+                    id: c.userId,
+                    username: c.username,
+                    avatarUrl: c.avatarUrl,
+                  });
+                  if (c.lastFrom !== myId && !c.lastReadAt) {
+                    mutate((oldPages) => {
+                      if (!oldPages) return oldPages;
+                      const flat = oldPages.flat();
+                      const idx = flat.findIndex(
+                        (cc) => cc.userId === c.userId
+                      );
+                      if (idx >= 0) {
+                        flat[idx] = {
+                          ...flat[idx],
+                          lastReadAt: new Date().toISOString(),
+                        };
+                      }
+                      return chunk(flat, LIMIT);
+                    }, false);
+                  }
+                }}
+                className="p-3 cursor-pointer flex items-center gap-3 hover:bg-gray-100"
+              >
+                <img
+                  src={c.avatarUrl || "/default-avatar.png"}
+                  className="w-10 h-10 rounded-full"
+                />
+                <div className="flex-1">
+                  <div className={isUnread ? "font-bold" : "font-medium"}>
+                    {c.username}
+                  </div>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <span
+                      className={`truncate max-w-[150px] ${
+                        isUnread ? "font-bold" : ""
+                      }`}
+                    >
+                      {c.lastMessage.length > 15
+                        ? `${c.lastMessage.slice(0, 15)}…`
+                        : c.lastMessage}
+                    </span>
+                    <span
+                      className={`ml-2 text-xs text-gray-400 ${
+                        isUnread ? "font-bold" : ""
+                      }`}
+                    >
+                      {new Date(c.updatedAt).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </li>
-          ))}
+                {isUnread && (
+                  <span className="w-2 h-2 rounded-full bg-blue-500" />
+                )}
+              </li>
+            );
+          })}
         </ul>
       </div>
 
