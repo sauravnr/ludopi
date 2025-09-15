@@ -45,8 +45,8 @@ export default function WithdrawModal({ show, onClose, max, onSuccess }) {
   };
 
   const footer = [
+    { label: "Cancel", variant: "neutral", onClick: onClose },
     { label: loading ? "..." : "Submit", onClick: submit },
-    { label: "Cancel", variant: "secondary", onClick: onClose },
   ];
 
   return (

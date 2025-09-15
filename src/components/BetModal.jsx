@@ -17,12 +17,12 @@ export default function BetModal({
   }, [show]);
 
   const footer = [
+    { label: "Cancel", variant: "neutral", onClick: onClose },
     {
       label: "Confirm",
       variant: "primary",
       onClick: () => onConfirm(options[index]?.entry),
     },
-    { label: "Cancel", variant: "secondary", onClick: onClose },
   ];
 
   const increase = () => setIndex((i) => (i + 1) % (options.length || 1));

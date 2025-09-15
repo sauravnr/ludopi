@@ -457,12 +457,12 @@ export default function Profile() {
           title="Edit Profile"
           onClose={() => setShowEditModal(false)}
           footer={[
-            { label: "Save", onClick: saveProfileChanges },
             {
               label: "Cancel",
-              variant: "secondary",
+              variant: "neutral",
               onClick: () => setShowEditModal(false),
             },
+            { label: "Save", onClick: saveProfileChanges },
           ]}
         >
           <div className="space-y-4">
@@ -543,7 +543,7 @@ export default function Profile() {
           footer={[
             {
               label: "Cancel",
-              variant: "secondary",
+              variant: "neutral",
               onClick: () => setShowUnfriendModal(false),
             },
             {

@@ -410,7 +410,7 @@ const Home = () => {
           footer={[
             {
               label: "Cancel",
-              variant: "secondary",
+              variant: "neutral",
               onClick: () => setShowVipConfirm(false),
             },
             {

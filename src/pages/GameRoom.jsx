@@ -301,8 +301,8 @@ const GameRoom = () => {
           closable={false}
           onClose={declineBet}
           footer={[
-            { label: "Accept", variant: "secondary", onClick: acceptBet },
-            { label: "Decline", variant: "primary", onClick: declineBet },
+            { label: "Decline", variant: "neutral", onClick: declineBet },
+            { label: "Accept", variant: "primary", onClick: acceptBet },
           ]}
         >
           <p className="text-center">

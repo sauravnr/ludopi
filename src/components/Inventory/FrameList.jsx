@@ -163,14 +163,14 @@ export default function FrameList() {
           buyItem && player && player.coins >= buyItem.price
             ? [
                 {
+                  label: "Cancel",
+                  onClick: () => setBuyItem(null),
+                  variant: "neutral",
+                },
+                {
                   label: "Confirm",
                   onClick: handleConfirm,
                   variant: "primary",
-                },
-                {
-                  label: "Cancel",
-                  onClick: () => setBuyItem(null),
-                  variant: "secondary",
                 },
               ]
             : [{ label: "Buy coin", onClick: () => {}, variant: "secondary" }]

@@ -139,7 +139,7 @@ export default function FriendsList({ onMessageClick }) {
           footer={[
             {
               label: "Cancel",
-              variant: "secondary",
+              variant: "neutral",
               onClick: () => setUnfriendTarget(null),
             },
             { label: "Confirm", onClick: confirmUnfriend },
