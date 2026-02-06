@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D Ludo Dice Roller</title>
+    <style>
+      :root {
+        --bg-color: #1a1a2e;
+        --felt-color: #2e7d32;
+        --felt-dark: #1b5e20;
+        --accent-gold: #ffd700;
+        --text-color: #ffffff;
+        --dice-size: 100px;
+        --dot-size: 18px;
+        --dice-color: #fff;
+        --dot-color: #000;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        user-select: none;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: var(--bg-color);
+        background-image: radial-gradient(
+          circle at center,
+          #232342 0%,
+          #1a1a2e 100%
+        );
+        color: var(--text-color);
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      /* UI Container */
+      .game-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2rem;
+        width: 100%;
+        max-width: 400px;
+        z-index: 10;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 1rem;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        color: var(--accent-gold);
+        text-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        letter-spacing: 2px;
+      }
+
+      .status-display {
+        background: rgba(0, 0, 0, 0.5);
+        padding: 0.5rem 1.5rem;
+        border-radius: 20px;
+        font-size: 1.2rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        min-height: 3.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+      }
+
+      /* The 3D Scene */
+      .scene {
+        width: var(--dice-size);
+        height: var(--dice-size);
+        perspective: 600px;
+        margin: 2rem 0;
+      }
+
+      .cube {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        transform-style: preserve-3d;
+        transform: translateZ(-50px) rotateX(0deg) rotateY(0deg);
+        transition: transform 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+
+      .cube.rolling {
+        animation: spin 0.2s linear infinite;
+      }
+
+      .face {
+        position: absolute;
+        width: var(--dice-size);
+        height: var(--dice-size);
+        background: var(--dice-color);
+        border-radius: 12px;
+        border: 2px solid #ddd;
+        box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 0; /* Hide text */
+      }
+
+      /* Dot positioning logic */
+      .dot {
+        width: var(--dot-size);
+        height: var(--dot-size);
+        background-color: var(--dot-color);
+        border-radius: 50%;
+        position: absolute;
+        box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.5);
+      }
+
+      /* Face Transforms */
+      .face-1 {
+        transform: rotateY(0deg) translateZ(50px);
+      }
+      .face-2 {
+        transform: rotateX(180deg) translateZ(50px);
+      }
+      .face-3 {
+        transform: rotateY(90deg) translateZ(50px);
+      }
+      .face-4 {
+        transform: rotateY(-90deg) translateZ(50px);
+      }
+      .face-5 {
+        transform: rotateX(90deg) translateZ(50px);
+      }
+      .face-6 {
+        transform: rotateX(-90deg) translateZ(50px);
+      }
+
+      /* Red dot for 1 (standard in many games) or Black for generic Ludo */
+      /* We will stick to black for standard Ludo, maybe red accent in UI */
+
+      /* Dot configurations */
+      .face-1 .dot:nth-child(1) {
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #d32f2f;
+        width: 24px;
+        height: 24px;
+      } /* Red for Ace */
+
+      .face-2 .dot:nth-child(1) {
+        top: 20%;
+        left: 20%;
+      }
+      .face-2 .dot:nth-child(2) {
+        bottom: 20%;
+        right: 20%;
+      }
+
+      .face-3 .dot:nth-child(1) {
+        top: 20%;
+        left: 20%;
+      }
+      .face-3 .dot:nth-child(2) {
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+      .face-3 .dot:nth-child(3) {
+        bottom: 20%;
+        right: 20%;
+      }
+
+      .face-4 .dot:nth-child(1) {
+        top: 20%;
+        left: 20%;
+      }
+      .face-4 .dot:nth-child(2) {
+        top: 20%;
+        right: 20%;
+      }
+      .face-4 .dot:nth-child(3) {
+        bottom: 20%;
+        left: 20%;
+      }
+      .face-4 .dot:nth-child(4) {
+        bottom: 20%;
+        right: 20%;
+      }
+
+      .face-5 .dot:nth-child(1) {
+        top: 20%;
+        left: 20%;
+      }
+      .face-5 .dot:nth-child(2) {
+        top: 20%;
+        right: 20%;
+      }
+      .face-5 .dot:nth-child(3) {
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+      .face-5 .dot:nth-child(4) {
+        bottom: 20%;
+        left: 20%;
+      }
+      .face-5 .dot:nth-child(5) {
+        bottom: 20%;
+        right: 20%;
+      }
+
+      .face-6 .dot:nth-child(1) {
+        top: 20%;
+        left: 20%;
+      }
+      .face-6 .dot:nth-child(2) {
+        top: 20%;
+        right: 20%;
+      }
+      .face-6 .dot:nth-child(3) {
+        top: 50%;
+        left: 20%;
+        transform: translateY(-50%);
+      }
+      .face-6 .dot:nth-child(4) {
+        top: 50%;
+        right: 20%;
+        transform: translateY(-50%);
+      }
+      .face-6 .dot:nth-child(5) {
+        bottom: 20%;
+        left: 20%;
+      }
+      .face-6 .dot:nth-child(6) {
+        bottom: 20%;
+        right: 20%;
+      }
+
+      /* Controls */
+      .controls {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      button {
+        padding: 12px 32px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        transition:
+          transform 0.1s,
+          box-shadow 0.2s,
+          background 0.2s;
+        text-transform: uppercase;
+        box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
+        outline: none;
+      }
+
+      button:active {
+        transform: translateY(4px);
+        box-shadow: none;
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
+      .btn-roll {
+        background: linear-gradient(135deg, #ffd700, #ffb300);
+        color: #4a3b00;
+        min-width: 150px;
+      }
+
+      .btn-reset {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .btn-reset:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      /* History / Log */
+      .history-panel {
+        margin-top: 2rem;
+        width: 100%;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 12px;
+        padding: 1rem;
+      }
+
+      .history-title {
+        font-size: 0.9rem;
+        color: #aaa;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .dice-icons {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        padding-bottom: 5px;
+        scrollbar-width: thin;
+        scrollbar-color: #555 transparent;
+      }
+
+      .dice-icon {
+        min-width: 30px;
+        height: 30px;
+        background: #fff;
+        border-radius: 4px;
+        color: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 14px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+
+      /* Toast Notification */
+      .toast {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%) translateY(100px);
+        background: #333;
+        color: #fff;
+        padding: 12px 24px;
+        border-radius: 30px;
+        opacity: 0;
+        transition: all 0.3s ease;
+        z-index: 100;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .toast.show {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+      }
+
+      /* Animations */
+      @keyframes popIn {
+        from {
+          transform: scale(0);
+        }
+        to {
+          transform: scale(1);
+        }
+      }
+
+      @keyframes spin {
+        0% {
+          transform: translateZ(-50px) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+        }
+        100% {
+          transform: translateZ(-50px) rotateX(360deg) rotateY(360deg)
+            rotateZ(360deg);
+        }
+      }
+
+      /* Felt Table Background for immersion */
+      .table-background {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        background:
+          radial-gradient(circle, transparent 20%, #1a1a2e 120%),
+          linear-gradient(
+            45deg,
+            #2e7d32 25%,
+            transparent 25%,
+            transparent 75%,
+            #2e7d32 75%,
+            #2e7d32
+          ),
+          linear-gradient(
+            45deg,
+            #2e7d32 25%,
+            transparent 25%,
+            transparent 75%,
+            #2e7d32 75%,
+            #2e7d32
+          );
+        background-color: #1b5e20;
+        background-size:
+          100% 100%,
+          40px 40px,
+          40px 40px;
+        background-position:
+          0 0,
+          0 0,
+          20px 20px;
+        opacity: 0.1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="table-background"></div>
+
+    <div class="game-container">
+      <header>
+        <h1>LUDO DICE</h1>
+      </header>
+
+      <div class="status-display" id="statusText">Ready to Roll</div>
+
+      <div class="scene">
+        <div class="cube" id="dice">
+          <div class="face face-1"><div class="dot"></div></div>
+          <div class="face face-2">
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+          <div class="face face-3">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+          <div class="face face-4">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+          <div class="face face-5">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+          <div class="face face-6">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn-roll" id="rollBtn">Roll Dice</button>
+        <button class="btn-reset" id="resetBtn">Reset</button>
+      </div>
+
+      <div class="history-panel">
+        <div class="history-title">Roll History</div>
+        <div class="dice-icons" id="historyList">
+          <!-- History items will be added here -->
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast">Result: 6!</div>
+
+    <script>
+      /**
+       * Ludo 3D Dice Logic
+       * Handles 3D rotations, randomization, sound synthesis, and UI updates.
+       */
+
+      const dice = document.getElementById("dice");
+      const rollBtn = document.getElementById("rollBtn");
+      const resetBtn = document.getElementById("resetBtn");
+      const statusText = document.getElementById("statusText");
+      const historyList = document.getElementById("historyList");
+      const toast = document.getElementById("toast");
+
+      let isRolling = false;
+      let history = [];
+
+      // Map dice values to specific (x, y) rotation degrees to show the correct face.
+      // Based on the CSS transform definitions.
+      const faceTransforms = {
+        1: { x: 0, y: 0 },
+        2: { x: 180, y: 0 },
+        3: { x: 0, y: -90 },
+        4: { x: 0, y: 90 },
+        5: { x: -90, y: 0 },
+        6: { x: 90, y: 0 },
+      };
+
+      // Audio Context for synthesized sounds (no external assets needed)
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      let audioCtx;
+
+      function initAudio() {
+        if (!audioCtx) {
+          audioCtx = new AudioContext();
+        }
+        if (audioCtx.state === "suspended") {
+          audioCtx.resume();
+        }
+      }
+
+      function playTickSound() {
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(
+          100,
+          audioCtx.currentTime + 0.05,
+        );
+
+        gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(
+          0.001,
+          audioCtx.currentTime + 0.05,
+        );
+
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.05);
+      }
+
+      function playSuccessSound(value) {
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        // Higher pitch for 6 (winning/exciting roll)
+        const baseFreq = value === 6 ? 600 : 400;
+
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(
+          baseFreq * 2,
+          audioCtx.currentTime + 0.1,
+        );
+
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(
+          0.001,
+          audioCtx.currentTime + 0.3,
+        );
+
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+      }
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add("show");
+        setTimeout(() => {
+          toast.classList.remove("show");
+        }, 2000);
+      }
+
+      function updateHistory(value) {
+        history.unshift(value);
+        if (history.length > 10) history.pop(); // Keep last 10
+
+        // Clear list
+        historyList.innerHTML = "";
+
+        history.forEach((val) => {
+          const el = document.createElement("div");
+          el.className = "dice-icon";
+          el.textContent = val;
+
+          // Highlight 6s
+          if (val === 6) {
+            el.style.background = "#ffd700";
+            el.style.color = "#000";
+            el.style.border = "2px solid #fff";
+          }
+
+          historyList.appendChild(el);
+        });
+      }
+
+      function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+
+      function rollDice() {
+        if (isRolling) return;
+        isRolling = true;
+        initAudio();
+
+        rollBtn.disabled = true;
+        statusText.textContent = "Rolling...";
+        statusText.style.color = "#aaa";
+
+        // Determine result immediately (logic before animation ends)
+        // Weighted logic could go here, but we keep it fair (1/6)
+        const result = getRandomInt(1, 6);
+
+        // Animation sequence
+        // 1. Reset transition for instant effect if needed, or keep smooth
+
+        // Add extra rotations for visual complexity
+        // We want to land on result, but spin wildly first.
+
+        // Generate a random number of extra spins (2 to 4 full rotations)
+        // 360 degrees = 1 rotation.
+        const extraSpinsX = 360 * getRandomInt(2, 4);
+        const extraSpinsY = 360 * getRandomInt(2, 4);
+
+        const target = faceTransforms[result];
+
+        // Apply the rolling class for the "shake" effect via CSS animation
+        dice.classList.add("rolling");
+
+        // Sound effect interval
+        let tickInterval = setInterval(playTickSound, 100);
+
+        // Stop spinning and land on result after time
+        setTimeout(() => {
+          clearInterval(tickInterval);
+          dice.classList.remove("rolling");
+
+          // Calculate final rotation
+          // We add the extra spins to the base rotation required for the face
+          const finalX = target.x + extraSpinsX;
+          const finalY = target.y + extraSpinsY;
+
+          dice.style.transform = `translateZ(-50px) rotateX(${finalX}deg) rotateY(${finalY}deg)`;
+
+          // Wait for transition to finish (1s defined in CSS)
+          setTimeout(() => {
+            // Clean up rotations so numbers don't get infinitely huge
+            // We keep the visual result using modulo 360 logic or just reset
+            // For simplicity, we just leave it, but technically we should reset the internal
+            // transform state to the base angles without visual jumping.
+            // Doing that requires a bit of a timeout hack.
+            dice.style.transition = "none";
+            dice.style.transform = `translateZ(-50px) rotateX(${target.x}deg) rotateY(${target.y}deg)`;
+
+            // Force reflow
+            void dice.offsetWidth;
+
+            dice.style.transition =
+              "transform 1s cubic-bezier(0.2, 0.8, 0.2, 1)";
+
+            // Finalize
+            isRolling = false;
+            rollBtn.disabled = false;
+
+            statusText.textContent = `Rolled a ${result}!`;
+            statusText.style.color = "#fff";
+
+            if (result === 6) {
+              statusText.style.color = "#ffd700";
+              showToast("You rolled a 6! Roll again!");
+            } else {
+              showToast(`Result: ${result}`);
+            }
+
+            playSuccessSound(result);
+            updateHistory(result);
+          }, 1000); // Matches CSS transition duration
+        }, 600); // Duration of the spin animation
+      }
+
+      function resetGame() {
+        if (isRolling) return;
+        history = [];
+        historyList.innerHTML = "";
+        dice.style.transform = `translateZ(-50px) rotateX(0deg) rotateY(0deg)`;
+        statusText.textContent = "Ready to Roll";
+        statusText.style.color = "#fff";
+        showToast("History Cleared");
+      }
+
+      // Event Listeners
+      rollBtn.addEventListener("click", rollDice);
+      resetBtn.addEventListener("click", resetGame);
+
+      // Spacebar shortcut
+      document.addEventListener("keydown", (e) => {
+        if (e.code === "Space" && !rollBtn.disabled) {
+          e.preventDefault(); // Prevent scrolling
+          rollDice();
+        }
+      });
+    </script>
+  </body>
+</html>
