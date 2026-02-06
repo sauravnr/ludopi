@@ -258,6 +258,33 @@ select:focus {
     stroke-dashoffset: 282.6; /* full circle wipe */
   }
 }
+@property --turn-progress {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 1turn;
+}
+.turn-clock-fill {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  transform: rotate(-90deg);
+  background: conic-gradient(
+    rgba(59, 130, 246, 0.35) 0turn,
+    rgba(59, 130, 246, 0.35) var(--turn-progress),
+    rgba(59, 130, 246, 0) var(--turn-progress),
+    rgba(59, 130, 246, 0) 1turn
+  );
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.3);
+  animation: turnFill 12s linear forwards;
+}
+@keyframes turnFill {
+  from {
+    --turn-progress: 1turn;
+  }
+  to {
+    --turn-progress: 0turn;
+  }
+}
 
 @media (prefers-color-scheme: light) {
   :root {

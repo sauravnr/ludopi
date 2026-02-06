@@ -2,9 +2,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Dice from "./Dice";
 import { useSocket } from "../context/SocketContext";
+import { useSettings } from "../context/SettingsContext";
 
 // dice dimensions in pixels
 const DICE_SIZE = 56;
+const ROLL_SPIN_MS = 700;
 
 // scaling factor for token diameter relative to a board tile
 const TOKEN_SCALE = 1.1;
@@ -645,6 +647,7 @@ const LudoCanvas = ({
   // tracks whether countdown is waiting for a roll or a move
   const [autoPhase, setAutoPhase] = useState(null); // 'roll' | 'move'
   const [turnAnimSeed, setTurnAnimSeed] = useState(0); // forces timer animation restart
+  const { soundOn } = useSettings();
   // track four tokens per color; -1 = still at home
   const [tokenSteps, setTokenSteps] = useState({
     red: [-1, -1, -1, -1],
@@ -966,7 +969,7 @@ const LudoCanvas = ({
             return u;
           });
         }, 3000); // face display
-      }, 700); // spinning time
+      }, ROLL_SPIN_MS); // spinning time
     };
 
     const onTurn = ({ currentTurnColor }) => {
@@ -979,6 +982,7 @@ const LudoCanvas = ({
       setTimer(12);
       setVisibleDice((v) => ({ ...v, [currentTurnColor]: true }));
       setAutoPhase("roll");
+      setTurnAnimSeed((s) => s + 1); // restart turn timer animation
     };
 
     socket.on("dice-rolled-broadcast", onDice);
@@ -1519,12 +1523,11 @@ const LudoCanvas = ({
                   />
                   {curr && (
                     <div
-                      key={turnAnimSeed}
-                      className="absolute inset-0 bg-blue-500"
-                      style={{
-                        animation: "countdownWedge 12s linear forwards",
-                      }}
-                    />
+                      className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                      aria-hidden="true"
+                    >
+                      <div key={turnAnimSeed} className="turn-clock-fill" />
+                    </div>
                   )}
                 </div>
                 {/* Dice to the right of avatar */}
@@ -1532,24 +1535,31 @@ const LudoCanvas = ({
                   className="flex items-center justify-center"
                   style={{ width: DICE_SIZE, height: DICE_SIZE }}
                 >
-                  {(myTurn || visibleDice[p.color]) && (
-                    <div
-                      className={`transition-opacity duration-300 ${
-                        visibleDice[p.color] ? "opacity-100" : "opacity-0"
-                      }`}
-                    >
-                      <div className="dice-pit">
-                        <Dice
+                  {(() => {
+                    const showDice = myTurn || visibleDice[p.color];
+                    return (
+                      <div
+                        className={`transition-opacity duration-300 ${
+                          showDice ? "opacity-100" : "opacity-0"
+                        }`}
+                        style={{ pointerEvents: showDice ? "auto" : "none" }}
+                        aria-hidden={!showDice}
+                      >
+                        <div className="dice-pit">
+                          <Dice
                           onRoll={handleDiceRoll}
                           disabled={!myTurn || hasRolled}
                           rollingNow={rollingDice[p.color]}
                           forcedFace={rolledDice[p.color]}
                           size={56}
                           design={p.diceDesign || "default"}
+                          soundOn={soundOn}
+                          rollDurationMs={ROLL_SPIN_MS}
                         />
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                 </div>
               </>
             ) : (
@@ -1559,24 +1569,31 @@ const LudoCanvas = ({
                   className="flex items-center justify-center"
                   style={{ width: DICE_SIZE, height: DICE_SIZE }}
                 >
-                  {(myTurn || visibleDice[p.color]) && (
-                    <div
-                      className={`transition-opacity duration-300 ${
-                        visibleDice[p.color] ? "opacity-100" : "opacity-0"
-                      }`}
-                    >
-                      <div className="dice-pit">
-                        <Dice
+                  {(() => {
+                    const showDice = myTurn || visibleDice[p.color];
+                    return (
+                      <div
+                        className={`transition-opacity duration-300 ${
+                          showDice ? "opacity-100" : "opacity-0"
+                        }`}
+                        style={{ pointerEvents: showDice ? "auto" : "none" }}
+                        aria-hidden={!showDice}
+                      >
+                        <div className="dice-pit">
+                          <Dice
                           onRoll={handleDiceRoll}
                           disabled={!myTurn || hasRolled}
                           rollingNow={rollingDice[p.color]}
                           forcedFace={rolledDice[p.color]}
                           size={56}
                           design={p.diceDesign || "default"}
+                          soundOn={soundOn}
+                          rollDurationMs={ROLL_SPIN_MS}
                         />
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                 </div>
                 {/* Avatar on right-side players */}
                 <div className="w-12 h-12 relative overflow-hidden">
@@ -1592,12 +1609,11 @@ const LudoCanvas = ({
                   />
                   {curr && (
                     <div
-                      key={turnAnimSeed}
-                      className="absolute inset-0 bg-blue-500"
-                      style={{
-                        animation: "countdownWedge 12s linear forwards",
-                      }}
-                    />
+                      className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                      aria-hidden="true"
+                    >
+                      <div key={turnAnimSeed} className="turn-clock-fill" />
+                    </div>
                   )}
                 </div>
               </>

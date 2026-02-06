@@ -6,6 +6,7 @@ import { AuthProvider } from "./context/AuthContext"; // adjust path if yours is
 import AuthedSocket from "./components/AuthedSocket.jsx";
 import { AlertProvider } from "./context/AlertContext";
 import { NotificationProvider } from "./context/NotificationContext";
+import { SettingsProvider } from "./context/SettingsContext";
 import "./index.css";
 import "flag-icons/css/flag-icons.min.css";
 import App from "./App.jsx";
@@ -17,7 +18,9 @@ createRoot(document.getElementById("root")).render(
         <AuthProvider>
           <AuthedSocket>
             <NotificationProvider>
-              <App />
+              <SettingsProvider>
+                <App />
+              </SettingsProvider>
             </NotificationProvider>
           </AuthedSocket>
         </AuthProvider>

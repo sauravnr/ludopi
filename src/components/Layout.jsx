@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useSettings } from "../context/SettingsContext";
 import Header from "./Header";
 import Footer from "./Footer";
 
@@ -19,9 +20,8 @@ export default function Layout() {
   else activePage = "";
 
   const [showSettings, setShowSettings] = useState(false);
-  const [soundOn, setSoundOn] = useState(true);
-  const [musicOn, setMusicOn] = useState(true);
-  const [chatOn, setChatOn] = useState(true);
+  const { soundOn, setSoundOn, musicOn, setMusicOn, chatOn, setChatOn } =
+    useSettings();
 
   const handleSupport = () => console.log("Support clicked");
   const handleFeedback = () => console.log("Feedback clicked");

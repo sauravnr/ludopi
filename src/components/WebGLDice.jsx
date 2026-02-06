@@ -26,6 +26,7 @@ function getDiceTextures(renderer, design) {
       tex.minFilter = THREE.LinearMipmapLinearFilter;
       tex.wrapS = THREE.ClampToEdgeWrapping;
       tex.wrapT = THREE.ClampToEdgeWrapping;
+      tex.colorSpace = THREE.SRGBColorSpace;
 
       const img = new Image();
       img.crossOrigin = "anonymous";
@@ -80,6 +81,7 @@ export default function WebGLDice({
     if (!container) return;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
     rendererRef.current = renderer;
 
     const gl = renderer.getContext();
@@ -119,8 +121,8 @@ export default function WebGLDice({
     // slightly narrower FOV so the cube fills more of the container
     const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 10);
     camera.position.set(0, 0, 2);
-    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-    const dl = new THREE.DirectionalLight(0xffffff, 0.8);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+    const dl = new THREE.DirectionalLight(0xffffff, 0.9);
     dl.position.set(5, 5, 5);
     scene.add(dl);
 
@@ -131,6 +133,8 @@ export default function WebGLDice({
         transparent: true,
         alphaTest: 0.1,
         map: tex,
+        emissive: new THREE.Color(0xffffff),
+        emissiveIntensity: 0.05,
       });
       mat.needsUpdate = true;
       return mat;
